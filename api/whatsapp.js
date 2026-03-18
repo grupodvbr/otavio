@@ -308,6 +308,62 @@ module.exports = async function handler(req,res){
 let resposta = ""
 
 
+
+
+/* ================= REQUISIÇÕES (GAS) ================= */
+
+async function buscarRequisicoes(){
+
+  const res = await fetch("https://script.google.com/macros/s/AKfycbzjVWXyGuwLDEfqNwgJppU2Yvo3_r_L7wbD1-AXfd3lztOUlq5zbKTQ0QCP7IknVae4TA/exec")
+
+  if(!res.ok){
+    throw new Error("Erro ao buscar requisições")
+  }
+
+  const dados = await res.json()
+
+  return dados.map(l => ({
+    data: new Date(l[0]),
+    item: (l[1] || "").toLowerCase(),
+    unidade: l[2],
+    quantidade: Number(l[3]) || 0,
+    setor: l[4],
+    solicitante: l[5],
+    observacoes: l[6],
+    status: (l[7] || "").toLowerCase()
+  }))
+}
+
+function analisarItens(dados, nomeItem){
+
+  const itemFiltro = nomeItem.toLowerCase()
+
+  let pedido = 0
+  let entregue = 0
+
+  dados.forEach(d => {
+
+    if(d.item.includes(itemFiltro)){
+
+      pedido += d.quantidade
+
+      if(d.status === "entregue"){
+        entregue += d.quantidade
+      }
+
+    }
+
+  })
+
+  return {
+    pedido,
+    entregue,
+    pendente: pedido - entregue
+  }
+}
+
+
+  
 /* ================= WEBHOOK VERIFY ================= */
 
 if(req.method==="GET"){
@@ -364,7 +420,15 @@ Você pode responder perguntas sobre:
 Responda sempre de forma clara e direta.
 `
 },
+  
+{
+role:"system",
+content:`
+DADOS REAIS DE REQUISIÇÕES:
 
+${dadosTexto}
+`
+},
 {
 role:"user",
 content:pergunta
@@ -469,6 +533,60 @@ return res.status(200).end()
 
 console.log("Cliente:",cliente)
 console.log("Mensagem:",mensagem)
+
+/* ================= CONSULTA REQUISIÇÕES (ADMIN) ================= */
+
+if(ADMINS.includes(cliente)){
+
+  // detecta pergunta tipo "quanto de arroz"
+  const match = texto.match(/quanto.*de\s+([a-zA-ZÀ-ÿ]+)/)
+
+  if(match){
+
+    const item = match[1]
+
+    console.log("CONSULTA REQUISIÇÕES PARA:", item)
+
+    const dados = await buscarRequisicoes()
+
+    const agora = new Date()
+    const mes = agora.getMonth()
+    const ano = agora.getFullYear()
+
+    const dadosMes = dados.filter(d =>
+      d.data.getMonth() === mes &&
+      d.data.getFullYear() === ano
+    )
+
+    const resultado = analisarItens(dadosMes, item)
+
+    resposta = `📊 *${item.toUpperCase()} no mês*
+
+🛒 Pedido: ${resultado.pedido}
+✅ Entregue: ${resultado.entregue}
+📦 Pendente: ${resultado.pendente}
+`
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        messaging_product:"whatsapp",
+        to:cliente,
+        type:"text",
+        text:{body:resposta}
+      })
+    })
+
+    return res.status(200).end()
+  }
+
+}
+
+  
 const texto = mensagem.toLowerCase()
 const textoNormalizado = normalizar(texto)
 /* ================= DETECTAR RECLAMAÇÃO ================= */
@@ -1353,7 +1471,15 @@ const promptSistema = (prompts || [])
 const completion = await openai.chat.completions.create({
 
 model:"gpt-4.1-mini",
+  
+const dados = await buscarRequisicoes()
 
+const dadosTexto = dados.slice(0,200).map(d => `
+Item: ${d.item}
+Qtd: ${d.quantidade}
+Status: ${d.status}
+Data: ${d.data.toISOString().split("T")[0]}
+`).join("\n")
 messages:[
 
 {
