@@ -154,7 +154,10 @@ try {
 
   await supabase.from("conversas_whatsapp").insert({
     telefone,
-    mensagem: `[TEMPLATE] ${template}`,
+    mensagem: JSON.stringify({
+  template,
+  parametros
+}),
     tipo: "template",
     role: "assistant",
     status: "sent",
