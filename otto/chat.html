@@ -311,8 +311,6 @@ carregarMais()
 function gerarHTML(m){
 
 let html = ""
-
-/* TEMPLATE */
 if(m.tipo === "template"){
 
   let nomeTemplate = ""
@@ -337,64 +335,68 @@ if(m.tipo === "template"){
   </div>
   `
 }
+}
+/* ===== MIDIA ===== */
 
-/* MIDIA */
 if(m?.tipo === "imagem" && m?.media_url){
-  html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
+html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
 }
 
 else if(m?.tipo === "video" && m?.media_url){
-  html += `
-  <video controls style="max-width:220px;border-radius:10px;">
-    <source src="${m.media_url}">
-  </video>`
+html += `
+<video controls style="max-width:220px;border-radius:10px;">
+  <source src="${m.media_url}">
+</video>`
 }
 
 else if(m?.tipo === "audio" && m?.media_url){
-  html += `
-  <audio controls style="width:200px;">
-    <source src="${m.media_url}">
-  </audio>`
+html += `
+<audio controls style="width:200px;">
+  <source src="${m.media_url}">
+</audio>`
 }
 
 else if(m?.tipo === "documento" && m?.media_url){
 
-  const ext = (m.nome_arquivo || "").split(".").pop()?.toLowerCase()
+const ext = (m.nome_arquivo || "").split(".").pop()?.toLowerCase()
 
-  if(ext === "pdf"){
-    html += `
-    <iframe src="${m.media_url}" width="220" height="260"
-    style="border:none;border-radius:10px;"></iframe>`
-  }else{
-    html += `
-    <div class="fileBox" onclick="window.open('${m.media_url}')">
-      📄 ${m.nome_arquivo || "Abrir arquivo"}
-    </div>`
-  }
+if(ext === "pdf"){
+html += `
+<iframe src="${m.media_url}" width="220" height="260"
+style="border:none;border-radius:10px;"></iframe>`
+}else{
+html += `
+<div class="fileBox" onclick="window.open('${m.media_url}')">
+📄 ${m.nome_arquivo || "Abrir arquivo"}
+</div>`
 }
 
-/* TEXTO */
+}
+
+/* ===== TEXTO ===== */
+
 if(m?.mensagem){
-  html += `<div>${m.mensagem}</div>`
+html += `<div>${m.mensagem}</div>`
 }
 
-/* STATUS */
+/* ===== STATUS ===== */
+
 function statusIcon(status){
-  if(status === "sent") return "✓"
-  if(status === "delivered") return "✓✓"
-  if(status === "read") return "<span style='color:#34b7f1'>✓✓</span>"
-  return ""
+if(status === "sent") return "✓"
+if(status === "delivered") return "✓✓"
+if(status === "read") return "<span style='color:#34b7f1'>✓✓</span>"
+return ""
 }
 
-/* TIME */
+/* ===== TIME ===== */
+
 html += `
 <div class="time">
-  ${hora(m.created_at)} ${statusIcon(m.status)}
+${hora(m.created_at)} ${statusIcon(m.status)}
 </div>
 `
 
 return html
-
 }
 
 
