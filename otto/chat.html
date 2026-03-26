@@ -695,35 +695,7 @@ if(data?.error){
 }
    
 
-/* ===== MOSTRAR NA TELA ===== */
 
-const temp = {
-  id: "temp-" + Date.now(),
-  mensagem: JSON.stringify({
-    template: nome,
-    parametros
-  }),
-  tipo: "template",
-  role: "assistant",
-  created_at: new Date().toISOString(),
-  status: "sent"
-}
-
-render(temp)
-scrollBottom()
-
-/* ===== SALVAR NO BANCO ===== */
-
-await db.from("conversas_whatsapp").insert({
-  telefone,
-  mensagem: JSON.stringify({
-    template: nome,
-    parametros
-  }),
-  tipo: "template",
-  role: "assistant",
-  status: "sent"
-})
 
   }catch(err){
     console.error("🔥 ERRO:", err)
