@@ -669,21 +669,32 @@ async function enviarTemplate(nome){
       return
     }
 
-    const messageId = data?.data?.messages?.[0]?.id || null
+   const messageId = data?.data?.messages?.[0]?.id || data?.messages?.[0]?.id || null
 
-    /* 💾 SALVAR IGUAL AO ENVIO NORMAL */
+const { error } = await db
+  .from("conversas_whatsapp")
+  .insert({
+    telefone: telefone.replace(/\D/g, ""),
+    mensagem: JSON.stringify({
+      template: nome,
+      parametros
+    }),
+    tipo: "template",
+    role: "assistant",
+    message_id: messageId,
+    status: "sent",
+    created_at: new Date().toISOString()
+  })
 
-    await db.from("conversas_whatsapp").insert({
-      telefone,
-      mensagem: JSON.stringify({
-        template: nome,
-        parametros
-      }),
-      tipo: "template",
-      role: "assistant",
-      message_id: messageId,
-      status: "sent"
-    })
+if(error){
+  console.error("❌ ERRO AO SALVAR:", error)
+  alert("Erro ao salvar no banco")
+  return
+}else{
+  console.log("💾 SALVO COM SUCESSO")
+}
+
+    
 
   }catch(err){
     console.error("🔥 ERRO:", err)
