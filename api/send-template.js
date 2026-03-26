@@ -163,25 +163,23 @@ const supabase = createClient(
 
 try {
 
-  const insert = await supabase.from("conversas_whatsapp").insert({
+const { error } = await supabase
+  .from("conversas_whatsapp")
+  .insert({
     telefone,
     mensagem: JSON.stringify({
       template,
       parametros
     }),
     tipo: "template",
-    role: "assistant",
-    status: "sent",
-    created_at: new Date().toISOString(),
-    message_id: data?.messages?.[0]?.id || null
+    role: "assistant"
   })
 
-  console.log("💾 SALVO NO BANCO:", insert)
-
-} catch (err) {
-  console.error("❌ ERRO AO SALVAR TEMPLATE:", err)
+if(error){
+  console.error("❌ ERRO SUPABASE:", error)
+}else{
+  console.log("💾 TEMPLATE SALVO")
 }
-
 return res.json({
   ok:true,
   enviado:true,
