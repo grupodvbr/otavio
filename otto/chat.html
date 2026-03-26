@@ -156,14 +156,24 @@ align-items:center;
 justify-content:center;
 cursor:pointer;
 }
+.time{
+font-size:11px;
+opacity:.7;
+text-align:right;
+display:flex;
+justify-content:flex-end;
+gap:4px;
+align-items:center;
+}
 
+
+  
 </style>
 
 </head>
 
 <body>
 
-<div class="header">Mercatto • WhatsApp</div>
 
 <div id="msgs" class="messages"></div>
 
@@ -172,12 +182,38 @@ cursor:pointer;
 <div class="inputBox">
 <input type="file" id="fileInput" hidden>
 <button onclick="fileInput.click()">📎</button>
+<button onclick="abrirTemplates()">📩</button>
 <textarea id="msg" placeholder="Mensagem..."></textarea>
 <button onclick="enviar()">➤</button>
 </div>
 
 <div id="preview" class="preview" style="display:none"></div>
 
+
+<div id="menuTemplates" style="
+position:absolute;
+bottom:80px;
+left:10px;
+background:#fff;
+border-radius:10px;
+box-shadow:0 10px 30px rgba(0,0,0,.2);
+display:none;
+flex-direction:column;
+padding:10px;
+gap:5px;
+">
+
+<button onclick="enviarTemplate('confirmao_de_reserva')">Reserva</button>
+<button onclick="enviarTemplate('reserva_especial')">Sala VIP</button>
+<button onclick="enviarTemplate('hello_world')">Teste</button>
+
+</div>
+
+
+
+
+
+  
 <script>
 
 /* ===== SUPABASE ===== */
@@ -197,23 +233,64 @@ let ultimaDataRender = null
 
 /* ===== TIME ===== */
 function hora(d){
+
+let data
+
+if(d.includes("Z")){
+  // veio do Supabase (UTC)
+  data = new Date(d)
+}else{
+  // veio do seu envio local
+  data = new Date(d.replace(" ", "T"))
+}
+
 return new Intl.DateTimeFormat("pt-BR",{
-hour:"2-digit",
-minute:"2-digit",
-timeZone:"America/Sao_Paulo"
-}).format(new Date(d))
-}
+  hour:"2-digit",
+  minute:"2-digit",
+  timeZone:"America/Bahia"
+}).format(data)
 
-/* ===== DATA ===== */
+}
+  
 function dataLabel(d){
-const date = new Date(d)
-const hoje = new Date()
-const diff = Math.floor((hoje - date)/(1000*60*60*24))
-if(diff===0) return "HOJE"
-if(diff===1) return "ONTEM"
-return date.toLocaleDateString("pt-BR")
+
+let data
+
+// 🔥 trata os dois formatos (Supabase + local)
+if(d.includes("Z")){
+  data = new Date(d) // UTC
+}else{
+  data = new Date(d.replace(" ", "T")) // banco local
 }
 
+// formatter padrão (comparação)
+const formatter = new Intl.DateTimeFormat("en-CA",{
+  timeZone:"America/Bahia",
+  year:"numeric",
+  month:"2-digit",
+  day:"2-digit"
+})
+
+const hoje = formatter.format(new Date())
+const dataMsg = formatter.format(data)
+
+// HOJE
+if(dataMsg === hoje) return "HOJE"
+
+// ONTEM
+const ontemDate = new Date()
+ontemDate.setDate(ontemDate.getDate()-1)
+
+const ontem = formatter.format(ontemDate)
+
+if(dataMsg === ontem) return "ONTEM"
+
+// PADRÃO (data normal)
+return new Intl.DateTimeFormat("pt-BR",{
+  timeZone:"America/Bahia"
+}).format(data)
+
+}
 /* ===== SCROLL ===== */
 function scrollBottom(){
 msgs.scrollTop = msgs.scrollHeight
@@ -231,53 +308,105 @@ carregarMais()
 }
 })
 
-/* ===== RENDER ===== */
+function gerarHTML(m){
+
+let html = ""
+
+/* ===== MIDIA ===== */
+
+if(m?.tipo === "imagem" && m?.media_url){
+html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
+}
+
+else if(m?.tipo === "video" && m?.media_url){
+html += `
+<video controls style="max-width:220px;border-radius:10px;">
+  <source src="${m.media_url}">
+</video>`
+}
+
+else if(m?.tipo === "audio" && m?.media_url){
+html += `
+<audio controls style="width:200px;">
+  <source src="${m.media_url}">
+</audio>`
+}
+
+else if(m?.tipo === "documento" && m?.media_url){
+
+const ext = (m.nome_arquivo || "").split(".").pop()?.toLowerCase()
+
+if(ext === "pdf"){
+html += `
+<iframe src="${m.media_url}" width="220" height="260"
+style="border:none;border-radius:10px;"></iframe>`
+}else{
+html += `
+<div class="fileBox" onclick="window.open('${m.media_url}')">
+📄 ${m.nome_arquivo || "Abrir arquivo"}
+</div>`
+}
+
+}
+
+/* ===== TEXTO ===== */
+
+if(m?.mensagem){
+html += `<div>${m.mensagem}</div>`
+}
+
+/* ===== STATUS ===== */
+
+function statusIcon(status){
+if(status === "sent") return "✓"
+if(status === "delivered") return "✓✓"
+if(status === "read") return "<span style='color:#34b7f1'>✓✓</span>"
+return ""
+}
+
+/* ===== TIME ===== */
+
+html += `
+<div class="time">
+${hora(m.created_at)} ${statusIcon(m.status)}
+</div>
+`
+
+return html
+}
+
+
 function render(m,top=false){
 
-if(mensagensIds.has(m.id)) return
+const existente = document.getElementById(m.id)
+
+if(existente){
+  existente.innerHTML = gerarHTML(m)
+  return
+}
+
 mensagensIds.add(m.id)
 
-/* DATA */
 const label = dataLabel(m.created_at)
+
 if(label !== ultimaDataRender){
-const d = document.createElement("div")
-d.className="date"
-d.innerText = label
-top ? msgs.prepend(d) : msgs.appendChild(d)
-ultimaDataRender = label
+  const d = document.createElement("div")
+  d.className="date"
+  d.innerText = label
+  top ? msgs.prepend(d) : msgs.appendChild(d)
+  ultimaDataRender = label
 }
 
 const div = document.createElement("div")
-div.className="msg "+(m.role==="assistant"?"assistant":"user")
+div.id = m.id || m.message_id
+div.className = "msg " + (m.role==="assistant"?"assistant":"user")
 
-let html=""
-
-/* MIDIA */
-if(m.tipo==="imagem"){
-html+=`<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
-}
-if(m.tipo==="video"){
-html+=`<video controls src="${m.media_url}"></video>`
-}
-if(m.tipo==="audio"){
-html+=`<audio controls src="${m.media_url}"></audio>`
-}
-if(m.tipo==="documento"){
-html+=`<div class="fileBox" onclick="window.open('${m.media_url}')">📄 ${m.nome_arquivo}</div>`
-}
-
-/* TEXTO */
-if(m.mensagem){
-html+=`<div>${m.mensagem}</div>`
-}
-
-html += `<div class="time">${hora(m.created_at)}</div>`
-
-div.innerHTML = html
+div.innerHTML = gerarHTML(m)
 
 top ? msgs.prepend(div) : msgs.appendChild(div)
-
 }
+
+
 
 /* ===== LOAD INICIAL ===== */
 async function iniciar(){
@@ -335,7 +464,7 @@ if(canal) db.removeChannel(canal)
 
 canal = db.channel("chat-"+telefone)
 .on("postgres_changes",{
-event:"INSERT",
+event:"*",
 schema:"public",
 table:"conversas_whatsapp",
 filter:`telefone=eq.${telefone}`
@@ -370,14 +499,30 @@ preview.innerHTML=`📄 ${arquivo.name}`
 /* ===== UPLOAD ===== */
 async function uploadMidia(file){
 
-const nome = Date.now()+"-"+file.name
+  const nome = Date.now() + "-" + file.name.replace(/\s+/g,"_")
 
-await db.storage.from("buffet_whatsa_mercatto").upload(nome,file)
+  const { data, error } = await db
+    .storage
+    .from("buffet_whatsa_mercatto")
+    .upload(nome, file)
 
-const {data} = db.storage.from("buffet_whatsa_mercatto").getPublicUrl(nome)
+  if(error){
+    console.error("ERRO UPLOAD:", error)
+    alert("Erro ao enviar arquivo")
+    return null
+  }
 
-return data.publicUrl
+  const { data: publicUrlData } = db
+    .storage
+    .from("buffet_whatsa_mercatto")
+    .getPublicUrl(nome)
 
+  if(!publicUrlData?.publicUrl){
+    alert("Erro ao gerar URL pública")
+    return null
+  }
+
+  return publicUrlData.publicUrl
 }
 
 /* ===== ENVIAR ===== */
@@ -390,8 +535,9 @@ const texto = msg.value.trim()
 const temp = {
 id:"temp-"+Date.now(),
 mensagem:texto,
-created_at:new Date().toISOString(),
-role:"assistant"
+created_at:new Date().toLocaleString("sv-SE").replace("T"," "),
+  role:"assistant",
+status:"sent"
 }
 
 render(temp)
@@ -406,18 +552,24 @@ let nomeArquivo=null
 
 if(arquivo){
 
-media = await uploadMidia(arquivo)
-nomeArquivo = arquivo.name
+  media = await uploadMidia(arquivo)
 
-if(arquivo.type.includes("image")) tipo="imagem"
-else if(arquivo.type.includes("video")) tipo="video"
-else if(arquivo.type.includes("audio")) tipo="audio"
-else tipo="documento"
+  if(!media){
+    alert("Falha no upload. Cancelando envio.")
+    return
+  }
+
+  nomeArquivo = arquivo.name
+
+  if(arquivo.type.includes("image")) tipo="imagem"
+  else if(arquivo.type.includes("video")) tipo="video"
+  else if(arquivo.type.includes("audio")) tipo="audio"
+  else tipo="documento"
 
 }
 
 /* API */
-await fetch("/api/send",{
+const send = await fetch("/api/send",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
@@ -427,7 +579,9 @@ media_url:media,
 tipo,
 nome_arquivo:nomeArquivo
 })
-})
+}).then(r => r.json())
+
+const messageId = send?.message_id
 
 /* BANCO */
 await db.from("conversas_whatsapp").insert({
@@ -436,7 +590,9 @@ mensagem:texto,
 tipo,
 media_url:media,
 nome_arquivo:nomeArquivo,
-role:"assistant"
+role:"assistant",
+message_id: messageId,
+status: "sent"
 })
 
 arquivo=null
@@ -447,6 +603,72 @@ preview.style.display="none"
 /* ===== START ===== */
 iniciar()
 
+
+function abrirTemplates(){
+  const menu = document.getElementById("menuTemplates")
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex"
+}
+
+async function enviarTemplate(nome){
+
+  if(!telefone) return
+
+  console.log("📤 Enviando template:", nome)
+
+  let parametros = {}
+
+  if(nome === "confirmao_de_reserva"){
+    parametros = {
+      nome: "Cliente",
+      data: "20/03",
+      hora: "20:00",
+      pessoas: "2"
+    }
+  }
+
+  if(nome === "reserva_especial"){
+    parametros = {
+      video: "https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Video%202026-03-10%20at%2021.08.40.mp4"
+    }
+  }
+
+  if(nome === "hello_world"){
+    parametros = {}
+  }
+
+  try{
+
+    const response = await fetch("/api/send-template",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        telefone,
+        template: nome,
+        parametros
+      })
+    })
+
+    const data = await response.json()
+
+    console.log("📩 RESPOSTA:", data)
+
+    if(data?.error){
+      alert("Erro: " + JSON.stringify(data.error))
+    }
+
+  }catch(err){
+    console.error("🔥 ERRO:", err)
+  }
+
+  document.getElementById("menuTemplates").style.display = "none"
+}
+
+
+
+
+  
 </script>
 
 </body>
