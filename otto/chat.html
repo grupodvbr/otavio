@@ -674,13 +674,44 @@ async function enviarTemplate(nome){
       })
     })
 
-    const data = await response.json()
+const data = await response.json()
 
-    console.log("📩 RESPOSTA:", data)
+console.log("📩 RESPOSTA:", data)
 
-    if(data?.error){
-      alert("Erro: " + JSON.stringify(data.error))
-    }
+if(data?.error){
+  alert("Erro: " + JSON.stringify(data.error))
+  return
+}
+
+/* ===== MOSTRAR NA TELA ===== */
+
+const temp = {
+  id: "temp-" + Date.now(),
+  mensagem: JSON.stringify({
+    template: nome,
+    parametros
+  }),
+  tipo: "template",
+  role: "assistant",
+  created_at: new Date().toISOString(),
+  status: "sent"
+}
+
+render(temp)
+scrollBottom()
+
+/* ===== SALVAR NO BANCO ===== */
+
+await db.from("conversas_whatsapp").insert({
+  telefone,
+  mensagem: JSON.stringify({
+    template: nome,
+    parametros
+  }),
+  tipo: "template",
+  role: "assistant",
+  status: "sent"
+})
 
   }catch(err){
     console.error("🔥 ERRO:", err)
