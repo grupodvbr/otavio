@@ -569,7 +569,24 @@ cursor:pointer;
 margin-top:6px;
 }
 
+/* ===== MOBILE FULL ===== */
 
+@media (max-width: 768px){
+
+  body{
+    flex-direction:column;
+  }
+
+  .sidebar{
+    width:100%;
+    height:100vh;
+  }
+
+  .chat{
+    display:none; /* 🔥 ESCONDE CHAT NO MOBILE */
+  }
+
+}
 
   
 </style>
@@ -740,9 +757,18 @@ for (const c of clientes){
 
   /* 🔥 CLICK CORRETO */
 
-  div.addEventListener("click", () => {
-    abrirChatIframe(c.telefone)
-  })
+div.addEventListener("click", () => {
+
+  // 📱 Se for celular → abre outra página
+  if(window.innerWidth <= 768){
+    window.location.href = "chat.html?telefone=" + c.telefone
+    return
+  }
+
+  // 💻 Se for desktop → iframe normal
+  abrirChatIframe(c.telefone)
+
+})
 
   container.appendChild(div)
 }
