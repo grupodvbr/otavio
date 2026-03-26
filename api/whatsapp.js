@@ -10,19 +10,16 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE
 )
 const ADMINS = [
-  "557798253249",
-  "557798315510"
+  "557798253249"
 ]
 
 
 
 
 const TEMPLATES_PERMITIDOS = [
-"confirmao_reserva",
-"lembrete_reserva",
-"confirmacao_pedido",
-"video_mercatto",
-"reserva_especial" // 👈 FALTAVA ISSO
+"confirmao_de_reserva",
+"reserva_especial",
+"hello_world"
 ]
 
 
@@ -300,7 +297,63 @@ Responda apenas com UMA palavra.
     .toLowerCase()
     .trim()
 }
+async function baixarESalvarMidia(mediaId, extensao, mime){
 
+  try{
+
+    const mediaInfo = await fetch(
+      `https://graph.facebook.com/v19.0/${mediaId}`,
+      {
+        headers:{
+          Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`
+        }
+      }
+    )
+
+    const mediaJson = await mediaInfo.json()
+
+    const fileRes = await fetch(mediaJson.url,{
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`
+      }
+    })
+
+const buffer = Buffer.from(await fileRes.arrayBuffer())
+    const fileName = `whatsapp/${Date.now()}.${extensao}`
+
+    const { error } = await supabase.storage
+      .from("buffet_whatsa_mercatto")
+      .upload(fileName, buffer, {
+        contentType: mime
+      })
+
+    if(error){
+      console.log("❌ ERRO UPLOAD:", error)
+      return null
+    }
+
+    const { data } = supabase.storage
+      .from("buffet_whatsa_mercatto")
+      .getPublicUrl(fileName)
+
+const publicUrl = data.publicUrl
+
+if(!publicUrl){
+  console.log("❌ URL NÃO GERADA")
+  return null
+}
+
+console.log("🌍 URL FINAL:", publicUrl)
+
+return publicUrl
+
+
+    
+  }catch(err){
+    console.log("❌ ERRO MIDIA:", err)
+    return null
+  }
+}
 
 
 
@@ -330,7 +383,7 @@ return res.status(403).end()
 
 if(req.method === "POST" && req.body?.admin_chat){
 
-if(req.headers.authorization !== `Bearer ${ADMIN_TOKEN}`){
+if(req.headers.authorization !== `Bearer ${process.env.ADMIN_TOKEN}`){
 return res.status(403).json({erro:"Acesso negado"})
 }
 
@@ -407,17 +460,100 @@ return res.status(200).end()
 
 const mensagensRecebidas = change.messages || []
 
+if(!mensagensRecebidas.length){
+  console.log("⚠️ SEM MENSAGEM")
+  return res.status(200).end()
+}
+
+const msg = mensagensRecebidas[0]
+
+console.log("📩 TIPO RECEBIDO:", msg.type)
+
+
+  
 // ignora mensagens do próprio bot
 if(mensagensRecebidas[0]?.from === change.metadata.phone_number_id){
 console.log("Mensagem do próprio bot ignorada")
 return res.status(200).end()
 }
 
-const mensagensTexto = mensagensRecebidas
-  .map(m => m.text?.body)
-  .filter(Boolean)
 
-const mensagem = mensagensTexto.join(" ")
+let mensagem = ""
+let tipo = "texto"
+let media_url = null
+let nome_arquivo = null
+
+/* ================= SWITCH CORRETO ================= */
+
+switch(msg.type){
+
+  case "text":
+    mensagem = msg.text?.body || ""
+  break
+
+case "image":
+
+  tipo = "imagem"
+  mensagem = "[Imagem]"
+
+  console.log("🖼️ IMAGEM RECEBIDA")
+
+  // 🔥 SEMPRE baixar e salvar
+  media_url = await baixarESalvarMidia(
+    msg.image.id,
+    "jpg",
+    msg.image.mime_type || "image/jpeg"
+  )
+
+break
+
+  case "video":
+    tipo = "video"
+    mensagem = "[Vídeo]"
+
+    media_url = await baixarESalvarMidia(
+      msg.video.id,
+      "mp4",
+      msg.video.mime_type || "video/mp4"
+    )
+  break
+
+  case "audio":
+    tipo = "audio"
+    mensagem = "[Áudio]"
+
+    media_url = await baixarESalvarMidia(
+      msg.audio.id,
+      "ogg",
+      msg.audio.mime_type || "audio/ogg"
+    )
+  break
+
+  case "document":
+    tipo = "documento"
+
+    nome_arquivo = msg.document.filename || "arquivo"
+
+    mensagem = `[Documento: ${nome_arquivo}]`
+
+    const ext = nome_arquivo.split(".").pop() || "bin"
+
+    media_url = await baixarESalvarMidia(
+      msg.document.id,
+      ext,
+      msg.document.mime_type
+    )
+  break
+
+  default:
+    console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
+}
+
+
+
+
+  
+
 
 const cliente = mensagensRecebidas[0]?.from
 const message_id = mensagensRecebidas[0]?.id
@@ -467,14 +603,130 @@ console.log("Mensagem vazia")
 return res.status(200).end()
 }
 
-console.log("Cliente:",cliente)
-console.log("Mensagem:",mensagem)
 const texto = mensagem.toLowerCase()
 const textoNormalizado = normalizar(texto)
-/* ================= DETECTAR RECLAMAÇÃO ================= */
+/* ================= DETECTAR NOME INTELIGENTE ================= */
 
-const tipoMensagem = await classificarMensagem(mensagem)
+let nomeDetectado = null
+let querAtualizarNome = false
+function nomeValido(nome){
 
+if(!nome) return false
+
+const proibidos = [
+"ok","sim","nao","não","oi","ola","menu","cardapio","quero",
+"reserva","mesa","pedido","bom","boa","tarde","noite"
+]
+
+const nomeLower = nome.toLowerCase()
+
+if(proibidos.includes(nomeLower)) return false
+if(nome.length < 3) return false
+if(nome.match(/[0-9]/)) return false
+
+return true
+}
+/* 🔥 EXTRAIR NOME DIRETO DA FRASE (COLE AQUI) */
+
+const matchNome = mensagem.match(
+/(?:meu nome (?:é|agora é)|me chamo|atualiza(?:r)? meu nome(?: para)?|nome correto é)\s+(.+)/i
+)
+
+if(matchNome){
+  nomeDetectado = matchNome[1]
+    .split(/,|\.|!|\?/) // corta lixo depois do nome
+    [0]
+    .trim()
+
+  console.log("🔥 Nome extraído:", nomeDetectado)
+}
+
+
+
+
+
+  
+/* 🔥 INTENÇÃO DE ATUALIZAÇÃO (CORRIGIDA) */
+if(
+mensagem.match(/(meu nome|me chamo|atualiza(r)? meu nome|nome correto)/i)
+){
+  querAtualizarNome = true
+}
+
+/* ================= PRIORIDADE: ATUALIZAR NOME ================= */
+
+if(nomeDetectado && nomeValido(nomeDetectado)){
+
+  nomeDetectado = nomeDetectado
+  .split(" ")
+  .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+  .join(" ")
+
+  console.log("✅ Nome detectado:", nomeDetectado)
+
+  /* 🔥 NÃO DEPENDE MAIS DE INTENÇÃO */
+  const deveAtualizar =
+    !nomeMemoria ||
+    nomeDetectado !== nomeMemoria
+
+  if(deveAtualizar){
+
+    console.log("🔥 ATUALIZANDO NOME NO SUPABASE")
+
+    const { data, error } = await supabase
+    .from("memoria_clientes")
+    .upsert({
+      telefone:cliente,
+      nome:nomeDetectado,
+      ultima_interacao:new Date().toISOString()
+    },{ onConflict:"telefone" })
+
+    if(error){
+      console.log("❌ ERRO:", error)
+    }else{
+      console.log("✅ SALVO:", data)
+    }
+
+    nomeMemoria = nomeDetectado
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        to:cliente,
+        type:"text",
+        text:{ body:`Perfeito! Atualizei seu nome para ${nomeDetectado} 😊` }
+      })
+    })
+
+    return res.status(200).end()
+  }
+}
+
+
+  
+
+
+
+
+  
+/* ================= AGORA SIM CLASSIFICA ================= */
+
+let tipoMensagem = "neutro"
+
+if(tipo === "texto" && mensagem && mensagem.trim()){
+  tipoMensagem = await classificarMensagem(mensagem)
+}else{
+  console.log("⚠️ Pulando classificação (mídia)")
+}
+
+
+
+  
 console.log("CLASSIFICAÇÃO:", tipoMensagem)
 
 if(
@@ -485,8 +737,7 @@ if(
   console.log("🚨 RECLAMAÇÃO OU FEEDBACK DETECTADO")
 
   /* BUSCAR NOME */
-  const nomeCliente = nomeMemoria || "Não identificado"
-
+const nomeCliente = nomeMemoria || nomeDetectado || "Não identificado"
   /* MENSAGEM PARA ADMIN */
   const alertaAdmin = `
 🚨 *ALERTA DE CLIENTE*
@@ -642,44 +893,7 @@ Deseja confirmar o pedido?`
 }
 
   
-/* ================= DETECTAR NOME AUTOMATICO ================= */
 
-let nomeDetectado = null
-
-const regexNome = mensagem.match(
-/(?:meu nome completo é|meu nome é|me chamo|sou|aqui é|pode chamar de)\s+([A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)?)/i
-)
-
-const regexAqui = mensagem.match(
-/^([A-Za-zÀ-ÿ]+)\s+aqu[ií]/i
-)
-
-if(regexNome){
-nomeDetectado = regexNome[1]
-}
-
-if(regexAqui){
-nomeDetectado = regexAqui[1]
-}
-
-if(nomeDetectado){
-
-nomeDetectado = nomeDetectado
-.split(" ")
-.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-.join(" ")
-
-console.log("Nome detectado:", nomeDetectado)
-
-await supabase
-.from("memoria_clientes")
-.upsert({
-telefone:cliente,
-nome:nomeDetectado,
-ultima_interacao:new Date().toISOString()
-})
-
-}
 const confirmou =
 texto.includes("sim") ||
 texto.includes("ok") ||
@@ -1061,7 +1275,7 @@ const { data: jaProcessada } = await supabase
 .from("mensagens_processadas")
 .select("*")
 .eq("message_id", message_id)
-.single()
+.maybeSingle()
 
 if(jaProcessada){
 console.log("Mensagem duplicada ignorada")
@@ -1077,9 +1291,14 @@ await supabase
 await supabase
 .from("conversas_whatsapp")
 .insert({
-telefone:cliente,
-mensagem:mensagem,
-role:"user"
+  telefone:cliente,
+mensagem:
+  mensagem ||
+  (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
+  tipo,
+  media_url,
+  nome_arquivo,
+  role:"user"
 })
 
 if(querEndereco){
@@ -1304,6 +1523,57 @@ CATEGORIA: ${item.tipo || "geral"}
 }
 
 
+// 🔥 CORREÇÃO CRÍTICA — DEFINIR DATA ANTES
+
+const agoraSistema = new Date()
+
+const agoraBahiaFix = new Date(
+  agoraSistema.toLocaleString("en-US",{ timeZone:"America/Bahia" })
+)
+
+const dataAtualISO = agoraBahiaFix.toISOString().split("T")[0]
+
+console.log("📅 DATA RESERVAS:", dataAtualISO)
+
+
+  
+/* ================= BUSCAR RESERVAS DO DIA ================= */
+
+let reservasHojeTexto = "SEM RESERVAS"
+
+try {
+
+  const { data: reservasHoje } = await supabase
+    .from("reservas_mercatto")
+    .select("*")
+    .gte("datahora", dataAtualISO + "T00:00")
+    .lte("datahora", dataAtualISO + "T23:59")
+
+  console.log("📊 RESERVAS DO DIA:", reservasHoje)
+
+  if (reservasHoje && reservasHoje.length) {
+
+    reservasHojeTexto = ""
+
+    reservasHoje.forEach(r => {
+
+      const hora = r.datahora?.split("T")[1]?.substring(0,5) || "--:--"
+
+      reservasHojeTexto += `
+NOME: ${r.nome}
+SALA: ${r.mesa}
+HORA: ${hora}
+STATUS: ${r.status}
+-------------------
+`
+
+    })
+
+  }
+
+} catch (err) {
+  console.log("❌ ERRO AO BUSCAR RESERVAS:", err)
+}
   
 /* ================= OPENAI ================= */
 
@@ -1440,7 +1710,31 @@ Regras:
 `
 },
 
+{
+role:"system",
+content:`
+RESERVAS REAIS DO DIA:
 
+${reservasHojeTexto}
+
+REGRAS CRÍTICAS:
+
+- Sala VIP 1 = Sala Paulo Augusto 1
+- Sala VIP 2 = Sala Paulo Augusto 2
+
+- São a MESMA sala com nomes diferentes
+- Nunca tratar como salas diferentes
+
+- Sempre verificar conflito de horário
+- Considerar duração de 4h30 + 1h bloqueio
+
+- Nunca dizer que tem vaga sem verificar aqui
+`
+},
+
+
+
+  
 
   
 ...mensagens
@@ -1464,26 +1758,60 @@ if(templateMatch){
 
   const templateNome = templateMatch[1]
 
-  /* ✅ COLE AQUI */
-  const TEMPLATE_IDIOMAS = {
-    reserva_especial: "en",
-    confirmacao_reserva: "pt_BR",
-    lembrete_reserva: "pt_BR",
-    confirmacao_pedido: "pt_BR",
-    video_mercatto: "pt_BR"
-  }
+const TEMPLATE_IDIOMAS = {
+  confirmao_de_reserva: "en_US",
+  reserva_especial: "en_US",
+  hello_world: "en_US"
+}
 
-  const idiomaTemplate = TEMPLATE_IDIOMAS[templateNome] || "pt_BR"
+const idiomaTemplate = TEMPLATE_IDIOMAS[templateNome] || "pt_BR"
 
-
-  
   console.log("TENTANDO ENVIAR TEMPLATE:",templateNome)
 
   if(!TEMPLATES_PERMITIDOS.includes(templateNome)){
     console.log("Template não permitido:",templateNome)
   }else{
 
-  const resp = await fetch(url,{
+let templatePayload = null
+
+/* ===== TEMPLATE CONFIRMAÇÃO ===== */
+if(templateNome === "confirmao_de_reserva"){
+  templatePayload = {
+    name: templateNome,
+    language:{ code: idiomaTemplate }, // ✅ CORRIGIDO
+    components:[
+      {
+        type:"body",
+        parameters:[
+          { type:"text", text: nomeMemoria || "Cliente" },
+          { type:"text", text: "20/03" },
+          { type:"text", text: "20:00" },
+          { type:"text", text: "4" }
+        ]
+      }
+    ]
+  }
+}
+
+/* ===== TEMPLATE VIDEO ===== */
+else if(templateNome === "reserva_especial"){
+templatePayload = {
+  name: templateNome,
+  language:{ code: idiomaTemplate } // ✅ DINÂMICO
+}
+}
+
+/* ===== TEMPLATE SIMPLES ===== */
+else if(templateNome === "hello_world"){
+  templatePayload = {
+    name: templateNome,
+    language:{ code: idiomaTemplate }
+  }
+}
+
+/* ===== ENVIO ===== */
+
+const resp = await fetch(url,{
   method:"POST",
   headers:{
     Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -1493,26 +1821,21 @@ if(templateMatch){
     messaging_product:"whatsapp",
     to:cliente,
     type:"template",
-    template:{
-      name:templateNome,
-      language:{ code: idiomaTemplate }
-    }
+    template: templatePayload
   })
 })
 
-const data = await resp.json()
+    const data = await resp.json()
 
-console.log("📩 RESPOSTA META TEMPLATE:", data)
+    console.log("📩 RESPOSTA META TEMPLATE:", data)
 
     console.log("✅ TEMPLATE ENVIADO")
 
-    // 🔥 ESSA LINHA RESOLVE TUDO
     return res.status(200).end()
   }
 
   resposta = resposta.replace(templateMatch[0],"").trim()
 }
-
 
 
 
