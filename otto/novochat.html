@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<title>Conversas • Mercatto</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+/* ===== BASE ===== */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Inter;
+}
+
+body{
+background:#fff;
+height:100vh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+
+/* ===== TOPO ===== */
+.topbar{
+height:60px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 16px;
+border-bottom:1px solid #eee;
+}
+
+.title{
+font-size:22px;
+font-weight:800;
+}
+
+/* ===== LISTA ===== */
+.lista{
+flex:1;
+overflow:auto;
+}
+
+/* ===== ITEM ===== */
+.chat-item{
+display:flex;
+gap:14px;
+padding:14px 16px;
+border-bottom:1px solid #eee;
+cursor:pointer;
+}
+
+.chat-item:active{
+background:#f5f5f5;
+}
+
+.avatar{
+width:55px;
+height:55px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.chat-info{
+flex:1;
+}
+
+.chat-title{
+font-size:16px;
+font-weight:600;
+}
+
+.chat-msg{
+font-size:13px;
+color:#777;
+margin-top:4px;
+}
+
+.status{
+font-size:11px;
+margin-top:4px;
+font-weight:600;
+}
+
+.on{ color:#16a34a; }
+.off{ color:#dc2626; }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="title">Conversas</div>
+</div>
+
+<div class="lista" id="lista"></div>
+
+<script>
+
+/* ===== SUPABASE ===== */
+const db = supabase.createClient(
+"https://dxkszikemntfusfyrzos.supabase.co",
+"sb_publishable_NNFvdfSXgOdGGVcSbphbjQ_brC3_9ed"
+)
+
+/* ===== CARREGAR ===== */
+async function carregar(){
+
+const {data} = await db
+.from("conversas_whatsapp")
+.select("*")
+.order("created_at",{ascending:false})
+
+const {data:memoria} = await db
+.from("memoria_clientes")
+.select("telefone,nome")
+
+const nomes = {}
+memoria.forEach(c => nomes[c.telefone] = c.nome)
+
+/* AGRUPAR */
+const map = {}
+data.forEach(m=>{
+  if(!map[m.telefone]) map[m.telefone] = m
+})
+
+const clientes = Object.values(map)
+
+const lista = document.getElementById("lista")
+lista.innerHTML = ""
+
+/* RENDER */
+for(const c of clientes){
+
+const pausado = await verificarPausa(c.telefone)
+
+const div = document.createElement("div")
+div.className = "chat-item"
+
+div.innerHTML = `
+<img class="avatar"
+src="https://ui-avatars.com/api/?name=${nomes[c.telefone]||c.telefone}&background=25d366&color=fff">
+
+<div class="chat-info">
+  <div class="chat-title">
+    ${nomes[c.telefone] || c.telefone}
+  </div>
+
+  <div class="chat-msg">
+    ${c.mensagem || ""}
+  </div>
+
+  <div class="status ${pausado?'off':'on'}">
+    ● ${pausado?'BOT PAUSADO':'BOT ATIVO'}
+  </div>
+</div>
+`
+
+/* CLICK */
+div.onclick = ()=>{
+  window.location.href = "chat.html?telefone=" + c.telefone
+}
+
+lista.appendChild(div)
+
+}
+
+}
+
+/* ===== BOT STATUS ===== */
+async function verificarPausa(telefone){
+
+const {data} = await db
+.from("controle_bot")
+.select("pausado")
+.eq("telefone",telefone)
+.limit(1)
+.maybeSingle()
+
+return data?.pausado === true
+
+}
+
+carregar()
+
+</script>
+
+</body>
+</html>
