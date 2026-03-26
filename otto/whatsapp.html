@@ -736,8 +736,7 @@ for (const c of clientes){
       </div>
     </div>
 
-    <div class="menuDots" onclick="abrirMenu(event,'${c.telefone}')">⋮</div>
-
+<div class="menuDots" onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">⋮</div>
     <div class="menu" id="menu-${c.telefone}">
       <button onclick="editarContato('${c.telefone}')">
         Editar contato
@@ -761,8 +760,8 @@ div.addEventListener("click", () => {
 
   // 📱 Se for celular → abre outra página
   if(window.innerWidth <= 768){
-    window.location.href = "chat.html?telefone=" + c.telefone
-    return
+window.location.assign("chat.html?telefone=" + c.telefone)
+  return
   }
 
   // 💻 Se for desktop → iframe normal
