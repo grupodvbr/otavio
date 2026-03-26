@@ -163,10 +163,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE
 )
 
+const numero = telefone.replace(/\D/g, "")
+
 const { error } = await supabase
   .from("conversas_whatsapp")
   .insert({
-    telefone,
+    telefone: numero,
     mensagem: JSON.stringify({
       template,
       parametros
