@@ -141,7 +141,30 @@ module.exports = async function(req, res){
     const data = await resp.json()
 
     console.log("📩 META RESPONSE:", data)
+/* ================= SALVAR NO BANCO ================= */
 
+const { createClient } = require("@supabase/supabase-js")
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE
+)
+
+try {
+
+  await supabase.from("conversas_whatsapp").insert({
+    telefone,
+    mensagem: `[TEMPLATE] ${template}`,
+    tipo: "template",
+    role: "assistant",
+    status: "sent",
+    created_at: new Date().toISOString(),
+    message_id: data?.messages?.[0]?.id || null
+  })
+
+} catch (err) {
+  console.error("❌ ERRO AO SALVAR TEMPLATE:", err)
+}
 if(data.error){
   console.log("❌ ERRO META DETALHADO:", JSON.stringify(data.error, null, 2))
 
