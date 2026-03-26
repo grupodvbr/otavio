@@ -597,8 +597,17 @@ margin-top:6px;
 @media (max-width:768px){
 
   body{
-    display:block; /* ✅ REMOVE O FLEX */
+    display:block;
     overflow:auto;
+  }
+
+  .sidebar{
+    width:100%;
+    height:100vh;
+  }
+
+  .chat{
+    display:none !important; /* 🔥 ESSA LINHA RESOLVE */
   }
 
 }
