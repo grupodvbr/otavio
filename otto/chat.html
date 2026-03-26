@@ -627,8 +627,6 @@ async function enviarTemplate(nome){
 
   if(!telefone) return
 
-  console.log("📤 Enviando template:", nome)
-
   let parametros = {}
 
   if(nome === "confirmao_de_reserva"){
@@ -652,50 +650,40 @@ async function enviarTemplate(nome){
 
   try{
 
-/* ===== MOSTRAR IMEDIATO (ANTES DO ENVIO) ===== */
+    const response = await fetch("/api/send-template",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        telefone,
+        template: nome,
+        parametros
+      })
+    })
 
-const tempId = "temp-" + Date.now()
+    const data = await response.json()
 
-const temp = {
-  id: tempId,
-  mensagem: JSON.stringify({
-    template: nome,
-    parametros
-  }),
-  tipo: "template",
-  role: "assistant",
-  created_at: new Date().toISOString(),
-  status: "sent"
-}
+    if(data?.error){
+      alert("Erro: " + JSON.stringify(data.error))
+      return
+    }
 
-render(temp)
-scrollBottom()
+    const messageId = data?.data?.messages?.[0]?.id || null
 
-/* ===== ENVIO REAL ===== */
+    /* 💾 SALVAR IGUAL AO ENVIO NORMAL */
 
-const response = await fetch("/api/send-template",{
-  method:"POST",
-  headers:{
-    "Content-Type":"application/json"
-  },
-  body: JSON.stringify({
-    telefone,
-    template: nome,
-    parametros
-  })
-})
-
-const data = await response.json()
-
-console.log("📩 RESPOSTA:", data)
-
-if(data?.error){
-  alert("Erro: " + JSON.stringify(data.error))
-  return
-}
-   
-
-
+    await db.from("conversas_whatsapp").insert({
+      telefone,
+      mensagem: JSON.stringify({
+        template: nome,
+        parametros
+      }),
+      tipo: "template",
+      role: "assistant",
+      message_id: messageId,
+      status: "sent"
+    })
 
   }catch(err){
     console.error("🔥 ERRO:", err)
