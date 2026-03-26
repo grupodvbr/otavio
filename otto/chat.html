@@ -312,9 +312,29 @@ function gerarHTML(m){
 
 let html = ""
 if(m.tipo === "template"){
-  html += `<div style="font-style:italic;opacity:.7">
-  📩 Template enviado: ${m.mensagem.replace('[TEMPLATE] ','')}
-  </div>`
+
+  let nomeTemplate = ""
+
+  try{
+    const parsed = JSON.parse(m.mensagem)
+    nomeTemplate = parsed.template
+  }catch{
+    nomeTemplate = m.mensagem
+  }
+
+  html += `
+  <div style="
+    background:#fff3cd;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    border-left:4px solid #f59e0b;
+  ">
+    📩 Template enviado:<br>
+    <strong>${nomeTemplate}</strong>
+  </div>
+  `
+}
 }
 /* ===== MIDIA ===== */
 
