@@ -655,19 +655,7 @@ async function enviarTemplate(nome){
     })
 
     const data = await response.json()
-if(data?.ok){
 
-  await db.from("conversas_whatsapp").insert({
-    telefone,
-    mensagem: `[TEMPLATE] ${nome}`,
-    tipo: "template",
-    role: "assistant",
-    status: "sent",
-    created_at: new Date().toISOString(),
-    message_id: data?.data?.messages?.[0]?.id || null
-  })
-
-}
     console.log("📩 RESPOSTA:", data)
 
     if(data?.error){
