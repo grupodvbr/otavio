@@ -607,17 +607,7 @@ nome_arquivo:nomeArquivo
 
 const messageId = send?.message_id
 
-/* BANCO */
-await db.from("conversas_whatsapp").insert({
-telefone,
-mensagem:texto,
-tipo,
-media_url:media,
-nome_arquivo:nomeArquivo,
-role:"assistant",
-message_id: messageId,
-status: "sent"
-})
+
 
 arquivo=null
 preview.style.display="none"
@@ -662,17 +652,38 @@ async function enviarTemplate(nome){
 
   try{
 
-    const response = await fetch("/api/send-template",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        telefone,
-        template: nome,
-        parametros
-      })
-    })
+/* ===== MOSTRAR IMEDIATO (ANTES DO ENVIO) ===== */
+
+const tempId = "temp-" + Date.now()
+
+const temp = {
+  id: tempId,
+  mensagem: JSON.stringify({
+    template: nome,
+    parametros
+  }),
+  tipo: "template",
+  role: "assistant",
+  created_at: new Date().toISOString(),
+  status: "sent"
+}
+
+render(temp)
+scrollBottom()
+
+/* ===== ENVIO REAL ===== */
+
+const response = await fetch("/api/send-template",{
+  method:"POST",
+  headers:{
+    "Content-Type":"application/json"
+  },
+  body: JSON.stringify({
+    telefone,
+    template: nome,
+    parametros
+  })
+})
 
 const data = await response.json()
 
@@ -682,6 +693,7 @@ if(data?.error){
   alert("Erro: " + JSON.stringify(data.error))
   return
 }
+   
 
 /* ===== MOSTRAR NA TELA ===== */
 
