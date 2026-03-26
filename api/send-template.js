@@ -140,7 +140,18 @@ module.exports = async function(req, res){
 
     const data = await resp.json()
 
-    console.log("📩 META RESPONSE:", data)
+console.log("📩 META RESPONSE:", data)
+
+/* ================= ERRO META ================= */
+
+if(data.error){
+  console.log("❌ ERRO META DETALHADO:", JSON.stringify(data.error, null, 2))
+
+  return res.status(500).json({
+    error: data.error
+  })
+}
+
 /* ================= SALVAR NO BANCO ================= */
 
 const { createClient } = require("@supabase/supabase-js")
@@ -152,12 +163,12 @@ const supabase = createClient(
 
 try {
 
-  await supabase.from("conversas_whatsapp").insert({
+  const insert = await supabase.from("conversas_whatsapp").insert({
     telefone,
     mensagem: JSON.stringify({
-  template,
-  parametros
-}),
+      template,
+      parametros
+    }),
     tipo: "template",
     role: "assistant",
     status: "sent",
@@ -165,23 +176,18 @@ try {
     message_id: data?.messages?.[0]?.id || null
   })
 
+  console.log("💾 SALVO NO BANCO:", insert)
+
 } catch (err) {
   console.error("❌ ERRO AO SALVAR TEMPLATE:", err)
 }
-if(data.error){
-  console.log("❌ ERRO META DETALHADO:", JSON.stringify(data.error, null, 2))
 
-  return res.status(500).json({
-    error: data.error
-  })
-}
-
-    return res.json({
-      ok:true,
-      enviado:true,
-      template,
-      data
-    })
+return res.json({
+  ok:true,
+  enviado:true,
+  template,
+  data
+})
 
   } catch (err){
 
