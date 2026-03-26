@@ -154,14 +154,14 @@ if(data.error){
 
 /* ================= SALVAR NO BANCO ================= */
 
+/* ================= SALVAR NO BANCO ================= */
+
 const { createClient } = require("@supabase/supabase-js")
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE
 )
-
-try {
 
 const { error } = await supabase
   .from("conversas_whatsapp")
@@ -180,20 +180,12 @@ if(error){
 }else{
   console.log("💾 TEMPLATE SALVO")
 }
+
+/* ================= RESPOSTA FINAL ================= */
+
 return res.json({
   ok:true,
   enviado:true,
   template,
   data
 })
-
-  } catch (err){
-
-    console.error("🔥 ERRO:", err)
-
-    return res.status(500).json({
-      error: err.message
-    })
-  }
-
-}
