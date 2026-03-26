@@ -22,13 +22,12 @@
 <link rel="apple-touch-startup-image" href="icons/logo.png">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="manifest.json">
-
+<link rel="manifest" href="/manifest.json">
 <!-- PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="white">
-<meta name="theme-color" content="#ffffff">
-
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#075e54">
+<meta name="apple-mobile-web-app-title" content="ZaapDV">
 <!-- =============================== -->
 <!-- ESTILO -->
 <!-- =============================== -->
@@ -337,7 +336,19 @@ if(salvo){
     window.location.href = u.pagina;
   }
 }
+
+
 </script>
 
+<script>
+let deferredPrompt
+
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault()
+  deferredPrompt = e
+
+  console.log("PWA pronto pra instalar 🔥")
+})
+</script>
 </body>
 </html>
