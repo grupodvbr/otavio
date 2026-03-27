@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>LICITAR • Painel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-black:#0b0f0e;
+  --bg-black-2:#111716;
+  --gold:#d4af37;
+  --gold-soft:#f1d77a;
+  --neon-green:#00ff88;
+  --text-main:#e8e8e8;
+  --text-muted:#9aa3a0;
+  --border-dark:#1f2a27;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Inter",sans-serif}
+
+body{
+  height:100vh;
+  background:var(--bg-black);
+  overflow:hidden;
+}
+
+.app{display:flex;height:100vh;width:100vw}
+
+/* ===================== SIDEBAR ===================== */
+.nav-hover-zone{
+  position:fixed;left:0;top:0;width:14px;height:100vh;z-index:50;
+}
+
+.sidebar{
+  position:fixed;
+  left:0;top:0;
+  width:260px;height:100vh;
+  background:linear-gradient(180deg,var(--bg-black),var(--bg-black-2));
+  border-right:1px solid var(--border-dark);
+  display:flex;flex-direction:column;
+  transform:translateX(-260px);
+  transition:.25s ease;
+  z-index:60;
+}
+
+.nav-hover-zone:hover + .sidebar,
+.sidebar:hover{transform:translateX(0)}
+
+@media(max-width:768px){
+  .nav-hover-zone{display:none}
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+}
+
+/* ===================== LOGO ===================== */
+.logo-area{
+  padding:22px 0;
+  text-align:center;
+  border-bottom:1px solid var(--border-dark);
+}
+.logo-area img{
+  width:170px;
+}
+
+@media (max-width:768px){
+  .logo-area img{
+    width:140px;
+  }
+}
+
+/* ===================== MENU ===================== */
+.menu{padding:14px 8px;overflow-y:auto}
+
+.menu-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;margin:6px;
+  font-size:14px;
+  color:var(--text-main);
+  border-radius:10px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.menu-item img{width:20px;filter:invert(90%)}
+
+.menu-item:hover{
+  background:#0f1513;
+  color:var(--gold-soft);
+}
+
+.menu-item.active{
+  background:#101916;
+  border-left:4px solid var(--gold);
+  color:var(--gold);
+  font-weight:600;
+}
+
+/* SUBMENU */
+.submenu{display:none;margin:6px 0 12px 48px}
+
+.submenu a{
+  display:block;
+  padding:9px 12px;
+  font-size:13px;
+  color:var(--text-muted);
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.submenu a:hover{
+  background:#0f1513;
+  color:var(--neon-green);
+}
+
+.submenu a.active-sub{
+  background:#0f1513;
+  color:var(--neon-green);
+  font-weight:600;
+}
+
+/* ===================== MAIN ===================== */
+.main{flex:1;display:flex;flex-direction:column;height:100vh}
+
+/* ===================== HEADER ===================== */
+.header{
+  height:54px;
+  background:linear-gradient(90deg,#050807,#0b0f0e);
+  border-bottom:1px solid var(--border-dark);
+  color:var(--text-main);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+}
+
+.logo-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:var(--gold);
+}
+
+.user-area{
+  display:flex;align-items:center;gap:18px;
+  font-size:13px;
+  color:var(--text-muted);
+}
+
+.logout{
+  cursor:pointer;
+  font-weight:600;
+  color:var(--neon-green);
+}
+.logout:hover{filter:brightness(1.2)}
+
+.menu-mobile-btn{
+  display:none;
+  font-size:22px;
+  cursor:pointer;
+  color:var(--gold);
+}
+@media(max-width:768px){.menu-mobile-btn{display:block}}
+
+/* ===================== IFRAME ===================== */
+iframe{
+  border:none;
+  width:100%;
+  height:calc(100vh - 54px);
+  background:#070a09;
+}
+
+/* SCROLL */
+.menu::-webkit-scrollbar{width:6px}
+.menu::-webkit-scrollbar-thumb{
+  background:#1c2623;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<div class="nav-hover-zone"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+<div class="logo-area">
+<img src="https://github.com/grupodvbr/licita/blob/main/ChatGPT%20Image%2027%20de%20jan.%20de%202026,%2019_27_44.png?raw=true">
+</div>
+
+<div class="menu">
+
+<div class="menu-item" onclick="openPage('home.html')" data-page="fichas.html">
+<img src="https://cdn-icons-png.flaticon.com/512/1946/1946488.png">Fichas
+</div>
+
+<div class="menu-item" onclick="toggleSub('sub_encontrar')">
+<img src="https://cdn-icons-png.flaticon.com/512/149/149852.png">Encontrar
+</div>
+<div class="submenu" id="sub_encontrar">
+<a onclick="openPage('buscar.html')" data-page="buscar.html">Buscar Oportunidades</a>
+<a onclick="openPage('avisos.html')" data-page="avisos.html">Meus Avisos</a>
+<a onclick="openPage('banco.html')" data-page="banco.html">Banco de Licitações</a>
+</div>
+
+<div class="menu-item" onclick="openPage('dashboard.html')" data-page="dashboard.html">
+<img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png">Dashboard
+</div>
+
+<div class="menu-item" onclick="openPage('anexos.html')" data-page="anexos.html">
+<img src="https://cdn-icons-png.flaticon.com/512/2985/2985150.png">Anexos ComprasNet
+</div>
+
+<div class="menu-item" onclick="toggleSub('sub_cadastrar')">
+<img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">Cadastrar
+</div>
+<div class="submenu" id="sub_cadastrar">
+<a onclick="openPage('documentos.html')" data-page="documentos.html">Documentos</a>
+<a onclick="openPage('cadastroempresas.html')" data-page="cadastroempresas.html">Empresas e fornecedores</a>
+<a onclick="openPage('licitacoes.html')" data-page="licitacoes.html">Licitações</a>
+<a onclick="openPage('usuarios.html')" data-page="usuarios.html">Usuários</a>
+</div>
+
+<div class="menu-item" onclick="toggleSub('sub_disputar')">
+<img src="https://cdn-icons-png.flaticon.com/512/1828/1828859.png">Romaneios
+</div>
+<div class="submenu" id="sub_disputar">
+<a onclick="openPage('calendario.html')" data-page="calendario.html">Calendário</a>
+</div>
+
+<div class="menu-item" onclick="toggleSub('sub_monitorar')">
+<img src="https://cdn-icons-png.flaticon.com/512/1827/1827956.png">Cotação
+</div>
+<div class="submenu" id="sub_monitorar">
+<a onclick="openPage('statuscotacao.html')" data-page="statuscotacao.html">Cotações em andamento</a>
+<a onclick="openPage('cotacao.html')" data-page="cotacao.html">Gerar cotação</a>
+<a onclick="openPage('fornecedor.html')" data-page="fornecedor.html">Cotação manual</a>
+<a onclick="openPage('resultadocotacao.html')" data-page="resultadocotacao.html">Gerar lances</a>
+</div>
+
+<div class="menu-item" onclick="toggleSub('sub_dados')">
+<img src="https://cdn-icons-png.flaticon.com/512/1828/1828805.png">Visão de Dados
+</div>
+<div class="submenu" id="sub_dados">
+<a onclick="openPage('visao-dados.html')" data-page="visao-dados.html">Análises</a>
+</div>
+
+<div class="menu-item" onclick="openPage('configuracoes.html')" data-page="configuracoes.html">
+<img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png">Configurações
+</div>
+
+</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<div class="header">
+<div style="display:flex;align-items:center;gap:12px">
+<div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
+<div class="logo-title">LICITAR</div>
+</div>
+<div class="user-area">
+<span id="userMail"></span>
+<span class="logout" onclick="logout()">SAIR</span>
+</div>
+</div>
+
+<iframe id="frame" src="home.html"></iframe>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient=supabase.createClient(
+"https://mblvyircwsaxaslklzky.supabase.co",
+"sb_publishable_oN2CuBzXHaUF7NHYS_M7aw_tBqVeD-x"
+);
+
+function toggleSub(id){
+const el=document.getElementById(id);
+el.style.display=el.style.display==="block"?"none":"block";
+}
+
+function toggleMobileMenu(){
+document.querySelector(".sidebar").classList.toggle("open");
+}
+
+function openPage(page){
+document.getElementById("frame").src=page;
+highlightMenu(page);
+if(window.innerWidth<=768){
+document.querySelector(".sidebar").classList.remove("open");
+}
+}
+
+function highlightMenu(page){
+document.querySelectorAll(".menu-item").forEach(i=>i.classList.remove("active"));
+document.querySelectorAll(".submenu a").forEach(i=>i.classList.remove("active-sub"));
+const sub=document.querySelector(`a[data-page="${page}"]`);
+if(sub){
+sub.classList.add("active-sub");
+sub.closest(".submenu").previousElementSibling.classList.add("active");
+sub.closest(".submenu").style.display="block";
+}
+}
+
+function logout(){
+localStorage.removeItem("usuarioEmail");
+location.href="login.html";
+}
+</script>
+
+</body>
+</html>
