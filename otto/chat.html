@@ -660,8 +660,16 @@ async function enviarTemplate(nome){
       })
     })
 
-    const data = await response.json()
+let data
 
+try{
+  data = await response.json()
+}catch{
+  const text = await response.text()
+  console.error("❌ RESPOSTA:", text)
+  alert("Erro servidor:\n" + text)
+  return
+}
     if(data?.error){
       alert("Erro: " + JSON.stringify(data.error))
       return
