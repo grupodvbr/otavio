@@ -40,13 +40,20 @@ box-sizing:border-box;
 }
 
 body{
-margin:0;
-font-family:Inter;
-background:var(--bg); /* 🔥 agora verde */
-color:var(--text);
-height:100vh;
-display:flex;
-overflow:hidden;
+  margin:0;
+  font-family:Inter;
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  display:flex;
+  overflow:hidden;
+}
+
+/* 🔥 MOBILE LIBERA SCROLL */
+@media (max-width:768px){
+  body{
+    overflow:auto;
+  }
 }
 
 /* ================= SIDEBAR ================= */
@@ -465,9 +472,17 @@ background:var(--sidebar);
 border-right:1px solid var(--border);
 display:flex;
 flex-direction:column;
-position:relative; /* 🔥 ESSENCIAL */
 }
 
+/* 🔥 MOBILE CORRETO */
+@media (max-width:768px){
+
+  .sidebar{
+    width:100%;
+    height:100vh;
+  }
+
+}
 
 
 
@@ -569,12 +584,21 @@ cursor:pointer;
 margin-top:6px;
 }
 
-/* ===== MOBILE FULL ===== */
 
-@media (max-width: 768px){
+.client{
+  -webkit-tap-highlight-color: transparent;
+}
+
+.client:active{
+  transform:scale(0.98);
+  opacity:0.8;
+}
+
+@media (max-width:768px){
 
   body{
-    flex-direction:column;
+    display:block;
+    overflow:auto;
   }
 
   .sidebar{
@@ -583,12 +607,10 @@ margin-top:6px;
   }
 
   .chat{
-    display:none; /* 🔥 ESCONDE CHAT NO MOBILE */
+    display:none !important; /* 🔥 ESSA LINHA RESOLVE */
   }
 
 }
-
-  
 </style>
 </head>
 
