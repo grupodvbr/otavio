@@ -2,8 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<head>
-<meta charset="UTF-8">
+
 <title>Fichas Técnicas</title>
 
 <link rel="icon" href="logo.png">
@@ -2656,8 +2655,8 @@ setTimeout(() => {
 
     resultadoBox.style.display = "block";
 
-    document.querySelectorAll(".item-busca").forEach(el => {
-      el.onclick = () => {
+resultadoBox.querySelectorAll(".item-busca").forEach(el => {
+  el.onclick = () => {
 
         const id = el.dataset.id;
         const selecionado = ingredientesBase.find(i => i.id == id);
@@ -3228,132 +3227,14 @@ const { data: pratoNovo } = await sb
 abrirModal(pratoNovo);
 
 }
-document.addEventListener("input", e => {
-
-  if(e.target.id !== "ingBusca") return;
-
-  const termo = e.target.value.toLowerCase().trim();
-  const box = document.getElementById("resultadoIngredientes");
-
-  if(!termo){
-    box.style.display="none";
-    return;
-  }
-
-  const resultados = ingredientesBase.filter(i =>
-    i.nome.toLowerCase().includes(termo)
-  );
-
-  if(resultados.length === 0){
-    box.innerHTML = `<div style="padding:10px;font-size:12px">Nenhum ingrediente</div>`;
-    box.style.display="block";
-    return;
-  }
-
-  box.innerHTML = resultados.map(i=>`
-
-    <div
-      class="itemIngrediente"
-      data-id="${i.id}"
-      style="
-        padding:10px;
-        cursor:pointer;
-        border-bottom:1px solid #f1f5f9;
-        font-size:13px;
-      "
-    >
-      ${i.nome}
-    </div>
-
-  `).join("");
-
-  box.style.display="block";
-
-});
-
-document.addEventListener("click", e => {
-
-  const item = e.target.closest(".itemIngrediente");
-  if(!item) return;
-
-  e.stopPropagation();
-
-  const id = item.dataset.id;
-
-  const prod = ingredientesBase.find(p => p.id == id);
-
-  if(!prod){
-    console.warn("Ingrediente não encontrado:", id);
-    return;
-  }
-
-  ingredienteSelecionado = prod;
-
-  document.getElementById("ingBusca").value = prod.nome;
-  document.getElementById("ingUnidade").value = prod.unidade_medida || "";
-
-  document.getElementById("resultadoIngredientes").style.display = "none";
-
-});
 
 
 
-document.addEventListener("click", e => {
-
-  const busca = document.getElementById("ingBusca");
-  const box = document.getElementById("resultadoIngredientes");
-
-  if(!busca || !box) return;
-
-  if(!busca.contains(e.target) && !box.contains(e.target)){
-    box.style.display = "none";
-  }
-
-});
 
 
 
-const buscaInput = document.getElementById("ingBusca");
-const resultadoBox = document.getElementById("resultadoIngredientes");
 
-buscaInput.addEventListener("input", () => {
 
-  const termo = buscaInput.value.toLowerCase();
-
-  if (!termo) {
-    resultadoBox.style.display = "none";
-    return;
-  }
-
-  const filtrados = ingredientesBase
-    .filter(i => i.nome.toLowerCase().includes(termo))
-    .slice(0, 20);
-
-  resultadoBox.innerHTML = filtrados.map(i => `
-    <div class="item-busca" data-id="${i.id}">
-      ${i.nome}
-    </div>
-  `).join("");
-
-  resultadoBox.style.display = "block";
-
-  // 🔥 IMPORTANTE: bind do clique
-  document.querySelectorAll(".item-busca").forEach(el => {
-    el.onclick = () => {
-
-      const id = el.dataset.id;
-      const selecionado = ingredientesBase.find(i => i.id == id);
-
-      ingredienteSelecionado = selecionado;
-
-      buscaInput.value = selecionado.nome;
-      document.getElementById("ingUnidade").value = selecionado.unidade_medida || "";
-
-      resultadoBox.style.display = "none";
-    };
-  });
-
-});
 </script>
 
 <button id="btnTop" onclick="scrollToTop()">↑</button>
