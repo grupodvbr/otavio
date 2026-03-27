@@ -1,10 +1,13 @@
+const fetch = require("node-fetch")
+const { createClient } = require("@supabase/supabase-js")
+
 module.exports = async function(req, res){
 
   try {
 
-    const { telefone, template, parametros = {} } = req.body
+    /* ================= DADOS ================= */
 
-    /* ================= VALIDAÇÃO ================= */
+    const { telefone, template, parametros = {} } = req.body || {}
 
     if(!telefone || !template){
       return res.status(400).json({
@@ -12,19 +15,21 @@ module.exports = async function(req, res){
       })
     }
 
-    const PHONE_ID = process.env.PHONE_NUMBER_ID || "1047101948485043"
+    const PHONE_ID = process.env.PHONE_NUMBER_ID
     const TOKEN = process.env.WHATSAPP_TOKEN
 
-    if(!TOKEN){
+    if(!TOKEN || !PHONE_ID){
       return res.status(500).json({
-        error: "WHATSAPP_TOKEN não configurado"
+        error: "TOKEN ou PHONE_ID não configurado"
       })
     }
+
+    const numero = telefone.replace(/\D/g,"")
 
     const url = `https://graph.facebook.com/v19.0/${PHONE_ID}/messages`
 
     console.log("📤 TEMPLATE:", template)
-    console.log("📞 TELEFONE:", telefone)
+    console.log("📞 TELEFONE:", numero)
 
     /* ================= IDIOMAS ================= */
 
@@ -38,17 +43,15 @@ module.exports = async function(req, res){
 
     if(!idioma){
       return res.status(400).json({
-        error: "Template não permitido ou idioma não configurado"
+        error: "Template não permitido"
       })
     }
 
-    /* ================= FUNÇÃO TEMPLATE ================= */
+    /* ================= TEMPLATE ================= */
 
-    function montarTemplate(template, parametros){
+    function montarTemplate(){
 
       switch(template){
-
-        /* ================= CONFIRMAÇÃO ================= */
 
         case "confirmao_de_reserva":
           return {
@@ -67,8 +70,6 @@ module.exports = async function(req, res){
             ]
           }
 
-        /* ================= RESERVA ESPECIAL (VIDEO) ================= */
-
         case "reserva_especial":
 
           if(!parametros.video){
@@ -84,16 +85,12 @@ module.exports = async function(req, res){
                 parameters: [
                   {
                     type: "video",
-                    video: {
-                      link: parametros.video
-                    }
+                    video: { link: parametros.video }
                   }
                 ]
               }
             ]
           }
-
-        /* ================= HELLO WORLD ================= */
 
         case "hello_world":
           return {
@@ -106,13 +103,11 @@ module.exports = async function(req, res){
       }
     }
 
-    /* ================= MONTA TEMPLATE ================= */
-
-    const templateData = montarTemplate(template, parametros)
+    const templateData = montarTemplate()
 
     if(!templateData){
       return res.status(400).json({
-        error: "Template não configurado"
+        error: "Template inválido"
       })
     }
 
@@ -120,14 +115,14 @@ module.exports = async function(req, res){
 
     const payload = {
       messaging_product: "whatsapp",
-      to: telefone,
+      to: numero,
       type: "template",
       template: templateData
     }
 
     console.log("📦 PAYLOAD:", JSON.stringify(payload, null, 2))
 
-    /* ================= ENVIO ================= */
+    /* ================= ENVIO META ================= */
 
     const resp = await fetch(url,{
       method:"POST",
@@ -138,56 +133,82 @@ module.exports = async function(req, res){
       body: JSON.stringify(payload)
     })
 
-    const data = await resp.json()
+    let data
 
-console.log("📩 META RESPONSE:", data)
+    try{
+      data = await resp.json()
+    }catch{
+      const text = await resp.text()
 
-/* ================= ERRO META ================= */
+      console.error("❌ META NÃO JSON:", text)
 
-if(data.error){
-  console.log("❌ ERRO META DETALHADO:", JSON.stringify(data.error, null, 2))
+      return res.status(500).json({
+        error: "Meta retornou resposta inválida",
+        raw: text
+      })
+    }
 
-  return res.status(500).json({
-    error: data.error
-  })
-}
+    /* ================= ERRO META ================= */
 
-/* ================= SALVAR NO BANCO ================= */
+    if(!resp.ok || data.error){
+      console.error("❌ ERRO META:", JSON.stringify(data, null, 2))
 
-/* ================= SALVAR NO BANCO ================= */
+      return res.status(500).json({
+        error: data
+      })
+    }
 
-const { createClient } = require("@supabase/supabase-js")
+    console.log("📩 META OK:", data)
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE
-)
+    /* ================= SALVAR SUPABASE ================= */
 
-const numero = telefone.replace(/\D/g, "")
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE
+    )
 
-const { error } = await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone: numero,
-    mensagem: JSON.stringify({
+    const messageId =
+      data?.messages?.[0]?.id ||
+      data?.data?.messages?.[0]?.id ||
+      null
+
+    const { error } = await supabase
+      .from("conversas_whatsapp")
+      .insert({
+        telefone: numero,
+        mensagem: JSON.stringify({
+          template,
+          parametros
+        }),
+        tipo: "template",
+        role: "assistant",
+        message_id: messageId,
+        status: "sent",
+        created_at: new Date().toISOString()
+      })
+
+    if(error){
+      console.error("❌ ERRO SUPABASE:", error)
+    }else{
+      console.log("💾 SALVO NO BANCO")
+    }
+
+    /* ================= RESPOSTA FINAL ================= */
+
+    return res.status(200).json({
+      ok:true,
+      enviado:true,
       template,
-      parametros
-    }),
-    tipo: "template",
-    role: "assistant"
-  })
+      data
+    })
 
-if(error){
-  console.error("❌ ERRO SUPABASE:", error)
-}else{
-  console.log("💾 TEMPLATE SALVO")
+  } catch (err){
+
+    console.error("🔥 ERRO GERAL:", err)
+
+    return res.status(500).json({
+      error: err.message || err
+    })
+  }
+
 }
-
-/* ================= RESPOSTA FINAL ================= */
-
-return res.json({
-  ok:true,
-  enviado:true,
-  template,
-  data
-})
