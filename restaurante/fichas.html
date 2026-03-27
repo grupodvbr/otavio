@@ -1343,7 +1343,20 @@ cursor:pointer;
   gap:12px;
 }
 
-  
+ #resultadoIngredientes{
+  z-index:9999;
+}
+
+.item-busca{
+  padding:10px;
+  cursor:pointer;
+  font-weight:700;
+  border-bottom:1px solid #eee;
+}
+
+.item-busca:hover{
+  background:#ecfeff;
+} 
 
 
   
@@ -3238,6 +3251,50 @@ document.addEventListener("click", e => {
   if(!busca.contains(e.target) && !box.contains(e.target)){
     box.style.display = "none";
   }
+
+});
+
+
+
+const buscaInput = document.getElementById("ingBusca");
+const resultadoBox = document.getElementById("resultadoIngredientes");
+
+buscaInput.addEventListener("input", () => {
+
+  const termo = buscaInput.value.toLowerCase();
+
+  if (!termo) {
+    resultadoBox.style.display = "none";
+    return;
+  }
+
+  const filtrados = ingredientesBase
+    .filter(i => i.nome.toLowerCase().includes(termo))
+    .slice(0, 20);
+
+  resultadoBox.innerHTML = filtrados.map(i => `
+    <div class="item-busca" data-id="${i.id}">
+      ${i.nome}
+    </div>
+  `).join("");
+
+  resultadoBox.style.display = "block";
+
+  // 🔥 IMPORTANTE: bind do clique
+  document.querySelectorAll(".item-busca").forEach(el => {
+    el.onclick = () => {
+
+      const id = el.dataset.id;
+      const selecionado = ingredientesBase.find(i => i.id == id);
+
+      ingredienteSelecionado = selecionado;
+
+      buscaInput.value = selecionado.nome;
+      document.getElementById("ingUnidade").value = selecionado.unidade_medida || "";
+
+      resultadoBox.style.display = "none";
+    };
+  });
 
 });
 </script>
