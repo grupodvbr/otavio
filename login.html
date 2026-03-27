@@ -1,397 +1,310 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="UTF-8">
-<title>LICITAR • Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercatto Systems • Plataforma Inteligente</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-  font-family:Inter, sans-serif;
+
+/* ===== BASE ===== */
+:root{
+--bg:#f8fafc;
+--card:#ffffff;
+--border:#e2e8f0;
+
+--text:#0f172a;
+--muted:#64748b;
+
+--primary:#14c8a8;
+--primary-dark:#0ea58b;
 }
+
+*{box-sizing:border-box;margin:0}
 
 body{
-  margin:0;
-  display:flex;
-  height:100vh;
-  overflow:hidden;
-  background:#f5f7fb;
+font-family:Inter;
+background:var(--bg);
+color:var(--text);
 }
 
-/* ========================== */
-/* COLUNA ESQUERDA            */
-/* ========================== */
-.left{
-  width:45%;
-  background:#ffffff;
-  padding:60px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  animation:fadeIn .4s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(20px); }
-  to { opacity:1; transform:translateY(0); }
+/* ===== HEADER ===== */
+.header{
+position:sticky;
+top:0;
+background:#fff;
+border-bottom:1px solid var(--border);
+padding:16px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 .logo{
-  font-size:46px;
-  font-weight:800;
-  color:#0b1e39;
-  margin-bottom:50px;
+font-weight:900;
+font-size:20px;
 }
 
-.group{
-  margin-bottom:22px;
+/* ===== HERO ===== */
+.hero{
+display:flex;
+gap:40px;
+padding:60px 30px;
+align-items:center;
 }
 
-label{
-  display:block;
-  color:#3a4660;
-  font-size:15px;
-  margin-bottom:8px;
+.hero-left{
+flex:1;
+}
+
+.hero-title{
+font-size:44px;
+font-weight:900;
+line-height:1.1;
+}
+
+.hero-title span{
+color:var(--primary);
+}
+
+.hero-desc{
+margin-top:20px;
+color:var(--muted);
+max-width:500px;
+}
+
+.hero-cta{
+margin-top:25px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.btn{
+padding:14px 18px;
+border-radius:10px;
+border:none;
+cursor:pointer;
+font-weight:700;
+}
+
+.btn-primary{
+background:var(--primary);
+color:#fff;
+}
+
+.btn-secondary{
+background:#fff;
+border:1px solid var(--border);
+}
+
+/* ===== LOGIN ===== */
+.login{
+width:380px;
+background:#fff;
+border:1px solid var(--border);
+border-radius:18px;
+padding:25px;
+box-shadow:0 20px 60px rgba(0,0,0,.08);
+}
+
+.login h2{
+margin-bottom:15px;
 }
 
 input{
-  width:100%;
-  padding:14px;
-  border:1px solid #d2d8e2;
-  border-radius:8px;
-  font-size:15px;
-  background:#f5f8ff;
-  transition:.25s;
+width:100%;
+padding:12px;
+margin-bottom:10px;
+border-radius:10px;
+border:1px solid var(--border);
 }
 
-input:focus{
-  border-color:#0b1e39;
-  box-shadow:0 0 0 3px rgba(11,30,57,.15);
-  outline:none;
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:var(--primary);
+color:#fff;
+font-weight:800;
+cursor:pointer;
 }
 
-/* ========================== */
-/* BOTÃO ENTRAR COM LOADER    */
-/* ========================== */
-.loginBtn{
-  width:100%;
-  padding:14px;
-  background:#0b1e39;
-  border:none;
-  color:#fff;
-  font-size:17px;
-  border-radius:8px;
-  margin-top:10px;
-  cursor:pointer;
-  font-weight:600;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  position:relative;
-  overflow:hidden;
+.error{
+color:#dc2626;
+font-size:13px;
+margin-top:10px;
 }
 
-.loginBtn.loading{
-  pointer-events:none;
-  opacity:.85;
+/* ===== CARDS ===== */
+.section{
+padding:50px 30px;
 }
 
-.loader{
-  width:18px;
-  height:18px;
-  border:3px solid #fff;
-  border-top-color:transparent;
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-  display:none;
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
 }
 
-.loginBtn.loading .loader{
-  display:block;
+.card{
+background:#fff;
+border:1px solid var(--border);
+border-radius:16px;
+padding:20px;
+transition:.3s;
 }
 
-@keyframes spin {
-  to { transform:rotate(360deg); }
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 20px 40px rgba(0,0,0,.08);
 }
 
-/* ========================== */
-/* BOTÃO GOOGLE               */
-/* ========================== */
-.googleBtn{
-  width:100%;
-  padding:14px;
-  background:#fff;
-  color:#3a4660;
-  border:1px solid #d2d8e2;
-  border-radius:8px;
-  font-size:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  cursor:pointer;
-  margin-top:20px;
-  transition:.25s;
+/* ===== MOBILE ===== */
+@media(max-width:900px){
+.hero{
+flex-direction:column;
+}
+.login{
+width:100%;
+}
 }
 
-.googleBtn:hover{
-  background:#f0f3ff;
-}
-
-.googleBtn img{
-  width:22px;
-  height:22px;
-  object-fit:contain;
-}
-
-.footer{
-  text-align:center;
-  margin-top:25px;
-  font-size:14px;
-  color:#4a5ea8;
-}
-
-.footer b{
-  display:block;
-  color:#1d2f6f;
-  cursor:pointer;
-}
-
-/* ========================== */
-/* COLUNA DIREITA             */
-/* ========================== */
-.right{
-  width:55%;
-  background:#0b1e39 url('sua-imagem-aqui.jpg') no-repeat center;
-  background-size:cover;
-}
-
-/* ======================== */
-/* POPUP ERRO               */
-/* ======================== */
-#popup{
-  position:fixed;
-  top:-200px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#ff4c4c;
-  color:white;
-  padding:18px 26px;
-  border-radius:10px;
-  font-size:15px;
-  font-weight:600;
-  min-width:260px;
-  text-align:center;
-  box-shadow:0 6px 20px rgba(0,0,0,0.25);
-  transition:.35s ease;
-  z-index:999;
-}
-
-/* ======================== */
-/* POPUP CADASTRO           */
-/* ======================== */
-#cadastroModal{
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.55);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-
-#cadastroBox{
-  background:white;
-  width:400px;
-  padding:32px;
-  border-radius:14px;
-  box-shadow:0 8px 25px rgba(0,0,0,.25);
-  animation:fadeIn .3s ease;
-}
-
-#cadastroBox h2{
-  font-size:24px;
-  margin-bottom:20px;
-  color:#0b1e39;
-  text-align:center;
-}
-
-#cadastroBox input{
-  margin-bottom:15px;
-}
-
-#cadastroBox button{
-  width:100%;
-  padding:14px;
-  background:#0b1e39;
-  color:white;
-  border:none;
-  border-radius:8px;
-  font-size:16px;
-  margin-top:10px;
-  cursor:pointer;
-}
-
-.closeBtn{
-  width:100%;
-  margin-top:10px;
-  padding:14px;
-  border:none;
-  background:#ddd;
-  border-radius:8px;
-  font-weight:600;
-  cursor:pointer;
-}
 </style>
 </head>
 
 <body>
 
-<!-- POPUP ERROS -->
-<div id="popup"></div>
-
-<!-- POPUP CADASTRO -->
-<div id="cadastroModal">
-  <div id="cadastroBox">
-    <h2>Novo Cadastro</h2>
-
-    <input id="c_nome" type="text" placeholder="Seu nome completo">
-    <input id="c_email" type="email" placeholder="seu.email@dominio.com">
-    <input id="c_senha" type="password" placeholder="Crie uma senha">
-
-    <button onclick="registrar()">Salvar Cadastro</button>
-    <button class="closeBtn" onclick="fecharCadastro()">Cancelar</button>
-  </div>
+<!-- HEADER -->
+<div class="header">
+<div class="logo">MERCATTO SYSTEM</div>
 </div>
 
-<!-- ESQUERDA -->
-<div class="left">
+<!-- HERO + LOGIN -->
+<div class="hero">
 
-  <div class="logo">LICITAR</div>
+<div class="hero-left">
 
-  <div class="group">
-    <label>Usuário</label>
-    <input id="email" type="email" placeholder="seu.email@dominio.com">
-  </div>
+<div class="hero-title">
+Controle total do seu restaurante.<br>
+<span>Sem erro. Sem prejuízo.</span>
+</div>
 
-  <div class="group">
-    <label>Senha</label>
-    <input id="senha" type="password" placeholder="••••••••">
-  </div>
+<div class="hero-desc">
+Sistema completo para fichas técnicas, CMV, pedidos, WhatsApp e gestão.
+Tudo integrado em uma única plataforma.
+</div>
 
-  <!-- BOTÃO ENTRAR COM LOADER -->
-  <button class="loginBtn" id="btnLogin" onclick="login()">
-    <span>Entrar</span>
-    <div class="loader"></div>
-  </button>
+<div class="hero-cta">
 
-  <div class="googleBtn">
-      <img src="https://www.svgrepo.com/show/475656/google-color.svg">
-      <span>Entrar com a conta Google</span>
-  </div>
+<button class="btn btn-primary" onclick="irWhats()">
+Falar no WhatsApp
+</button>
 
-  <div class="footer">
-    Ainda não possui acesso?
-    <b onclick="abrirCadastro()">Fazer cadastro</b>
-  </div>
+<button class="btn btn-secondary">
+Ver recursos
+</button>
 
 </div>
 
-<!-- DIREITA -->
-<div class="right"></div>
+</div>
+
+<!-- LOGIN -->
+<div class="login">
+
+<h2>Acessar sistema</h2>
+
+<input id="email" placeholder="Email">
+<input id="senha" type="password" placeholder="Senha">
+
+<button onclick="login()">Entrar</button>
+
+<div onclick="recuperar()" style="margin-top:10px;font-size:13px;color:#64748b;cursor:pointer">
+Esqueci minha senha
+</div>
+
+<div id="erro" class="error"></div>
+
+</div>
+
+</div>
+
+<!-- BENEFÍCIOS -->
+<div class="section">
+
+<div class="grid">
+
+<div class="card">
+<b>📊 Controle de CMV</b>
+<span>Saiba exatamente quanto cada prato custa e quanto você lucra.</span>
+</div>
+
+<div class="card">
+<b>📲 Integração WhatsApp</b>
+<span>Automatize atendimento e aumente vendas.</span>
+</div>
+
+<div class="card">
+<b>📦 Fichas Técnicas</b>
+<span>Padronize receitas e elimine erros operacionais.</span>
+</div>
+
+<div class="card">
+<b>💰 Mais lucro</b>
+<span>Decisões inteligentes baseadas em dados reais.</span>
+</div>
+
+</div>
+
+</div>
 
 <script>
-/* CONFIG SUPABASE */
-const SUPABASE_URL  = "https://mblvyircwsaxaslklzky.supabase.co";
-const SUPABASE_KEY  = "sb_publishable_oN2CuBzXHaUF7NHYS_M7aw_tBqVeD-x";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function showPopup(msg){
-  const pop = document.getElementById("popup");
-  pop.innerHTML = msg;
-  pop.style.top = "30px";
-  setTimeout(()=>{ pop.style.top = "-200px"; }, 3000);
-}
+const SUPABASE = supabase.createClient(
+  "https://SEU_URL",
+  "SUA_KEY"
+);
 
-/* LOGIN COM LOADER */
 async function login(){
-  const btn = document.getElementById("btnLogin");
-  btn.classList.add("loading");
 
-  const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value.trim();
+const email = document.getElementById('email').value.trim();
+const senha = document.getElementById('senha').value.trim();
+const erro = document.getElementById('erro');
 
-  if(!email || !senha){
-    btn.classList.remove("loading");
-    showPopup("Preencha email e senha.");
-    return;
-  }
+erro.innerText = "";
 
-  const { data, error } = await sb
-    .from("usuarios")
-    .select("*")
-    .eq("email", email)
-    .eq("senha", senha)
-    .eq("ativo", true)
-    .maybeSingle();
-
-  btn.classList.remove("loading");
-
-  if(error){
-    showPopup("Erro: " + error.message);
-    return;
-  }
-
-  if(!data){
-    showPopup("Credenciais inválidas ou usuário não aprovado.");
-    return;
-  }
-
-  localStorage.setItem("usuarioEmail", email);
-  window.location.href = "index.html";
+if(!email || !senha){
+erro.innerText = "Preencha email e senha";
+return;
 }
 
-/* POPUP CADASTRO */
-function abrirCadastro(){
-  cadastroModal.style.display = "flex";
+const { data, error } = await SUPABASE.auth.signInWithPassword({
+email,
+password: senha
+});
+
+if(error){
+erro.innerText = "Email ou senha inválidos";
+return;
 }
 
-function fecharCadastro(){
-  cadastroModal.style.display = "none";
+window.location.href = "home.html";
 }
 
-async function registrar(){
-  const nome  = c_nome.value.trim();
-  const email = c_email.value.trim();
-  const senha = c_senha.value.trim();
-
-  if(!nome || !email || !senha){
-    showPopup("Preencha todos os campos.");
-    return;
-  }
-
-  const check = await sb.from("usuarios").select("*").eq("email", email);
-  if(check.data.length > 0){
-    showPopup("Email já cadastrado.");
-    return;
-  }
-
-  const { error } = await sb.from("usuarios").insert({
-    nome, email, senha, ativo:false
-  });
-
-  if(error){
-    showPopup("Erro: " + error.message);
-    return;
-  }
-
-  fecharCadastro();
-  showPopup("Cadastro enviado! Aguarde aprovação.");
+function recuperar(){
+alert("Fluxo de recuperação aqui");
 }
+
+function irWhats(){
+window.open("https://wa.me/5577999999999?text=Tenho interesse no sistema");
+}
+
 </script>
 
 </body>
