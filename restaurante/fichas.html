@@ -70,11 +70,11 @@ body.modal-open{
 .card{
   background:var(--card);
   border-radius:22px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  box-shadow:var(--shadow-md);
   overflow:hidden;
   cursor:pointer;
   transition:.18s ease;
-  border:1px solid #000;
+  border:1px solid rgba(0,0,0,.03);
 }
 
 .card:hover{
@@ -896,17 +896,19 @@ background:#0f172a;
 
 
 
+
+
 /* =========================================
-   FILTROS — MENU CLARO PREMIUM
+   FILTROS — MENU ESCURO PREMIUM
 ========================================= */
 
 .filters{
-  background:#ffffff;
+  background:#14c8a8; /* mesma cor do tema */
   padding:10px 14px;
   display:flex;
   align-items:center;
   gap:8px;
-  border-bottom:1px solid #000;
+  border-bottom:1px solid #1e293b;
   position:sticky;
   top:0;
   z-index:50;
@@ -920,21 +922,21 @@ background:#0f172a;
   height:34px;
 
   border-radius:8px;
-  border:1px solid #000;
+  border:1px solid #334155;
 
   padding:0 10px;
 
   font-size:12px;
   font-weight:600;
 
-  background:#ffffff;
-  color:#000;
+  background:#1e293b;
+  color:#fff;
 
   outline:none;
 }
 
 .filters input::placeholder{
-  color:#6b7280;
+  color:#94a3b8;
 }
 
 /* SELECTS */
@@ -943,15 +945,15 @@ background:#0f172a;
   height:34px;
 
   border-radius:8px;
-  border:1px solid #000;
+  border:1px solid #334155;
 
   padding:0 8px;
 
   font-size:12px;
   font-weight:600;
 
-  background:#ffffff;
-  color:#000;
+  background:#1e293b;
+  color:#fff;
 
   outline:none;
 }
@@ -959,14 +961,14 @@ background:#0f172a;
 /* HOVER */
 .filters select:hover,
 .filters input:hover{
-  border-color:#000;
+  border-color:#475569;
 }
 
 /* FOCO */
 .filters input:focus,
 .filters select:focus{
-  border-color:#000;
-  box-shadow:0 0 0 2px rgba(0,0,0,.1);
+  border-color:#3b82f6;
+  box-shadow:0 0 0 2px rgba(59,130,246,.2);
 }
 
 /* MOBILE */
