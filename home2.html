@@ -242,6 +242,61 @@ iframe{
   background:#cbd5f5;
   border-radius:10px;
 }
+
+
+
+
+
+
+.logo-text{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:.5px;
+
+  color:var(--primary);
+
+  text-align:center;
+  line-height:1.2;
+}
+
+.menu-indicator{
+  position:fixed;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+
+  width:34px;
+  height:70px;
+
+  background:var(--primary);
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:0 10px 10px 0;
+
+  font-size:18px;
+  font-weight:900;
+
+  cursor:pointer;
+
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+
+  z-index:70;
+  transition:.2s;
+}
+
+.menu-indicator:hover{
+  background:#1d4ed8;
+}
+
+
+.sidebar:hover ~ .menu-indicator{
+  opacity:0;
+  pointer-events:none;
+}
 </style>
 </head>
 
@@ -254,11 +309,16 @@ iframe{
 <div class="sidebar">
 
 <div class="logo-area">
-<img src="https://github.com/grupodvbr/licita/blob/main/ChatGPT%20Image%2027%20de%20jan.%20de%202026,%2019_27_44.png?raw=true">
+  <div class="logo-text">
+    MERCATTO DELÍCIA
+  </div>
 </div>
 
 <div class="menu">
 
+<div class="menu-indicator" onclick="toggleMobileMenu()">
+  ☰
+</div>
 <div class="menu-item" onclick="openPage('home.html')" data-page="fichas.html">
 <img src="https://cdn-icons-png.flaticon.com/512/1946/1946488.png">Fichas
 </div>
