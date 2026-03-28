@@ -296,20 +296,7 @@ grid-template-columns:1fr;
 grid-template-columns:1fr;
 }
 }
-
-
-.form-grid-top{
-  display:grid;
-  grid-template-columns: 2fr 1.2fr 1.5fr;
-  gap:16px;
-  align-items:end;
-}
-
-@media(max-width:900px){
-  .form-grid-top{
-    grid-template-columns:1fr;
-  }
-}
+  
 </style>
 </head>
 
@@ -339,8 +326,6 @@ grid-template-columns:1fr;
 <div id="listaFichas" class="lista"></div>
 
 <div class="form-grid">
-
-<div class="form-grid-top">
 
   <div class="field">
     <label>NOME DO PRATO</label>
@@ -376,17 +361,6 @@ grid-template-columns:1fr;
       <option>ACOMPANHAMENTO</option>
     </select>
   </div>
-
-  <div class="field">
-    <label>FOTO DO PRATO</label>
-    <input type="file" id="fotoProduto" accept="image/*">
-  </div>
-
-</div>
-
-<img id="previewFoto" class="preview hidden">
-
-<div class="form-grid">
 
   <div class="field">
     <label>PREÇO DE VENDA</label>
