@@ -296,7 +296,20 @@ grid-template-columns:1fr;
 grid-template-columns:1fr;
 }
 }
-  
+
+
+.form-grid-top{
+  display:grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr;
+  gap:16px;
+  align-items:end;
+}
+
+@media(max-width:900px){
+  .form-grid-top{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 </head>
 
