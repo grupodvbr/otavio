@@ -327,6 +327,8 @@ grid-template-columns:1fr;
 
 <div class="form-grid">
 
+<div class="form-grid-top">
+
   <div class="field">
     <label>NOME DO PRATO</label>
     <input id="nomePrato">
@@ -361,6 +363,17 @@ grid-template-columns:1fr;
       <option>ACOMPANHAMENTO</option>
     </select>
   </div>
+
+  <div class="field">
+    <label>FOTO DO PRATO</label>
+    <input type="file" id="fotoProduto" accept="image/*">
+  </div>
+
+</div>
+
+<img id="previewFoto" class="preview hidden">
+
+<div class="form-grid">
 
   <div class="field">
     <label>PREÇO DE VENDA</label>
