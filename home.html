@@ -314,93 +314,103 @@ iframe{
       </div>
     </div>
 
-    <div class="menu">
+   <div class="menu">
 
-      <div class="menu-item" onclick="openPage('painel.html')" data-page="fichas.html">
-        <img src="https://cdn-icons-png.flaticon.com/512/1946/1946488.png">
-        Fichas
-      </div>
+  <!-- APP / SISTEMA -->
+  <div class="menu-item" onclick="openPage('painel.html')" data-page="fichas.html">
+    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828919.png">
+    Aplicativos
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_encontrar')">
-        <img src="https://cdn-icons-png.flaticon.com/512/149/149852.png">
-        Encontrar
-      </div>
+  <!-- BUSCA -->
+  <div class="menu-item" onclick="toggleSub('sub_encontrar')">
+    <img src="https://cdn-icons-png.flaticon.com/512/622/622669.png">
+    Encontrar
+  </div>
 
-      <div class="submenu" id="sub_encontrar">
-        <a onclick="openPage('restaurante/requisicoesdemercadorias.html')" data-page="buscar.html">Painel</a>
-        <a onclick="openPage('avisos.html')" data-page="avisos.html">Meus Avisos</a>
-        <a onclick="openPage('banco.html')" data-page="banco.html">Banco de Licitações</a>
-      </div>
+  <div class="submenu" id="sub_encontrar">
+    <a onclick="openPage('restaurante/requisicoesdemercadorias.html')" data-page="buscar.html">Requisições</a>
+    <a onclick="openPage('avisos.html')" data-page="avisos.html">Avisos</a>
+    <a onclick="openPage('banco.html')" data-page="banco.html">Banco de Licitações</a>
+  </div>
 
-      <div class="menu-item" onclick="openPage('dashboard.html')" data-page="dashboard.html">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png">
-        Dashboard
-      </div>
+  <!-- DASHBOARD -->
+  <div class="menu-item" onclick="openPage('dashboard.html')" data-page="dashboard.html">
+    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828859.png">
+    Dashboard
+  </div>
 
-      <div class="menu-item" onclick="openPage('anexos.html')" data-page="anexos.html">
-        <img src="https://cdn-icons-png.flaticon.com/512/2985/2985150.png">
-        Anexos ComprasNet
-      </div>
+  <!-- ANEXOS -->
+  <div class="menu-item" onclick="openPage('anexos.html')" data-page="anexos.html">
+    <img src="https://cdn-icons-png.flaticon.com/512/833/833524.png">
+    Anexos
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_ficha')">
-        <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">
-        Ficha técnica
-      </div>
+  <!-- FICHA TECNICA -->
+  <div class="menu-item" onclick="toggleSub('sub_ficha')">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    Ficha técnica
+  </div>
 
-      <div class="submenu" id="sub_ficha">
-        <a onclick="openPage('restaurante/fichas.html')" data-page="restaurante/fichas.html">Fichas</a>
-        <a onclick="openPage('relatórios/caderno.html')" data-page="relatórios/caderno.html">Livro de receitas</a>
-        <a onclick="openPage('relatórios/historico.html')" data-page="relatórios/historico.html">Histórico</a>
-      </div>
+  <div class="submenu" id="sub_ficha">
+    <a onclick="openPage('restaurante/fichas.html')" data-page="restaurante/fichas.html">Fichas</a>
+    <a onclick="openPage('relatórios/caderno.html')" data-page="relatórios/caderno.html">Livro de receitas</a>
+    <a onclick="openPage('relatórios/historico.html')" data-page="relatórios/historico.html">Histórico</a>
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_cadastrar')">
-        <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">
-        Cadastrar
-      </div>
+  <!-- CADASTRAR -->
+  <div class="menu-item" onclick="toggleSub('sub_cadastrar')">
+    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828817.png">
+    Cadastros
+  </div>
 
-      <div class="submenu" id="sub_cadastrar">
-        <a onclick="openPage('otto/whatsapp.html')" data-page="otto/whatsapp.html">Wkatsapp API</a>
-        <a onclick="openPage('cadastroempresas.html')" data-page="cadastroempresas.html">Empresas e fornecedores</a>
-        <a onclick="openPage('licitacoes.html')" data-page="licitacoes.html">Licitações</a>
-        <a onclick="openPage('usuarios.html')" data-page="usuarios.html">Usuários</a>
-      </div>
+  <div class="submenu" id="sub_cadastrar">
+    <a onclick="openPage('otto/whatsapp.html')" data-page="otto/whatsapp.html">Automação WhatsApp</a>
+    <a onclick="openPage('cadastroempresas.html')" data-page="cadastroempresas.html">Empresas</a>
+    <a onclick="openPage('licitacoes.html')" data-page="licitacoes.html">Licitações</a>
+    <a onclick="openPage('usuarios.html')" data-page="usuarios.html">Usuários</a>
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_disputar')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828859.png">
-        Romaneios
-      </div>
+  <!-- REQUISIÇÕES / LOGISTICA -->
+  <div class="menu-item" onclick="toggleSub('sub_disputar')">
+    <img src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png">
+    Requisições
+  </div>
 
-      <div class="submenu" id="sub_disputar">
-        <a onclick="openPage('restaurante/reservas.html')" data-page="restaurante/reservas.html">Reservas</a>
-      </div>
+  <div class="submenu" id="sub_disputar">
+    <a onclick="openPage('restaurante/reservas.html')" data-page="restaurante/reservas.html">Reservas de mesas</a>
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_monitorar')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1827/1827956.png">
-        Cotação
-      </div>
+  <!-- COTAÇÃO -->
+  <div class="menu-item" onclick="toggleSub('sub_monitorar')">
+    <img src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png">
+    Cotação
+  </div>
 
-      <div class="submenu" id="sub_monitorar">
-        <a onclick="openPage('statuscotacao.html')" data-page="statuscotacao.html">Cotações em andamento</a>
-        <a onclick="openPage('cotacao.html')" data-page="cotacao.html">Gerar cotação</a>
-        <a onclick="openPage('fornecedor.html')" data-page="fornecedor.html">Cotação manual</a>
-        <a onclick="openPage('resultadocotacao.html')" data-page="resultadocotacao.html">Gerar lances</a>
-      </div>
+  <div class="submenu" id="sub_monitorar">
+    <a onclick="openPage('statuscotacao.html')" data-page="statuscotacao.html">Em andamento</a>
+    <a onclick="openPage('cotacao.html')" data-page="cotacao.html">Gerar cotação</a>
+    <a onclick="openPage('fornecedor.html')" data-page="fornecedor.html">Manual</a>
+    <a onclick="openPage('resultadocotacao.html')" data-page="resultadocotacao.html">Lances</a>
+  </div>
 
-      <div class="menu-item" onclick="toggleSub('sub_dados')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828805.png">
-        Visão de Dados
-      </div>
+  <!-- DADOS -->
+  <div class="menu-item" onclick="toggleSub('sub_dados')">
+    <img src="https://cdn-icons-png.flaticon.com/512/1161/1161388.png">
+    Análises
+  </div>
 
-      <div class="submenu" id="sub_dados">
-        <a onclick="openPage('visao-dados.html')" data-page="visao-dados.html">Análises</a>
-      </div>
+  <div class="submenu" id="sub_dados">
+    <a onclick="openPage('visao-dados.html')" data-page="visao-dados.html">Visão geral</a>
+  </div>
 
-      <div class="menu-item" onclick="openPage('configuracoes.html')" data-page="configuracoes.html">
-        <img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png">
-        Configurações
-      </div>
+  <!-- CONFIG -->
+  <div class="menu-item" onclick="openPage('configuracoes.html')" data-page="configuracoes.html">
+    <img src="https://cdn-icons-png.flaticon.com/512/2099/2099058.png">
+    Configurações
+  </div>
 
-    </div>
+</div>
   </div>
 
   <!-- BOTÃO LATERAL (AGORA CORRETO) -->
