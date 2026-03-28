@@ -43,18 +43,28 @@ padding:16px 30px;
 display:flex;
 justify-content:space-between;
 align-items:center;
+z-index:10;
 }
 
 .logo{
 font-weight:900;
-font-size:20px;
+font-size:22px;
+}
+
+.cta-top{
+background:var(--primary);
+color:#fff;
+padding:10px 16px;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
 }
 
 /* ===== HERO ===== */
 .hero{
 display:flex;
-gap:40px;
-padding:60px 30px;
+gap:50px;
+padding:70px 30px;
 align-items:center;
 }
 
@@ -63,7 +73,7 @@ flex:1;
 }
 
 .hero-title{
-font-size:44px;
+font-size:48px;
 font-weight:900;
 line-height:1.1;
 }
@@ -75,26 +85,28 @@ color:var(--primary);
 .hero-desc{
 margin-top:20px;
 color:var(--muted);
-max-width:500px;
+max-width:520px;
+font-size:16px;
 }
 
 .hero-cta{
-margin-top:25px;
+margin-top:30px;
 display:flex;
-gap:10px;
+gap:12px;
 flex-wrap:wrap;
 }
 
 .btn{
-padding:14px 18px;
-border-radius:10px;
+padding:14px 20px;
+border-radius:12px;
 border:none;
 cursor:pointer;
 font-weight:700;
+transition:.2s;
 }
 
 .btn-primary{
-background:var(--primary);
+background:linear-gradient(135deg,#14c8a8,#0ea58b);
 color:#fff;
 }
 
@@ -103,14 +115,18 @@ background:#fff;
 border:1px solid var(--border);
 }
 
+.btn:hover{
+transform:translateY(-2px);
+}
+
 /* ===== LOGIN ===== */
 .login{
-width:380px;
+width:400px;
 background:#fff;
 border:1px solid var(--border);
 border-radius:18px;
-padding:25px;
-box-shadow:0 20px 60px rgba(0,0,0,.08);
+padding:28px;
+box-shadow:0 30px 80px rgba(0,0,0,.08);
 }
 
 .login h2{
@@ -142,14 +158,19 @@ font-size:13px;
 margin-top:10px;
 }
 
-/* ===== CARDS ===== */
+/* ===== PRODUTOS ===== */
 .section{
-padding:50px 30px;
+padding:70px 30px;
+}
+
+.section h3{
+font-size:30px;
+margin-bottom:30px;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
 gap:20px;
 }
 
@@ -157,13 +178,47 @@ gap:20px;
 background:#fff;
 border:1px solid var(--border);
 border-radius:16px;
-padding:20px;
+padding:24px;
 transition:.3s;
 }
 
 .card:hover{
-transform:translateY(-6px);
-box-shadow:0 20px 40px rgba(0,0,0,.08);
+transform:translateY(-8px);
+box-shadow:0 20px 60px rgba(0,0,0,.08);
+}
+
+.card b{
+display:block;
+font-size:18px;
+margin-bottom:10px;
+}
+
+.card span{
+font-size:14px;
+color:var(--muted);
+line-height:1.5;
+}
+
+/* ===== CTA FINAL ===== */
+.cta{
+background:linear-gradient(135deg,#14c8a8,#0ea58b);
+color:#fff;
+padding:60px;
+border-radius:20px;
+text-align:center;
+}
+
+.cta h3{
+font-size:32px;
+margin-bottom:15px;
+}
+
+/* ===== FOOTER ===== */
+.footer{
+padding:40px;
+text-align:center;
+font-size:13px;
+color:var(--muted);
 }
 
 /* ===== MOBILE ===== */
@@ -184,31 +239,36 @@ width:100%;
 <!-- HEADER -->
 <div class="header">
 <div class="logo">MERCATTO SYSTEM</div>
+<div class="cta-top" onclick="irWhats()">Falar no WhatsApp</div>
 </div>
 
-<!-- HERO + LOGIN -->
+<!-- HERO -->
 <div class="hero">
 
 <div class="hero-left">
 
 <div class="hero-title">
-Controle total do seu restaurante.<br>
-<span>Sem erro. Sem prejuízo.</span>
+Pare de perder dinheiro na sua operação.<br>
+<span>Tenha controle total.</span>
 </div>
 
 <div class="hero-desc">
-Sistema completo para fichas técnicas, CMV, pedidos, WhatsApp e gestão.
-Tudo integrado em uma única plataforma.
+Sistema completo para restaurantes com controle de CMV, fichas técnicas, pedidos e automação WhatsApp.
+Você vende mais, erra menos e aumenta seu lucro.
 </div>
 
 <div class="hero-cta">
 
 <button class="btn btn-primary" onclick="irWhats()">
-Falar no WhatsApp
+Quero esse sistema
 </button>
 
 <button class="btn btn-secondary">
-Ver recursos
+Ver funcionalidades
+</button>
+
+<button class="btn btn-secondary" onclick="scrollLogin()">
+Fazer login
 </button>
 
 </div>
@@ -235,42 +295,74 @@ Esqueci minha senha
 
 </div>
 
-<!-- BENEFÍCIOS -->
+<!-- PRODUTOS -->
 <div class="section">
+
+<h3>Tudo que você precisa em um único sistema</h3>
 
 <div class="grid">
 
 <div class="card">
-<b>📊 Controle de CMV</b>
-<span>Saiba exatamente quanto cada prato custa e quanto você lucra.</span>
+<b>📊 Ficha Técnica & CMV</b>
+<span>Controle total de custos, margem e lucro de cada prato em tempo real.</span>
 </div>
 
 <div class="card">
-<b>📲 Integração WhatsApp</b>
-<span>Automatize atendimento e aumente vendas.</span>
+<b>📲 WhatsApp Automatizado</b>
+<span>Responda clientes automaticamente e aumente suas vendas.</span>
 </div>
 
 <div class="card">
-<b>📦 Fichas Técnicas</b>
-<span>Padronize receitas e elimine erros operacionais.</span>
+<b>📦 Gestão de Estoque</b>
+<span>Controle entrada, saída e desperdício com precisão.</span>
 </div>
 
 <div class="card">
-<b>💰 Mais lucro</b>
-<span>Decisões inteligentes baseadas em dados reais.</span>
+<b>📈 Dashboard Inteligente</b>
+<span>Visualize vendas, lucro e desempenho em tempo real.</span>
+</div>
+
+<div class="card">
+<b>🛵 Delivery Integrado</b>
+<span>Organize pedidos e entregas sem erro.</span>
+</div>
+
+<div class="card">
+<b>⚙️ Automação Total</b>
+<span>Elimine tarefas manuais e aumente sua eficiência.</span>
 </div>
 
 </div>
 
+</div>
+
+<!-- CTA FINAL -->
+<div class="section">
+<div class="cta">
+
+<h3>Pronto para transformar sua empresa?</h3>
+
+<p>Comece agora e tenha controle total do seu negócio.</p>
+
+<button class="btn btn-primary" onclick="irWhats()">Começar agora</button>
+
+</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+© Mercatto Systems • Plataforma Inteligente
 </div>
 
 <script>
 
+/* CONFIG */
 const SUPABASE = supabase.createClient(
   "https://SEU_URL",
   "SUA_KEY"
 );
 
+/* LOGIN */
 async function login(){
 
 const email = document.getElementById('email').value.trim();
@@ -297,12 +389,21 @@ return;
 window.location.href = "home.html";
 }
 
-function recuperar(){
-alert("Fluxo de recuperação aqui");
+/* WHATSAPP */
+function irWhats(){
+window.open("https://wa.me/5577999999999?text=Tenho interesse no sistema Mercatto");
 }
 
-function irWhats(){
-window.open("https://wa.me/5577999999999?text=Tenho interesse no sistema");
+/* SCROLL LOGIN */
+function scrollLogin(){
+document.querySelector('.login').scrollIntoView({
+behavior:'smooth'
+});
+}
+
+/* RECUPERAR */
+function recuperar(){
+alert("Configurar reset de senha");
 }
 
 </script>
