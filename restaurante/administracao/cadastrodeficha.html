@@ -296,7 +296,18 @@ grid-template-columns:1fr;
 grid-template-columns:1fr;
 }
 }
-  
+  .form-grid-top{
+  display:grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr;
+  gap:16px;
+  align-items:end;
+}
+
+@media(max-width:900px){
+  .form-grid-top{
+    grid-template-columns:1fr;
+  }
+}
 </style>
 </head>
 
@@ -325,11 +336,12 @@ grid-template-columns:1fr;
 <input id="buscarFicha" placeholder="Digite o nome do prato...">
 <div id="listaFichas" class="lista"></div>
 
-<div class="form-grid">
+<!-- LINHA PRINCIPAL -->
+<div class="form-grid-top">
 
   <div class="field">
     <label>NOME DO PRATO</label>
-    <input id="nomePrato">
+    <input id="nomePrato" placeholder="Digite o nome do prato">
   </div>
 
   <div class="field">
@@ -363,8 +375,21 @@ grid-template-columns:1fr;
   </div>
 
   <div class="field">
+    <label>FOTO DO PRATO</label>
+    <input type="file" id="fotoProduto" accept="image/*">
+  </div>
+
+</div>
+
+<!-- PREVIEW -->
+<img id="previewFoto" class="preview hidden">
+
+<!-- LINHA SECUNDÁRIA -->
+<div class="form-grid">
+
+  <div class="field">
     <label>PREÇO DE VENDA</label>
-    <input id="precoVenda" type="number" step="0.01">
+    <input id="precoVenda" type="number" step="0.01" placeholder="0,00">
   </div>
 
   <div class="field">
@@ -373,10 +398,6 @@ grid-template-columns:1fr;
   </div>
 
 </div>
-
-  <label>FOTO DO PRATO</label>
-  <input type="file" id="fotoProduto" accept="image/*">
-  <img id="previewFoto" class="preview hidden">
 <h3>MODO DE PREPARO</h3>
 
 <label>DESCREVA O PASSO A PASSO</label>
