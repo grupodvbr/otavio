@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Aplicativos • Mercatto</title>
+
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1,
+user-scalable=no,
+viewport-fit=cover">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+<!-- ICONS (LEVE) -->
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+<style>
+
+:root{
+--primary:#2563eb;
+--bg:#f8fafc;
+--card:#ffffff;
+
+--text:#0f172a;
+--muted:#64748b;
+--border:#e2e8f0;
+
+--radius:18px;
+
+--shadow:0 6px 18px rgba(0,0,0,.06);
+--shadow-hover:0 14px 30px rgba(0,0,0,.10);
+}
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+/* BODY */
+
+body{
+font-family:Inter;
+background:linear-gradient(180deg,#ffffff,#f1f5f9);
+color:var(--text);
+}
+
+/* ================= HEADER ================= */
+
+.header{
+padding:18px;
+position:sticky;
+top:0;
+z-index:50;
+
+background:rgba(255,255,255,.85);
+backdrop-filter:blur(12px);
+
+border-bottom:1px solid var(--border);
+
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.title{
+font-size:22px;
+font-weight:900;
+}
+
+/* SEARCH */
+
+.search{
+height:42px;
+border-radius:12px;
+border:1px solid var(--border);
+padding:0 12px;
+font-size:13px;
+font-weight:600;
+background:#fff;
+}
+
+/* FILTROS */
+
+.filters{
+display:flex;
+gap:8px;
+overflow:auto;
+}
+
+.filter{
+padding:6px 10px;
+border-radius:999px;
+border:1px solid var(--border);
+font-size:11px;
+font-weight:700;
+cursor:pointer;
+white-space:nowrap;
+background:#fff;
+}
+
+.filter.active{
+background:var(--primary);
+color:#fff;
+border-color:var(--primary);
+}
+
+/* ================= GRID ================= */
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+gap:14px;
+padding:16px;
+}
+
+/* ================= CARD ================= */
+
+.card{
+background:var(--card);
+border-radius:18px;
+padding:16px;
+
+cursor:pointer;
+transition:.2s;
+
+display:flex;
+flex-direction:column;
+gap:12px;
+
+text-decoration:none;
+color:inherit;
+
+border:1px solid var(--border);
+}
+
+.card:hover{
+transform:translateY(-4px);
+box-shadow:var(--shadow-hover);
+}
+
+/* ICON */
+
+.icon-box{
+width:46px;
+height:46px;
+
+border-radius:14px;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+font-size:22px;
+
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+color:#fff;
+}
+
+/* BODY */
+
+.card-title{
+font-size:14px;
+font-weight:800;
+}
+
+.card-desc{
+font-size:12px;
+color:var(--muted);
+}
+
+/* TAG */
+
+.tag{
+font-size:10px;
+font-weight:800;
+
+padding:4px 8px;
+border-radius:999px;
+
+background:#eef2ff;
+color:#3730a3;
+
+width:max-content;
+}
+
+/* MOBILE */
+
+@media(max-width:520px){
+
+.grid{
+grid-template-columns:repeat(2,1fr);
+}
+
+.card-desc{
+display:none;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+<div class="title">Aplicativos</div>
+
+<input id="search" class="search" placeholder="Buscar...">
+
+<div id="filters" class="filters"></div>
+
+</div>
+
+<div id="grid" class="grid"></div>
+
+<script>
+
+/* ================= DADOS ================= */
+
+const apps=[
+
+{
+nome:"Requisições de produtos",
+descricao:"Controle de requisições de uso e consumo",
+tipo:"Operacional",
+icon:"ri-restaurant-line",
+link:"apresentacoes/requisicoesusoeconsumo.html"
+},
+
+{
+nome:"PDV Bebidas",
+descricao:"Venda rápida",
+tipo:"Operacional",
+icon:"ri-goblet-line",
+link:"pdv-bebidas.html"
+},
+
+{
+nome:"CMV Dashboard",
+descricao:"Custos e lucro",
+tipo:"Financeiro",
+icon:"ri-bar-chart-line",
+link:"cmv.html"
+},
+
+{
+nome:"Buffet Controle",
+descricao:"Reposição buffet",
+tipo:"Operacional",
+icon:"ri-cake-3-line",
+link:"buffet.html"
+},
+
+{
+nome:"Financeiro",
+descricao:"Relatórios",
+tipo:"Financeiro",
+icon:"ri-money-dollar-circle-line",
+link:"financeiro.html"
+},
+
+{
+nome:"Auditoria",
+descricao:"Histórico sistema",
+tipo:"Auditoria",
+icon:"ri-shield-check-line",
+link:"auditoria.html"
+}
+
+];
+
+/* ================= FILTROS ================= */
+
+let filtroAtual="Todos";
+
+const tipos=["Todos",...new Set(apps.map(a=>a.tipo))];
+
+filters.innerHTML=tipos.map(t=>
+`<div class="filter ${t==="Todos"?"active":""}" onclick="setFiltro('${t}',this)">
+${t}
+</div>`
+).join("");
+
+function setFiltro(tipo,el){
+filtroAtual=tipo;
+
+document.querySelectorAll(".filter").forEach(f=>f.classList.remove("active"));
+el.classList.add("active");
+
+render();
+}
+
+/* ================= RENDER ================= */
+
+function render(){
+
+const busca=search.value.toLowerCase();
+
+const filtrados=apps.filter(a=>
+(!busca || a.nome.toLowerCase().includes(busca)) &&
+(filtroAtual==="Todos" || a.tipo===filtroAtual)
+);
+
+grid.innerHTML=filtrados.map(a=>`
+<a href="${a.link}" class="card">
+
+<div class="icon-box">
+<i class="${a.icon}"></i>
+</div>
+
+<div class="card-title">${a.nome}</div>
+<div class="card-desc">${a.descricao}</div>
+<div class="tag">${a.tipo}</div>
+
+</a>
+`).join("");
+
+}
+
+/* ================= PERFORMANCE ================= */
+
+let timer;
+search.addEventListener("input",()=>{
+clearTimeout(timer);
+timer=setTimeout(render,150);
+});
+
+/* INIT */
+
+render();
+
+</script>
+
+</body>
+</html>
