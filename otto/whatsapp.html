@@ -669,6 +669,14 @@ const db = supabase.createClient(
 "https://dxkszikemntfusfyrzos.supabase.co",
 "sb_publishable_NNFvdfSXgOdGGVcSbphbjQ_brC3_9ed"
 )
+
+/* ===== PERMISSÃO ===== */
+if ("Notification" in window) {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission()
+  }
+}
+  
 let pagina = 0
 const limite = 20
 let carregando = false
@@ -689,11 +697,61 @@ payload=>{
 )
 .subscribe()
 
+
+/* ===== REALTIME MENSAGENS ===== */
+
+db
+.channel("conversas_realtime")
+.on(
+  "postgres_changes",
+  {
+    event:"INSERT",
+    schema:"public",
+    table:"conversas_whatsapp"
+  },
+  payload => {
+
+    const m = payload.new
+
+    // 🔥 atualiza lista instantâneo
+    atualizarClientesSilencioso()
+
+    // 🔔 notifica
+    notificarLista(m)
+
+  }
+)
+.subscribe()
+
+
+  
 /* ================= GLOBAL ================= */
 
 let nomes = {}
 let clienteSelecionado = null
+/* ===== NOTIFICAÇÃO LISTA ===== */
 
+function notificarLista(m){
+
+  if (!("Notification" in window)) return
+  if (Notification.permission !== "granted") return
+
+  // 🔥 evita notificar se já estiver na conversa aberta
+  if(clienteSelecionado === m.telefone) return
+
+  const nome = nomes[m.telefone] || m.telefone
+
+  const n = new Notification(nome, {
+    body: m.mensagem || "Nova mensagem",
+    icon: "https://cdn-icons-png.flaticon.com/512/733/733585.png"
+  })
+
+  n.onclick = () => {
+    window.focus()
+    abrirChatIframe(m.telefone)
+  }
+
+}
 /* ================= CARREGAR CLIENTES ================= */
 
 async function carregarClientes(){
