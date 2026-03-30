@@ -222,6 +222,14 @@ const db = supabase.createClient(
 "sb_publishable_NNFvdfSXgOdGGVcSbphbjQ_brC3_9ed"
 )
 
+/* ===== PERMISSÃO DE NOTIFICAÇÃO ===== */
+if ("Notification" in window) {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission()
+  }
+}
+
+
 /* ===== VARS ===== */
 let telefone = new URLSearchParams(location.search).get("telefone")
 let mensagensIds = new Set()
@@ -308,6 +316,30 @@ carregarMais()
 }
 })
 
+
+function notificar(m){
+
+  if (!("Notification" in window)) return
+  if (Notification.permission !== "granted") return
+
+  // 🔥 evita notificar mensagem enviada por você
+  if(m.role === "assistant") return
+
+  const n = new Notification("Nova mensagem 💬", {
+    body: m.mensagem || "Nova mídia recebida",
+    icon: "https://cdn-icons-png.flaticon.com/512/733/733585.png"
+  })
+
+  n.onclick = () => {
+    window.focus()
+  }
+
+}
+
+
+
+
+  
 function gerarHTML(m){
 
 let html = ""
@@ -500,8 +532,8 @@ if(id && mensagensIds.has(id)) return
   const m = payload.new
 
   // 🔥 atualiza status (✓ ✓✓ azul etc)
-  render(m)
-
+render(m)
+notificar(m)
 })
 
 .subscribe()
