@@ -2038,54 +2038,29 @@ mBody.innerHTML = `
 
 
 
-<div class="grid-3" style="margin:14px 0">
+<div class="grid-4" style="margin:14px 0">
 
   <div>
-    <label style="font-weight:800;font-size:13px">
-      STATUS DO PRATO
-    </label>
-
-    <select id="statusPrato" style="margin-top:6px">
-      <option value="true">ATIVO</option>
-      <option value="false">DESATIVADO</option>
-    </select>
+    <label>STATUS DO PRATO</label>
+    <select id="statusPrato"></select>
   </div>
 
   <div>
-    <label style="font-weight:800;font-size:13px">
-      TIPO DO PRATO
-    </label>
-
-    <select id="tipoPrato" style="margin-top:6px">
-      <option value="">SELECIONE</option>
-    </select>
+    <label>TIPO DO PRATO</label>
+    <select id="tipoPrato"></select>
   </div>
 
   <div>
-    <label style="font-weight:800;font-size:13px">
-      NO CARDÁPIO
-    </label>
-
-    <select id="cardapioPrato" style="margin-top:6px">
-      <option value="true">SIM</option>
-      <option value="false">NÃO</option>
-    </select>
+    <label>NO CARDÁPIO</label>
+    <select id="cardapioPrato"></select>
   </div>
 
-</div>
+  <!-- 🔥 AGORA FICA NA MESMA LINHA -->
+  <div>
+    <label>⏱ TEMPO (MIN)</label>
+    <input id="tempoPreparo" type="number" placeholder="Ex: 25">
+  </div>
 
-<!-- 🔥 AQUI É O LUGAR EXATO -->
-<div style="margin-top:10px">
-  <label style="font-weight:800;font-size:13px">
-    ⏱ TEMPO DE PREPARO (MIN)
-  </label>
-
-  <input 
-    id="tempoPreparo"
-    type="number"
-    placeholder="Ex: 25"
-    style="margin-top:6px"
-  >
 </div>
 
 <hr>
