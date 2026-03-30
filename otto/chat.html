@@ -522,6 +522,42 @@ preview.innerHTML=`📄 ${arquivo.name}`
 }
 }
 
+
+/* ===== AUTO ATUALIZAÇÃO SILENCIOSA ===== */
+async function atualizarSilencioso(){
+
+  const {data} = await db
+  .from("conversas_whatsapp")
+  .select("*")
+  .eq("telefone",telefone)
+  .order("created_at",{ascending:false})
+  .limit(20)
+
+  if(!data) return
+
+  data.reverse().forEach(m=>{
+
+    const id = m.id || m.message_id
+
+    if(!mensagensIds.has(id)){
+      render(m)
+
+      const pertoDoFim = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 200
+
+      if(pertoDoFim){
+        scrollBottom()
+      }
+    }
+
+  })
+
+}
+
+
+
+
+
+  
 /* ===== UPLOAD ===== */
 async function uploadMidia(file){
 
@@ -641,6 +677,7 @@ preview.style.display="none"
 /* ===== START ===== */
 iniciar()
 
+setInterval(atualizarSilencioso, 5000)
 
 function abrirTemplates(){
   const menu = document.getElementById("menuTemplates")
