@@ -1348,8 +1348,8 @@ cursor:pointer;
   grid-template-columns:1fr 1fr 1fr 1fr;
   gap:12px;
 }
- #resultadoIngredientes{
-  z-index:9999;
+#resultadoIngredientes{
+  z-index:50;
 }
 
 .item-busca{
@@ -1363,14 +1363,20 @@ cursor:pointer;
   background:#ecfeff;
 } 
 
-select{
-  position:relative;
-  z-index:9999;
-}
+
   .modal-body{
   position:relative;
   z-index:1;
   overflow-y:auto;
+}
+
+.modal{
+  z-index:999;
+}
+
+.modal-box{
+  position:relative;
+  z-index:1000;
 }
 </style>
 </head>
