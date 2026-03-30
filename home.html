@@ -437,9 +437,9 @@ iframe{
 <div style="display:flex;align-items:center;gap:12px">
 
   <!-- BOTÃO VOLTAR -->
-  <div class="btn-voltar" onclick="voltarPagina()">
-    ←
-  </div>
+<div class="btn-voltar" onclick="voltarPagina()">
+  ←
+</div>
 
   <!-- MENU -->
   <div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
@@ -518,7 +518,8 @@ window.onload = function(){
 
 
 function voltarPagina(){
-  window.history.back();
+  const frame = document.getElementById("frame");
+  frame.contentWindow.history.back();
 }
 </script>
 
