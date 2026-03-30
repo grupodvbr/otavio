@@ -2,27 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Configurações • Financeiro</title>
+<title>Configurações Financeiras</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
-/* ================= BASE ================= */
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:"Inter",sans-serif;
-}
-
 body{
+  font-family:Inter;
   background:#f8fafc;
+  margin:0;
 }
 
-/* ================= GRID ================= */
 .container{
   padding:20px;
 }
@@ -33,159 +23,159 @@ body{
   gap:20px;
 }
 
-/* ================= CARD ================= */
 .card{
   background:#fff;
   border-radius:16px;
   padding:16px;
-  box-shadow:0 8px 25px rgba(0,0,0,.06);
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
+  height:420px;
   display:flex;
   flex-direction:column;
-  height:420px;
 }
 
-.card h2{
+h2{
   font-size:16px;
-  font-weight:700;
   margin-bottom:10px;
-  color:#0f172a;
 }
 
-/* ================= BUSCA ================= */
-.search{
-  width:100%;
+input{
   padding:10px;
   border-radius:10px;
   border:1px solid #e5e7eb;
   margin-bottom:10px;
 }
 
-/* ================= LISTA ================= */
 .list{
   flex:1;
   overflow:auto;
 }
 
 .item{
-  padding:10px;
-  border-bottom:1px solid #f1f5f9;
-  font-size:14px;
+  padding:8px;
+  border-bottom:1px solid #eee;
+  font-size:13px;
 }
 
-/* ================= FORM ================= */
-.form{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.form input{
-  flex:1;
-  padding:10px;
-  border-radius:10px;
-  border:1px solid #e5e7eb;
-}
-
-.btn{
+button{
   background:#2563eb;
   color:#fff;
   border:none;
-  padding:10px 14px;
+  padding:10px;
   border-radius:10px;
   cursor:pointer;
 }
-
-/* ================= RESPONSIVO ================= */
-@media(max-width:900px){
-  .grid{
-    grid-template-columns:1fr;
-  }
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
   <div class="grid">
 
-    <!-- FORNECEDORES / CLIENTES -->
+    <!-- PESSOAS -->
     <div class="card">
       <h2>Fornecedores / Clientes</h2>
-
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista1',this.value)">
-
-      <div class="list" id="lista1"></div>
-
-      <div class="form">
-        <input id="input1" placeholder="Nome">
-        <button class="btn" onclick="addItem('lista1','input1')">Adicionar</button>
-      </div>
+      <input placeholder="Buscar..." onkeyup="buscar('pessoas',this.value)">
+      <div class="list" id="pessoas"></div>
+      <input id="nomePessoa" placeholder="Nome">
+      <button onclick="addPessoa()">Adicionar</button>
     </div>
 
-    <!-- CONTAS BANCARIAS -->
+    <!-- CONTAS -->
     <div class="card">
       <h2>Contas Bancárias</h2>
-
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista2',this.value)">
-
-      <div class="list" id="lista2"></div>
-
-      <div class="form">
-        <input id="input2" placeholder="Banco / Conta">
-        <button class="btn" onclick="addItem('lista2','input2')">Adicionar</button>
-      </div>
+      <input placeholder="Buscar..." onkeyup="buscar('contas',this.value)">
+      <div class="list" id="contas"></div>
+      <input id="nomeConta" placeholder="Banco / Conta">
+      <button onclick="addConta()">Adicionar</button>
     </div>
 
-    <!-- PLANO DE CONTAS -->
+    <!-- PLANO -->
     <div class="card">
       <h2>Plano de Contas</h2>
-
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista3',this.value)">
-
-      <div class="list" id="lista3"></div>
-
-      <div class="form">
-        <input id="input3" placeholder="Ex: Despesas, Receita...">
-        <button class="btn" onclick="addItem('lista3','input3')">Adicionar</button>
-      </div>
+      <input placeholder="Buscar..." onkeyup="buscar('plano',this.value)">
+      <div class="list" id="plano"></div>
+      <input id="nomePlano" placeholder="Nome">
+      <button onclick="addPlano()">Adicionar</button>
     </div>
 
-    <!-- BLOCO VAZIO -->
+    <!-- VAZIO -->
     <div class="card">
-      <h2>Outros (em breve)</h2>
+      <h2>Outros</h2>
     </div>
 
   </div>
-
 </div>
 
 <script>
 
-/* ================= ADD ================= */
-function addItem(lista,input){
-  const valor = document.getElementById(input).value
-  if(!valor) return
+const sb = supabase.createClient(
+  "https://ehxrrpsiksceljmhsfxk.supabase.co",
+  "sb_publishable_Jm2ZQKzPS3gNPCKSjFAmYQ_WNMYwF1j"
+);
 
-  const div = document.createElement("div")
-  div.className="item"
-  div.innerText = valor
+/* ================= LOAD ================= */
 
-  document.getElementById(lista).prepend(div)
+async function carregar(){
 
-  document.getElementById(input).value=""
+  const {data:pessoas} = await sb.from("pessoas").select("*")
+  const {data:contas} = await sb.from("contas_bancarias").select("*")
+  const {data:plano} = await sb.from("plano_contas").select("*")
+
+  render("pessoas",pessoas)
+  render("contas",contas)
+  render("plano",plano)
 }
 
-/* ================= FILTRO ================= */
-function filtrar(lista,valor){
+function render(id,data){
+  const el = document.getElementById(id)
+  el.innerHTML=""
+
+  data.forEach(i=>{
+    const div = document.createElement("div")
+    div.className="item"
+    div.innerText = i.nome || i.banco
+    el.appendChild(div)
+  })
+}
+
+/* ================= ADD ================= */
+
+async function addPessoa(){
+  const nome = document.getElementById("nomePessoa").value
+
+  await sb.from("pessoas").insert([{nome,tipo:"FORNECEDOR"}])
+
+  carregar()
+}
+
+async function addConta(){
+  const nome = document.getElementById("nomeConta").value
+
+  await sb.from("contas_bancarias").insert([{banco:nome}])
+
+  carregar()
+}
+
+async function addPlano(){
+  const nome = document.getElementById("nomePlano").value
+
+  await sb.from("plano_contas").insert([{nome,tipo:"DESPESA"}])
+
+  carregar()
+}
+
+/* ================= BUSCA ================= */
+
+function buscar(lista,valor){
   valor = valor.toLowerCase()
 
   document.querySelectorAll(`#${lista} .item`).forEach(el=>{
     el.style.display = el.innerText.toLowerCase().includes(valor) ? "block":"none"
   })
 }
+
+carregar()
 
 </script>
 
