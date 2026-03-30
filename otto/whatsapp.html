@@ -789,14 +789,16 @@ container.innerHTML = ""
 
 for (const c of clientes){
 
-  const div = document.createElement("div")
+ const div = document.createElement("div")
 
-  const inicial = c.telefone.slice(-2)
+const inicial = c.telefone.slice(-2)
 
-  const pausado = await verificarPausa(c.telefone)
+const pausado = await verificarPausa(c.telefone)
 
-  div.className = pausado ? "client pausado" : "client"
+// 🔥 ESSA LINHA É A CORREÇÃO
+div.setAttribute("data-telefone", c.telefone)
 
+div.className = pausado ? "client pausado" : "client"
   div.innerHTML = `
 <div class="avatar">
   <img 
@@ -1371,8 +1373,10 @@ async function atualizarClientesSilencioso(){
         previewEl.innerText = c.mensagem
 
         // 🔥 efeito leve (sem travar UI)
-        card.style.transition = "0.2s"
-        card.style.background = "#dcfce7"
+card.parentNode.prepend(card)
+
+card.style.transition = "0.2s"
+card.style.background = "#dcfce7"
 
         setTimeout(()=>{
           card.style.background = ""
