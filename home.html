@@ -23,7 +23,7 @@
   --sidebar:#ffffff;
   --header:#ffffff;
 
-  --shadow:0 8px 25px rgba(0,0,0,.08);
+  --shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
 /* RESET */
@@ -46,16 +46,7 @@ body{
   width:100vw;
 }
 
-/* ===================== SIDEBAR ===================== */
-.nav-hover-zone{
-  position:fixed;
-  left:0;
-  top:0;
-  width:14px;
-  height:100vh;
-  z-index:50;
-}
-
+/* ================= SIDEBAR ================= */
 .sidebar{
   position:fixed;
   left:0;
@@ -64,49 +55,37 @@ body{
   height:100vh;
 
   background:var(--sidebar);
-
   border-right:1px solid var(--border);
 
   display:flex;
   flex-direction:column;
 
-  transform:translateX(-260px);
-  transition:.25s ease;
+  transform:translateX(-100%);
+  transition:.3s cubic-bezier(.4,0,.2,1);
+
   z-index:60;
-}
-
-
-
-/* MOBILE */
-.sidebar{
-  transform:translateX(-260px);
-  transition:.25s ease;
 }
 
 .sidebar.open{
   transform:translateX(0);
 }
 
-/* MOBILE */
-@media(max-width:768px){
-  .nav-hover-zone{display:none}
-  .sidebar{transform:translateX(-100%)}
-}
-
-/* ===================== LOGO ===================== */
+/* ================= LOGO ================= */
 .logo-area{
   padding:20px;
   text-align:center;
   border-bottom:1px solid var(--border);
 }
 
-.logo-area img{
-  width:150px;
+.logo-text{
+  font-size:20px;
+  font-weight:900;
+  color:var(--primary);
 }
 
-/* ===================== MENU ===================== */
+/* ================= MENU ================= */
 .menu{
-  padding:12px;
+  padding:14px;
   overflow-y:auto;
 }
 
@@ -121,14 +100,14 @@ body{
   font-size:14px;
   color:var(--text);
 
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;
-  transition:.15s;
+  transition:.2s;
 }
 
 .menu-item img{
   width:18px;
-  opacity:.6;
+  opacity:.7;
 }
 
 .menu-item:hover{
@@ -146,7 +125,7 @@ body{
 /* SUBMENU */
 .submenu{
   display:none;
-  margin:6px 0 12px 48px;
+  margin:6px 0 12px 44px;
 }
 
 .submenu a{
@@ -155,29 +134,14 @@ body{
   font-size:13px;
   color:var(--text-muted);
   border-radius:8px;
-  cursor:pointer;
 }
 
 .submenu a:hover{
-  background:#f1f5f9;
-  color:var(--primary);
-}
-
-.submenu a.active-sub{
   background:#eef2ff;
   color:var(--primary);
-  font-weight:600;
 }
 
-/* ===================== MAIN ===================== */
-.main{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-}
-
-/* ===================== HEADER ===================== */
+/* ================= HEADER ================= */
 .header{
   height:60px;
   background:var(--header);
@@ -190,33 +154,10 @@ body{
   padding:0 20px;
 
   box-shadow:var(--shadow);
+  z-index:10;
 }
 
-.logo-title{
-  font-size:18px;
-  font-weight:800;
-  color:var(--primary);
-  letter-spacing:1px;
-}
-
-.user-area{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  font-size:13px;
-  color:var(--text-muted);
-}
-
-.logout{
-  cursor:pointer;
-  font-weight:700;
-  color:var(--primary);
-}
-
-.logout:hover{
-  opacity:.8;
-}
-
+/* ================= BOTÕES ================= */
 .menu-mobile-btn{
   display:flex;
   align-items:center;
@@ -225,74 +166,39 @@ body{
   width:42px;
   height:42px;
 
-  border-radius:10px;
+  border-radius:12px;
 
   background:var(--primary-soft);
-  color:var(--primary);
-
-  font-size:20px;
-  font-weight:700;
 
   cursor:pointer;
   transition:.2s;
 
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
 
-/* HOVER */
+.menu-mobile-btn img{
+  width:18px;
+  filter: brightness(0) saturate(100%) invert(33%) sepia(98%) saturate(1200%) hue-rotate(210deg);
+}
+
 .menu-mobile-btn:hover{
   background:var(--primary);
-  color:#fff;
 }
 
-
-/* ===================== IFRAME ===================== */
-iframe{
-  border:none;
-  width:100%;
-  height:calc(100vh - 60px);
-  background:var(--bg);
+.menu-mobile-btn:hover img{
+  filter: brightness(0) invert(1);
 }
 
-/* ===================== SCROLL ===================== */
-.menu::-webkit-scrollbar{
-  width:6px;
-}
-
-.menu::-webkit-scrollbar-thumb{
-  background:#cbd5f5;
-  border-radius:10px;
-}
-
-
-
-
-
-
-.logo-text{
-  font-size:20px;
-  font-weight:900;
-  letter-spacing:.5px;
-
-  color:var(--primary);
-
-  text-align:center;
-  line-height:1.2;
-}
-
-
-
-
-
+/* BOTÃO VOLTAR */
 .btn-voltar{
-  width:36px;
-  height:36px;
+  width:40px;
+  height:40px;
 
   display:flex;
   align-items:center;
   justify-content:center;
 
-  border-radius:10px;
+  border-radius:12px;
 
   background:var(--primary-soft);
   color:var(--primary);
@@ -309,6 +215,15 @@ iframe{
   color:#fff;
 }
 
+/* ================= IFRAME ================= */
+iframe{
+  border:none;
+  width:100%;
+  height:calc(100vh - 60px);
+  background:var(--bg);
+}
+
+/* ================= OVERLAY ================= */
 .overlay{
   position:fixed;
   top:0;
@@ -316,8 +231,8 @@ iframe{
   width:100%;
   height:100%;
 
-  background:rgba(0,0,0,.3);
-  backdrop-filter:blur(3px);
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(4px);
 
   opacity:0;
   pointer-events:none;
@@ -329,6 +244,16 @@ iframe{
 .overlay.active{
   opacity:1;
   pointer-events:auto;
+}
+
+/* ================= SCROLL ================= */
+.menu::-webkit-scrollbar{
+  width:6px;
+}
+
+.menu::-webkit-scrollbar-thumb{
+  background:#cbd5f5;
+  border-radius:10px;
 }
 </style>
 </head>
