@@ -208,6 +208,8 @@ body.modal-open{
   gap:18px;
   padding:10px 6px 18px;
   overflow:visible;
+  position:relative;
+  z-index:2;
 }
 
 .modal-main h2{
@@ -1363,10 +1365,13 @@ cursor:pointer;
 
 select{
   position:relative;
-  z-index:5;
+  z-index:9999;
 }
-  
-  
+  .modal-body{
+  position:relative;
+  z-index:1;
+  overflow-y:auto;
+}
 </style>
 </head>
 
