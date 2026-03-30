@@ -309,31 +309,26 @@ iframe{
   color:#fff;
 }
 
-.menu-mobile-btn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
 
-  width:42px;
-  height:42px;
+  background:rgba(0,0,0,.3);
+  backdrop-filter:blur(3px);
 
-  border-radius:10px;
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
 
-  background:var(--primary-soft);
-  color:var(--primary);
-
-  font-size:20px;
-  font-weight:700;
-
-  cursor:pointer;
-  transition:.2s;
-
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  z-index:55;
 }
 
-.menu-mobile-btn:hover{
-  background:var(--primary);
-  color:#fff;
+.overlay.active{
+  opacity:1;
+  pointer-events:auto;
 }
 </style>
 </head>
@@ -435,7 +430,7 @@ iframe{
 
     <!-- BOTÃO MENU -->
     <div class="menu-mobile-btn" onclick="toggleMobileMenu()">
-      ☰
+      <img src="https://cdn-icons-png.flaticon.com/512/1828/1828859.png" style="width:18px;">
     </div>
 
     <!-- BOTÃO VOLTAR -->
@@ -470,12 +465,11 @@ el.style.display=el.style.display==="block"?"none":"block";
 
 function toggleMobileMenu(){
   const sidebar = document.querySelector(".sidebar");
+  const overlay = document.querySelector(".overlay");
 
   sidebar.classList.toggle("open");
-
-  localStorage.setItem("menuAberto", sidebar.classList.contains("open"));
+  overlay.classList.toggle("active");
 }
-
 
 
 function openPage(page){
