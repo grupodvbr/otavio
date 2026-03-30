@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Grupo DV • Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter}
+
+body{
+background:#f8fafc;
+color:#0f172a;
+}
+
+/* HEADER */
+.header{
+height:70px;
+background:#fff;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 30px;
+border-bottom:1px solid #e2e8f0;
+}
+
+.logo{
+font-size:20px;
+font-weight:800;
+color:#14c8a8;
+}
+
+/* HERO */
+.hero{
+padding:30px;
+}
+
+.hero h1{
+font-size:28px;
+font-weight:800;
+}
+
+.hero p{
+color:#64748b;
+margin-top:8px;
+}
+
+/* KPIS */
+.kpis{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+padding:0 30px;
+}
+
+.kpi{
+background:#fff;
+padding:18px;
+border-radius:16px;
+border:1px solid #e2e8f0;
+box-shadow:0 8px 25px rgba(0,0,0,.05);
+}
+
+.kpi-title{
+font-size:12px;
+color:#64748b;
+}
+
+.kpi-value{
+font-size:22px;
+font-weight:800;
+margin-top:5px;
+}
+
+/* GRID */
+.grid{
+padding:30px;
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+gap:20px;
+}
+
+/* CARD */
+.card{
+background:#fff;
+border-radius:18px;
+padding:20px;
+border:1px solid #e2e8f0;
+box-shadow:0 10px 30px rgba(0,0,0,.05);
+transition:.2s;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+
+.tag{
+font-size:11px;
+background:#ecfeff;
+color:#0ea58b;
+padding:4px 8px;
+border-radius:8px;
+display:inline-block;
+margin-bottom:10px;
+font-weight:700;
+}
+
+.title{
+font-weight:800;
+margin-bottom:5px;
+}
+
+.desc{
+font-size:13px;
+color:#64748b;
+margin-bottom:15px;
+}
+
+.btn{
+padding:10px;
+border:none;
+border-radius:10px;
+background:#14c8a8;
+color:#fff;
+font-weight:700;
+cursor:pointer;
+}
+
+.btn:hover{
+background:#0ea58b;
+}
+
+/* RESPONSIVO */
+@media(max-width:900px){
+.kpis{
+grid-template-columns:1fr;
+}
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">GRUPO DV</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Painel de Controle</h1>
+  <p>Gestão completa do seu restaurante e operação em um único sistema.</p>
+</div>
+
+<!-- KPIs -->
+<div class="kpis">
+
+  <div class="kpi">
+    <div class="kpi-title">Reservas hoje</div>
+    <div class="kpi-value" id="kpiReservas">12</div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-title">Conversas WhatsApp</div>
+    <div class="kpi-value" id="kpiWhats">48</div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-title">Requisições pendentes</div>
+    <div class="kpi-value" id="kpiReq">7</div>
+  </div>
+
+  <div class="kpi">
+    <div class="kpi-title">CMV Médio</div>
+    <div class="kpi-value" id="kpiCmv">32%</div>
+  </div>
+
+</div>
+
+<!-- MÓDULOS -->
+<div class="grid">
+
+  <div class="card">
+    <div>
+      <div class="tag">RESTAURANTE</div>
+      <div class="title">Ficha Técnica</div>
+      <div class="desc">Controle de custo, ingredientes e margem.</div>
+    </div>
+    <button class="btn" onclick="abrir('restaurante/fichas.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">COMPRAS</div>
+      <div class="title">Requisições</div>
+      <div class="desc">Gestão de pedidos internos.</div>
+    </div>
+    <button class="btn" onclick="abrir('restaurante/requisicoesdemercadorias.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">ATENDIMENTO</div>
+      <div class="title">Reservas</div>
+      <div class="desc">Controle de mesas e clientes.</div>
+    </div>
+    <button class="btn" onclick="abrir('restaurante/reservas.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">AUTOMAÇÃO</div>
+      <div class="title">WhatsApp</div>
+      <div class="desc">Gestão de conversas e bot.</div>
+    </div>
+    <button class="btn" onclick="abrir('otto/whatsapp.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">FINANCEIRO</div>
+      <div class="title">Cotações</div>
+      <div class="desc">Comparação e negociação de preços.</div>
+    </div>
+    <button class="btn" onclick="abrir('cotacao.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">ANÁLISE</div>
+      <div class="title">Dashboard Analítico</div>
+      <div class="desc">Indicadores e métricas.</div>
+    </div>
+    <button class="btn" onclick="abrir('dashboard.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">GESTÃO</div>
+      <div class="title">Empresas</div>
+      <div class="desc">Cadastro de fornecedores.</div>
+    </div>
+    <button class="btn" onclick="abrir('cadastroempresas.html')">Abrir</button>
+  </div>
+
+  <div class="card">
+    <div>
+      <div class="tag">LICITAÇÕES</div>
+      <div class="title">Licitações</div>
+      <div class="desc">Controle completo de processos.</div>
+    </div>
+    <button class="btn" onclick="abrir('licitacoes.html')">Abrir</button>
+  </div>
+
+</div>
+
+<script>
+function abrir(p){
+  window.location.href = p;
+}
+</script>
+
+</body>
+</html>
