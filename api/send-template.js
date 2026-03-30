@@ -1,13 +1,10 @@
-const fetch = require("node-fetch")
-const { createClient } = require("@supabase/supabase-js")
-
 module.exports = async function(req, res){
 
   try {
 
-    /* ================= DADOS ================= */
+    const { telefone, template, parametros = {} } = req.body
 
-    const { telefone, template, parametros = {} } = req.body || {}
+    /* ================= VALIDAÇÃO ================= */
 
     if(!telefone || !template){
       return res.status(400).json({
@@ -15,21 +12,19 @@ module.exports = async function(req, res){
       })
     }
 
-    const PHONE_ID = process.env.PHONE_NUMBER_ID
+    const PHONE_ID = process.env.PHONE_NUMBER_ID || "1047101948485043"
     const TOKEN = process.env.WHATSAPP_TOKEN
 
-    if(!TOKEN || !PHONE_ID){
+    if(!TOKEN){
       return res.status(500).json({
-        error: "TOKEN ou PHONE_ID não configurado"
+        error: "WHATSAPP_TOKEN não configurado"
       })
     }
-
-    const numero = telefone.replace(/\D/g,"")
 
     const url = `https://graph.facebook.com/v19.0/${PHONE_ID}/messages`
 
     console.log("📤 TEMPLATE:", template)
-    console.log("📞 TELEFONE:", numero)
+    console.log("📞 TELEFONE:", telefone)
 
     /* ================= IDIOMAS ================= */
 
@@ -43,15 +38,17 @@ module.exports = async function(req, res){
 
     if(!idioma){
       return res.status(400).json({
-        error: "Template não permitido"
+        error: "Template não permitido ou idioma não configurado"
       })
     }
 
-    /* ================= TEMPLATE ================= */
+    /* ================= FUNÇÃO TEMPLATE ================= */
 
-    function montarTemplate(){
+    function montarTemplate(template, parametros){
 
       switch(template){
+
+        /* ================= CONFIRMAÇÃO ================= */
 
         case "confirmao_de_reserva":
           return {
@@ -70,6 +67,8 @@ module.exports = async function(req, res){
             ]
           }
 
+        /* ================= RESERVA ESPECIAL (VIDEO) ================= */
+
         case "reserva_especial":
 
           if(!parametros.video){
@@ -85,12 +84,16 @@ module.exports = async function(req, res){
                 parameters: [
                   {
                     type: "video",
-                    video: { link: parametros.video }
+                    video: {
+                      link: parametros.video
+                    }
                   }
                 ]
               }
             ]
           }
+
+        /* ================= HELLO WORLD ================= */
 
         case "hello_world":
           return {
@@ -103,11 +106,13 @@ module.exports = async function(req, res){
       }
     }
 
-    const templateData = montarTemplate()
+    /* ================= MONTA TEMPLATE ================= */
+
+    const templateData = montarTemplate(template, parametros)
 
     if(!templateData){
       return res.status(400).json({
-        error: "Template inválido"
+        error: "Template não configurado"
       })
     }
 
@@ -115,14 +120,14 @@ module.exports = async function(req, res){
 
     const payload = {
       messaging_product: "whatsapp",
-      to: numero,
+      to: telefone,
       type: "template",
       template: templateData
     }
 
     console.log("📦 PAYLOAD:", JSON.stringify(payload, null, 2))
 
-    /* ================= ENVIO META ================= */
+    /* ================= ENVIO ================= */
 
     const resp = await fetch(url,{
       method:"POST",
@@ -133,69 +138,19 @@ module.exports = async function(req, res){
       body: JSON.stringify(payload)
     })
 
-    let data
+    const data = await resp.json()
 
-    try{
-      data = await resp.json()
-    }catch{
-      const text = await resp.text()
+    console.log("📩 META RESPONSE:", data)
 
-      console.error("❌ META NÃO JSON:", text)
+if(data.error){
+  console.log("❌ ERRO META DETALHADO:", JSON.stringify(data.error, null, 2))
 
-      return res.status(500).json({
-        error: "Meta retornou resposta inválida",
-        raw: text
-      })
-    }
+  return res.status(500).json({
+    error: data.error
+  })
+}
 
-    /* ================= ERRO META ================= */
-
-    if(!resp.ok || data.error){
-      console.error("❌ ERRO META:", JSON.stringify(data, null, 2))
-
-      return res.status(500).json({
-        error: data
-      })
-    }
-
-    console.log("📩 META OK:", data)
-
-    /* ================= SALVAR SUPABASE ================= */
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE
-    )
-
-    const messageId =
-      data?.messages?.[0]?.id ||
-      data?.data?.messages?.[0]?.id ||
-      null
-
-    const { error } = await supabase
-      .from("conversas_whatsapp")
-      .insert({
-        telefone: numero,
-        mensagem: JSON.stringify({
-          template,
-          parametros
-        }),
-        tipo: "template",
-        role: "assistant",
-        message_id: messageId,
-        status: "sent",
-        created_at: new Date().toISOString()
-      })
-
-    if(error){
-      console.error("❌ ERRO SUPABASE:", error)
-    }else{
-      console.log("💾 SALVO NO BANCO")
-    }
-
-    /* ================= RESPOSTA FINAL ================= */
-
-    return res.status(200).json({
+    return res.json({
       ok:true,
       enviado:true,
       template,
@@ -204,10 +159,10 @@ module.exports = async function(req, res){
 
   } catch (err){
 
-    console.error("🔥 ERRO GERAL:", err)
+    console.error("🔥 ERRO:", err)
 
     return res.status(500).json({
-      error: err.message || err
+      error: err.message
     })
   }
 
