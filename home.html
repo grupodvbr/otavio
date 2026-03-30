@@ -300,7 +300,34 @@ iframe{
 .sidebar.open + .menu-indicator{
   background: rgba(37, 99, 235, 0.9);
 }
-  
+
+
+
+
+.btn-voltar{
+  width:36px;
+  height:36px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:10px;
+
+  background:var(--primary-soft);
+  color:var(--primary);
+
+  font-size:18px;
+  font-weight:800;
+
+  cursor:pointer;
+  transition:.2s;
+}
+
+.btn-voltar:hover{
+  background:var(--primary);
+  color:#fff;
+}
 </style>
 </head>
 
@@ -407,9 +434,17 @@ iframe{
   <div class="main">
 
     <div class="header">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
-      </div>
+<div style="display:flex;align-items:center;gap:12px">
+
+  <!-- BOTÃO VOLTAR -->
+  <div class="btn-voltar" onclick="voltarPagina()">
+    ←
+  </div>
+
+  <!-- MENU -->
+  <div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
+
+</div>
 
       <div class="user-area">
         <span id="userMail"></span>
@@ -479,6 +514,11 @@ window.onload = function(){
     highlightMenu(paginaSalva);
   }
 
+}
+
+
+function voltarPagina(){
+  window.history.back();
 }
 </script>
 
