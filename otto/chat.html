@@ -237,17 +237,17 @@ function hora(d){
 let data
 
 if(d.includes("Z")){
-  // veio do Supabase (UTC)
   data = new Date(d)
 }else{
-  // veio do seu envio local
   data = new Date(d.replace(" ", "T"))
 }
 
+/* 🔥 CORREÇÃO: REMOVE 3 HORAS */
+data.setHours(data.getHours() - 3)
+
 return new Intl.DateTimeFormat("pt-BR",{
   hour:"2-digit",
-  minute:"2-digit",
-  timeZone:"America/Bahia"
+  minute:"2-digit"
 }).format(data)
 
 }
