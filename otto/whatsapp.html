@@ -684,7 +684,7 @@ schema:"public",
 table:"controle_bot"
 },
 payload=>{
-carregarClientes()
+  atualizarClientesSilencioso()
 }
 )
 .subscribe()
@@ -697,7 +697,6 @@ let clienteSelecionado = null
 /* ================= CARREGAR CLIENTES ================= */
 
 async function carregarClientes(){
-document.getElementById("frameChat").src = ""
 const {data} = await db
 .from("conversas_whatsapp")
 .select("*")
@@ -1255,10 +1254,92 @@ if(sendBox){
 }
 
 
-  
+ let atualizando = false
 
+async function atualizarClientesSilencioso(){
 
+  if(atualizando) return
+  atualizando = true
 
+  try{
+
+    const container = document.getElementById("clientes")
+
+    const {data} = await db
+    .from("conversas_whatsapp")
+    .select("telefone,mensagem,created_at")
+    .order("created_at",{ascending:false})
+    .limit(50) // 🔥 evita travamento
+
+    const {data:memoria} = await db
+    .from("memoria_clientes")
+    .select("telefone,nome")
+
+    /* nomes */
+    const nomesTemp = {}
+    memoria.forEach(c=>{
+      nomesTemp[c.telefone] = c.nome
+    })
+
+    /* agrupar */
+    const map = {}
+    data.forEach(m=>{
+      if(!map[m.telefone]) map[m.telefone] = m
+    })
+
+    const clientes = Object.values(map)
+
+    /* 🔥 LOOP CORRETO (SEM forEach async) */
+    for(const c of clientes){
+
+      let card = document.querySelector(`[data-telefone="${c.telefone}"]`)
+
+      const pausado = await verificarPausa(c.telefone)
+      const nome = nomesTemp[c.telefone] || c.telefone
+
+      /* 🔥 SE NÃO EXISTE → IGNORA (NÃO CRIA) */
+      if(!card) continue
+
+      /* 🔥 ATUALIZA SEM RECRIAR */
+      const phoneEl = card.querySelector(".phone")
+      const previewEl = card.querySelector(".preview")
+      const statusEl = card.querySelector(".status")
+
+      if(phoneEl && phoneEl.innerText !== nome){
+        phoneEl.innerText = nome
+      }
+
+      if(previewEl && previewEl.innerText !== c.mensagem){
+        previewEl.innerText = c.mensagem
+
+        // 🔥 efeito leve (sem travar UI)
+        card.style.transition = "0.2s"
+        card.style.background = "#dcfce7"
+
+        setTimeout(()=>{
+          card.style.background = ""
+        },300)
+      }
+
+      if(statusEl){
+        statusEl.innerHTML = `● ${pausado?'BOT PAUSADO':'BOT ATIVO'}`
+        statusEl.className = "status " + (pausado ? "off" : "on")
+      }
+
+    }
+
+  }catch(err){
+    console.error("Erro atualização:", err)
+  }
+
+  atualizando = false
+}
+
+/* ================= INTERVALO ================= */
+
+setInterval(() => {
+  atualizarClientesSilencioso()
+}, 5000)
 
 
 
