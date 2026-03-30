@@ -202,6 +202,11 @@ flex-direction:column;
 padding:10px;
 gap:5px;
 ">
+
+<button onclick="enviarTemplate('confirmao_de_reserva')">Reserva</button>
+<button onclick="enviarTemplate('reserva_especial')">Sala VIP</button>
+<button onclick="enviarTemplate('hello_world')">Teste</button>
+
 </div>
 
 
@@ -599,40 +604,11 @@ preview.style.display="none"
 iniciar()
 
 
-async function abrirTemplates(){
-
+function abrirTemplates(){
   const menu = document.getElementById("menuTemplates")
-
-  if(menu.style.display === "flex"){
-    menu.style.display = "none"
-    return
-  }
-
-  menu.style.display = "flex"
-
-  await carregarTemplates()
-
-}async function carregarTemplates(){
-
-  const resp = await fetch("/api/templates")
-  const data = await resp.json()
-
-  const container = document.getElementById("menuTemplates")
-  container.innerHTML = ""
-
-  data.templates.forEach(t => {
-
-    const btn = document.createElement("button")
-
-    btn.innerText = t.name
-
-    btn.onclick = () => enviarTemplate(t.name)
-
-    container.appendChild(btn)
-
-  })
-
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex"
 }
+
 async function enviarTemplate(nome){
 
   if(!telefone) return
@@ -641,18 +617,24 @@ async function enviarTemplate(nome){
 
   let parametros = {}
 
-let parametros = {}
-
-/* 🔥 opcional: você pode manter regras específicas aqui se quiser */
-
-if(nome.includes("reserva")){
-  parametros = {
-    nome: "Cliente",
-    data: "20/03",
-    hora: "20:00",
-    pessoas: "2"
+  if(nome === "confirmao_de_reserva"){
+    parametros = {
+      nome: "Cliente",
+      data: "20/03",
+      hora: "20:00",
+      pessoas: "2"
+    }
   }
-}
+
+  if(nome === "reserva_especial"){
+    parametros = {
+      video: "https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Video%202026-03-10%20at%2021.08.40.mp4"
+    }
+  }
+
+  if(nome === "hello_world"){
+    parametros = {}
+  }
 
   try{
 
