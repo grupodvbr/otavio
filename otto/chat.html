@@ -463,22 +463,43 @@ function realtime(){
 if(canal) db.removeChannel(canal)
 
 canal = db.channel("chat-"+telefone)
+
 .on("postgres_changes",{
-event:"*",
-schema:"public",
-table:"conversas_whatsapp",
-filter:`telefone=eq.${telefone}`
+  event:"INSERT",
+  schema:"public",
+  table:"conversas_whatsapp",
+  filter:`telefone=eq.${telefone}`
 },payload=>{
 
-render(payload.new)
+  const m = payload.new
 
-if(msgs.scrollTop > msgs.scrollHeight - msgs.clientHeight - 200){
-scrollBottom()
-}
+  // 🔥 evita duplicar mensagem já renderizada
+  if(mensagensIds.has(m.id)) return
+
+  render(m)
+
+  // auto scroll inteligente
+  if(msgs.scrollTop > msgs.scrollHeight - msgs.clientHeight - 200){
+    scrollBottom()
+  }
 
 })
-.subscribe()
 
+.on("postgres_changes",{
+  event:"UPDATE",
+  schema:"public",
+  table:"conversas_whatsapp",
+  filter:`telefone=eq.${telefone}`
+},payload=>{
+
+  const m = payload.new
+
+  // 🔥 atualiza status (✓ ✓✓ azul etc)
+  render(m)
+
+})
+
+.subscribe()
 }
 
 /* ===== PREVIEW ===== */
@@ -532,8 +553,10 @@ if(!telefone) return
 
 const texto = msg.value.trim()
 
+const tempId = "temp-"+Date.now()
+
 const temp = {
-id:"temp-"+Date.now(),
+id: tempId,
 mensagem:texto,
 created_at:new Date().toLocaleString("sv-SE").replace("T"," "),
   role:"assistant",
@@ -585,15 +608,25 @@ const messageId = send?.message_id
 
 /* BANCO */
 await db.from("conversas_whatsapp").insert({
-telefone,
-mensagem:texto,
-tipo,
-media_url:media,
-nome_arquivo:nomeArquivo,
-role:"assistant",
-message_id: messageId,
-status: "sent"
+  telefone,
+  mensagem:texto,
+  tipo,
+  media_url:media,
+  nome_arquivo:nomeArquivo,
+  role:"assistant",
+  message_id: messageId,
+  status:"sent"
+}).select().single().then(({data})=>{
+  
+  // 🔥 substitui temp pelo real
+  const tempEl = document.getElementById(tempId)
+  if(tempEl && data?.id){
+    tempEl.id = data.id
+    mensagensIds.add(data.id)
+  }
+
 })
+  
 
 arquivo=null
 preview.style.display="none"
