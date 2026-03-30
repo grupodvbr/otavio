@@ -1861,6 +1861,7 @@ c.addEventListener("click", async () => {
       ${p.foto_url ? `<img src="${p.foto_url}">` : ``}
       <div class="card-body">
         <h3>${p.nome}</h3>
+        ${p.tempo_preparo ? `<div class="badge">⏱ ${p.tempo_preparo} min</div>` : ""}
         <p class="desc-card">${p.descricao || ""}</p>
         <div class="card-stats">
           <div class="stat blue">📦 Tipo<b>${p.tipo || "—"}</b></div>
