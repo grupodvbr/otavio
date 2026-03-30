@@ -81,10 +81,19 @@ body{
 }
 
 /* MOBILE */
+.sidebar{
+  transform:translateX(-260px);
+  transition:.25s ease;
+}
+
+.sidebar.open{
+  transform:translateX(0);
+}
+
+/* MOBILE */
 @media(max-width:768px){
   .nav-hover-zone{display:none}
   .sidebar{transform:translateX(-100%)}
-  .sidebar.open{transform:translateX(0)}
 }
 
 /* ===================== LOGO ===================== */
@@ -431,15 +440,25 @@ el.style.display=el.style.display==="block"?"none":"block";
 }
 
 function toggleMobileMenu(){
-document.querySelector(".sidebar").classList.toggle("open");
+  const sidebar = document.querySelector(".sidebar");
+
+  if(sidebar.classList.contains("open")){
+    sidebar.classList.remove("open");
+  } else {
+    sidebar.classList.add("open");
+  }
 }
 
 function openPage(page){
-document.getElementById("frame").src=page;
-highlightMenu(page);
-if(window.innerWidth<=768){
-document.querySelector(".sidebar").classList.remove("open");
-}
+  document.getElementById("frame").src = page;
+
+  localStorage.setItem("paginaAtual", page); // 🔥 salva
+
+  highlightMenu(page);
+
+  if(window.innerWidth<=768){
+    document.querySelector(".sidebar").classList.remove("open");
+  }
 }
 
 function highlightMenu(page){
@@ -456,6 +475,17 @@ sub.closest(".submenu").style.display="block";
 function logout(){
 localStorage.removeItem("usuarioEmail");
 location.href="login.html";
+}
+
+window.onload = function(){
+
+  const paginaSalva = localStorage.getItem("paginaAtual");
+
+  if(paginaSalva){
+    document.getElementById("frame").src = paginaSalva;
+    highlightMenu(paginaSalva);
+  }
+
 }
 </script>
 
