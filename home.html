@@ -265,35 +265,7 @@ iframe{
   line-height:1.2;
 }
 
-.menu-indicator{
-  position:fixed;
-  left:0;
-  top:80px; /* 👈 AGORA FICA EM CIMA */
-  bottom:auto;
-
-  width:50px;
-  height:50px;
-
-  background: rgba(37, 99, 235, 0.9);
-  backdrop-filter: blur(10px);
-
-  color:#fff;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  border-radius:0 12px 12px 0;
-
-  font-size:22px;
-
-  cursor:pointer;
-
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
-
-  z-index:70;
-  transition:.2s;
-}
+.
 .menu-indicator:hover{
   background:#1d4ed8;
 }
@@ -421,32 +393,33 @@ iframe{
 </div>
   </div>
 
-  <!-- BOTÃO LATERAL (AGORA CORRETO) -->
-  <div class="menu-indicator" onclick="toggleMobileMenu()">
-    ☰
-  </div>
+
 
   <!-- MAIN -->
   <div class="main">
 
-    <div class="header">
-<div style="display:flex;align-items:center;gap:12px">
+<div class="header">
 
-  <!-- BOTÃO VOLTAR -->
-<div class="btn-voltar" onclick="voltarPagina()">
-  ←
-</div>
+  <div style="display:flex;align-items:center;gap:10px">
 
-  <!-- MENU -->
-  <div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
-
-</div>
-
-      <div class="user-area">
-        <span id="userMail"></span>
-        <span class="logout" onclick="logout()">SAIR</span>
-      </div>
+    <!-- MENU (AGORA PRIMEIRO) -->
+    <div class="menu-mobile-btn" onclick="toggleMobileMenu()">
+      ☰
     </div>
+
+    <!-- VOLTAR -->
+    <div class="btn-voltar" onclick="voltarPagina()">
+      ←
+    </div>
+
+  </div>
+
+  <div class="user-area">
+    <span id="userMail"></span>
+    <span class="logout" onclick="logout()">SAIR</span>
+  </div>
+
+</div>
 
 <iframe id="frame" src="inicio/dashboard.html"></iframe>
 </div>
