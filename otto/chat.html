@@ -378,8 +378,9 @@ return html
 
 function render(m,top=false){
 
-const existente = document.getElementById(m.id)
+const id = m.id || m.message_id
 
+const existente = document.getElementById(id)
 if(existente){
   existente.innerHTML = gerarHTML(m)
   return
@@ -398,7 +399,10 @@ if(label !== ultimaDataRender){
 }
 
 const div = document.createElement("div")
-div.id = m.id || m.message_id
+const id = m.id || m.message_id
+
+div.id = id
+mensagensIds.add(id)
 div.className = "msg " + (m.role==="assistant"?"assistant":"user")
 
 div.innerHTML = gerarHTML(m)
@@ -474,8 +478,9 @@ canal = db.channel("chat-"+telefone)
   const m = payload.new
 
   // 🔥 evita duplicar mensagem já renderizada
-  if(mensagensIds.has(m.id)) return
+const id = m.id || m.message_id
 
+if(mensagensIds.has(id)) return
   render(m)
 
   // auto scroll inteligente
