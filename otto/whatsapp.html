@@ -671,11 +671,11 @@ const db = supabase.createClient(
 )
 
 /* ===== PERMISSÃO ===== */
-if ("Notification" in window) {
-  if (Notification.permission !== "granted") {
+document.addEventListener("click", () => {
+  if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission()
   }
-}
+}, { once: true })
   
 let pagina = 0
 const limite = 20
@@ -707,7 +707,8 @@ db
   {
     event:"INSERT",
     schema:"public",
-    table:"conversas_whatsapp"
+    table:"conversas_whatsapp",
+    filter:`telefone=neq.null`
   },
   payload => {
 
@@ -1358,8 +1359,10 @@ async function atualizarClientesSilencioso(){
       const nome = nomesTemp[c.telefone] || c.telefone
 
       /* 🔥 SE NÃO EXISTE → IGNORA (NÃO CRIA) */
-      if(!card) continue
-
+if(!card){
+  await carregarClientes()
+  break
+}
       /* 🔥 ATUALIZA SEM RECRIAR */
       const phoneEl = card.querySelector(".phone")
       const previewEl = card.querySelector(".preview")
