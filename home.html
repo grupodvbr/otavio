@@ -265,41 +265,6 @@ iframe{
   line-height:1.2;
 }
 
-.menu-indicator{
-  position:fixed;
-  left:0;
-  bottom:20px; /* 👈 agora fica embaixo */
-
-  width:50px;
-  height:50px;
-
-  background: rgba(37, 99, 235, 0.9);
-  backdrop-filter: blur(10px);
-
-  color:#fff;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  border-radius:0 12px 12px 0;
-
-  font-size:22px;
-
-  cursor:pointer;
-
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
-
-  z-index:70;
-  transition:.2s;
-}
-.menu-indicator:hover{
-  background:#1d4ed8;
-}
-
-.sidebar.open + .menu-indicator{
-  background: rgba(37, 99, 235, 0.9);
-}
 
 
 
@@ -325,6 +290,33 @@ iframe{
 }
 
 .btn-voltar:hover{
+  background:var(--primary);
+  color:#fff;
+}
+
+.menu-mobile-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:42px;
+  height:42px;
+
+  border-radius:10px;
+
+  background:var(--primary-soft);
+  color:var(--primary);
+
+  font-size:20px;
+  font-weight:700;
+
+  cursor:pointer;
+  transition:.2s;
+
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.menu-mobile-btn:hover{
   background:var(--primary);
   color:#fff;
 }
@@ -420,32 +412,30 @@ iframe{
 </div>
   </div>
 
-  <!-- BOTÃO LATERAL (AGORA CORRETO) -->
-  <div class="menu-indicator" onclick="toggleMobileMenu()">
-    ☰
+
+
+ <div class="header">
+
+  <div style="display:flex;align-items:center;gap:12px">
+
+    <!-- BOTÃO MENU -->
+    <div class="menu-mobile-btn" onclick="toggleMobileMenu()">
+      ☰
+    </div>
+
+    <!-- BOTÃO VOLTAR -->
+    <div class="btn-voltar" onclick="voltarPagina()">
+      ←
+    </div>
+
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
-
-    <div class="header">
-<div style="display:flex;align-items:center;gap:12px">
-
-  <!-- BOTÃO VOLTAR -->
-<div class="btn-voltar" onclick="voltarPagina()">
-  ←
-</div>
-
-  <!-- MENU -->
-  <div class="menu-mobile-btn" onclick="toggleMobileMenu()">☰</div>
+  <div class="user-area">
+    <span id="userMail"></span>
+    <span class="logout" onclick="logout()">SAIR</span>
+  </div>
 
 </div>
-
-      <div class="user-area">
-        <span id="userMail"></span>
-        <span class="logout" onclick="logout()">SAIR</span>
-      </div>
-    </div>
 
 <iframe id="frame" src="inicio/dashboard.html"></iframe>
 </div>
