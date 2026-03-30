@@ -327,6 +327,28 @@ iframe{
 .menu-mobile-btn:hover{
   background:#1d4ed8;
 }
+
+.overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(3px);
+
+  opacity:0;
+  pointer-events:none;
+  transition:.25s;
+
+  z-index:55;
+}
+
+.overlay.active{
+  opacity:1;
+  pointer-events:auto;
+}
 </style>
 </head>
 
@@ -337,7 +359,7 @@ iframe{
 
   <!-- SIDEBAR -->
   <div class="sidebar">
-
+<div class="overlay" onclick="toggleMobileMenu()"></div>
     <div class="logo-area">
       <div class="logo-text">
         MERCATTO DELÍCIA
@@ -465,12 +487,13 @@ el.style.display=el.style.display==="block"?"none":"block";
 
 function toggleMobileMenu(){
   const sidebar = document.querySelector(".sidebar");
+  const overlay = document.querySelector(".overlay");
 
   sidebar.classList.toggle("open");
+  overlay.classList.toggle("active");
 
   localStorage.setItem("menuAberto", sidebar.classList.contains("open"));
 }
-
 
 
 function openPage(page){
@@ -482,6 +505,7 @@ function openPage(page){
 
   // 🔥 FECHA SEMPRE (desktop + mobile)
   document.querySelector(".sidebar").classList.remove("open");
+  document.querySelector(".overlay").classList.remove("active");
 }
 
 function highlightMenu(page){
