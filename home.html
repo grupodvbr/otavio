@@ -442,11 +442,25 @@ el.style.display=el.style.display==="block"?"none":"block";
 function toggleMobileMenu(){
   const sidebar = document.querySelector(".sidebar");
 
-  if(sidebar.classList.contains("open")){
-    sidebar.classList.remove("open");
-  } else {
-    sidebar.classList.add("open");
+  sidebar.classList.toggle("open");
+
+  localStorage.setItem("menuAberto", sidebar.classList.contains("open"));
+}
+
+window.onload = function(){
+
+  const paginaSalva = localStorage.getItem("paginaAtual");
+  const menuAberto = localStorage.getItem("menuAberto");
+
+  if(paginaSalva){
+    document.getElementById("frame").src = paginaSalva;
+    highlightMenu(paginaSalva);
   }
+
+  if(menuAberto === "true"){
+    document.querySelector(".sidebar").classList.add("open");
+  }
+
 }
 
 function openPage(page){
