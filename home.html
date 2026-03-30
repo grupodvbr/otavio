@@ -75,10 +75,7 @@ body{
   z-index:60;
 }
 
-.nav-hover-zone:hover + .sidebar,
-.sidebar:hover{
-  transform:translateX(0);
-}
+
 
 /* MOBILE */
 .sidebar{
@@ -447,21 +444,7 @@ function toggleMobileMenu(){
   localStorage.setItem("menuAberto", sidebar.classList.contains("open"));
 }
 
-window.onload = function(){
 
-  const paginaSalva = localStorage.getItem("paginaAtual");
-  const menuAberto = localStorage.getItem("menuAberto");
-
-  if(paginaSalva){
-    document.getElementById("frame").src = paginaSalva;
-    highlightMenu(paginaSalva);
-  }
-
-  if(menuAberto === "true"){
-    document.querySelector(".sidebar").classList.add("open");
-  }
-
-}
 
 function openPage(page){
   document.getElementById("frame").src = page;
