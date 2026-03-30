@@ -453,9 +453,28 @@ return res.status(200).end()
 
 /* IGNORA EVENTOS DE STATUS */
 
+/* ================= TRATAR STATUS ================= */
+
+if(change.statuses){
+
+  const status = change.statuses[0]
+
+  console.log("📩 STATUS RECEBIDO:", status.status)
+
+  await supabase
+  .from("conversas_whatsapp")
+  .update({
+    status: status.status // sent, delivered, read
+  })
+  .eq("message_id", status.id)
+
+  return res.status(200).end()
+}
+
+/* ================= CONTINUA NORMAL ================= */
+
 if(!change.messages){
-console.log("Evento sem mensagem (status)")
-return res.status(200).end()
+  return res.status(200).end()
 }
 
 const mensagensRecebidas = change.messages || []
@@ -1292,13 +1311,15 @@ await supabase
 .from("conversas_whatsapp")
 .insert({
   telefone:cliente,
-mensagem:
-  mensagem ||
-  (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
+  mensagem:
+    mensagem ||
+    (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
   tipo,
   media_url,
   nome_arquivo,
-  role:"user"
+  role:"user",
+  message_id: message_id, // 🔥 ESSENCIAL
+  status: "received"      // 🔥 ESSENCIAL
 })
 
 if(querEndereco){
@@ -2508,12 +2529,32 @@ console.log("Erro ao processar reserva:",e)
 
 /* ================= SALVAR RESPOSTA ================= */
 
+const envio = await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{body:resposta}
+})
+})
+
+const retorno = await envio.json()
+
+const messageId = retorno?.messages?.[0]?.id
+
 await supabase
 .from("conversas_whatsapp")
 .insert({
-telefone:cliente,
-mensagem:resposta,
-role:"assistant"
+  telefone:cliente,
+  mensagem:resposta,
+  role:"assistant",
+  message_id: messageId, // 🔥 ESSENCIAL
+  status:"sent"          // 🔥 ESSENCIAL
 })
 /* ================= TEMPO NATURAL ================= */
 
