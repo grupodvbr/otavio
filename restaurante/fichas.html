@@ -2073,8 +2073,21 @@ mBody.innerHTML = `
 
 </div>
 
-<hr>
+<!-- 🔥 AQUI É O LUGAR EXATO -->
+<div style="margin-top:10px">
+  <label style="font-weight:800;font-size:13px">
+    ⏱ TEMPO DE PREPARO (MIN)
+  </label>
 
+  <input 
+    id="tempoPreparo"
+    type="number"
+    placeholder="Ex: 25"
+    style="margin-top:6px"
+  >
+</div>
+
+<hr>
 <hr>
 
 <div class="resumo">
@@ -2487,6 +2500,30 @@ setTimeout(() => {
   const valorInicial = (p.descricao || "").trim();
 
   desc.onblur = async () => {
+setTimeout(() => {
+  const tempo = document.getElementById("tempoPreparo");
+  if (!tempo) return;
+
+  const valorInicial = Number(p.tempo_preparo || 0);
+
+  tempo.value = valorInicial || "";
+
+  tempo.onblur = async () => {
+    const novo = Number(tempo.value || 0);
+
+    if (novo === valorInicial) return;
+
+    await sb
+      .from("buffet")
+      .update({ tempo_preparo: novo })
+      .eq("id", pratoAtual.id);
+
+    await carregarPratos();
+    aplicarFiltros();
+  };
+}, 0);
+
+    
     const textoAtual = desc.value.trim();
     if (textoAtual === valorInicial) return;
 
