@@ -2475,6 +2475,29 @@ setTimeout(() => {
 
 setTimeout(() => {
   const desc = document.getElementById("descricaoPrato");
+
+  setTimeout(() => {
+  const tempo = document.getElementById("tempoPreparo");
+  if (!tempo) return;
+
+  const valorInicial = Number(pratoAtual.tempo_preparo || 0);
+
+  tempo.value = valorInicial || "";
+
+  tempo.onblur = async () => {
+    const novo = Number(tempo.value || 0);
+
+    if (novo === valorInicial) return;
+
+    await sb
+      .from("buffet")
+      .update({ tempo_preparo: novo })
+      .eq("id", pratoAtual.id);
+
+    await carregarPratos();
+    aplicarFiltros();
+  };
+}, 0);
   if (!desc) return;
 
   const valorInicial = (p.descricao || "").trim();
