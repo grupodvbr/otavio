@@ -2,201 +2,177 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Configurações Financeiras</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes e Fornecedores</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 
-/* ================= BASE ================= */
-:root{
-  --primary:#2563eb;
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --border:#e5e7eb;
-  --text:#0f172a;
-  --muted:#64748b;
-  --shadow:0 20px 60px rgba(0,0,0,.08);
-}
+body{margin:0;font-family:Inter;background:#f1f5f9}
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Inter;
-}
-
-body{
-  background:var(--bg);
-}
-
-/* ================= HEADER ================= */
+/* HEADER */
 .header{
-  height:60px;
   background:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  border-bottom:1px solid var(--border);
+  padding:14px 20px;
   font-weight:800;
+  border-bottom:1px solid #e5e7eb;
 }
 
-/* ================= GRID ================= */
-.container{
-  padding:20px;
+/* FILTRO */
+.filters{
+  background:#fff;
+  padding:14px;
+  display:flex;
+  gap:10px;
+}
+
+input{
+  height:36px;
+  border:1px solid #ddd;
+  border-radius:6px;
+  padding:0 10px;
+}
+
+/* BOTÃO */
+.btn{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* TABELA */
+.table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.table th,.table td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  font-size:13px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal-box{
+  width:1000px;
+  background:#fff;
+  border-radius:10px;
+}
+
+.tabs{
+  display:flex;
+  border-bottom:1px solid #ddd;
+}
+
+.tab{
+  padding:10px;
+  cursor:pointer;
+}
+
+.tab.active{
+  border-bottom:3px solid blue;
+}
+
+.form{
+  padding:12px;
 }
 
 .grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
 }
 
-/* ================= CARD ================= */
-.card{
-  background:var(--card);
-  border-radius:18px;
-  padding:16px;
-  box-shadow:var(--shadow);
-  display:flex;
-  flex-direction:column;
-  height:420px;
-}
-
-.card h2{
-  font-size:15px;
-  font-weight:800;
-  margin-bottom:10px;
-}
-
-/* ================= BUSCA ================= */
-.search{
-  height:38px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  padding:0 10px;
-  margin-bottom:10px;
-}
-
-/* ================= LISTA ================= */
-.list{
-  flex:1;
-  overflow:auto;
-}
-
-.item{
-  padding:10px;
-  border-bottom:1px solid #f1f5f9;
-  font-size:13px;
-  display:flex;
-  justify-content:space-between;
-}
-
-/* ================= FORM ================= */
-.form{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.form input{
-  flex:1;
-  height:38px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  padding:0 10px;
-}
-
-.btn{
-  height:38px;
-  padding:0 14px;
-  border:none;
-  border-radius:10px;
-  background:var(--primary);
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.btn-delete{
-  background:#ef4444;
-  font-size:11px;
-  padding:4px 8px;
-}
-
-/* ================= RESPONSIVO ================= */
-@media(max-width:900px){
-  .grid{
-    grid-template-columns:1fr;
-  }
-}
+.hidden{display:none}
 
 </style>
 </head>
 
 <body>
 
-<div class="header">
-  Configurações Financeiras
+<div class="header">Clientes e Fornecedores</div>
+
+<div class="filters">
+<input id="busca" placeholder="Buscar...">
+<button class="btn" onclick="abrir()">+ Cadastrar</button>
 </div>
 
-<div class="container">
+<table class="table">
+<thead>
+<tr>
+<th>Nome</th>
+<th>Documento</th>
+<th>Telefone</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
-  <div class="grid">
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="modal-box">
 
-    <!-- PESSOAS -->
-    <div class="card">
-      <h2>Fornecedores / Clientes</h2>
+<div class="tabs">
+<div class="tab active" onclick="tab(0)">Dados</div>
+<div class="tab" onclick="tab(1)">Endereço</div>
+<div class="tab" onclick="tab(2)">Financeiro</div>
+<div class="tab" onclick="tab(3)">Obs</div>
+</div>
 
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('pessoas',this.value)">
+<!-- DADOS -->
+<div class="form tab-content">
+<div class="grid">
+<input id="nome" placeholder="Nome">
+<input id="doc" placeholder="CPF/CNPJ">
+<input id="tel" placeholder="Telefone">
+<input id="email" placeholder="Email">
+<input id="codigo" placeholder="Código externo">
+</div>
+</div>
 
-      <div class="list" id="pessoas"></div>
+<!-- ENDEREÇO -->
+<div class="form tab-content hidden">
+<div class="grid">
+<input id="cep" placeholder="CEP">
+<input id="log" placeholder="Logradouro">
+<input id="num" placeholder="Número">
+<input id="bairro" placeholder="Bairro">
+<input id="cidade" placeholder="Cidade">
+</div>
+</div>
 
-      <div class="form">
-        <input id="inputPessoa" placeholder="Nome">
-        <button class="btn" onclick="addPessoa()">Adicionar</button>
-      </div>
-    </div>
+<!-- FINANCEIRO -->
+<div class="form tab-content hidden">
+<div class="grid">
+<input id="banco" placeholder="Banco">
+<input id="agencia" placeholder="Agência">
+<input id="conta" placeholder="Conta">
+<input id="pix" placeholder="PIX">
+</div>
+</div>
 
-    <!-- CONTAS -->
-    <div class="card">
-      <h2>Contas Bancárias</h2>
+<!-- OBS -->
+<div class="form tab-content hidden">
+<textarea id="obs" style="width:100%;height:100px"></textarea>
+</div>
 
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('contas',this.value)">
+<button class="btn" onclick="salvar()" style="margin:10px">Salvar</button>
 
-      <div class="list" id="contas"></div>
-
-      <div class="form">
-        <input id="inputConta" placeholder="Banco / Conta">
-        <button class="btn" onclick="addConta()">Adicionar</button>
-      </div>
-    </div>
-
-    <!-- PLANO -->
-    <div class="card">
-      <h2>Plano de Contas</h2>
-
-      <input class="search" placeholder="Buscar..." onkeyup="filtrar('plano',this.value)">
-
-      <div class="list" id="plano"></div>
-
-      <div class="form">
-        <input id="inputPlano" placeholder="Nome">
-        <button class="btn" onclick="addPlano()">Adicionar</button>
-      </div>
-    </div>
-
-    <!-- VAZIO -->
-    <div class="card">
-      <h2>Outros (em breve)</h2>
-    </div>
-
-  </div>
-
+</div>
 </div>
 
 <script>
@@ -206,93 +182,100 @@ const sb = supabase.createClient(
   "sb_publishable_Jm2ZQKzPS3gNPCKSjFAmYQ_WNMYwF1j"
 );
 
-/* ================= LOAD ================= */
+let editId=null;
 
-async function carregar(){
+/* LOAD */
+async function load(){
+  const {data} = await sb.from("pessoas_financeiro").select("*")
 
-  const {data:pessoas} = await sb.from("pessoas").select("*").order("created_at",{ascending:false})
-  const {data:contas} = await sb.from("contas_bancarias").select("*")
-  const {data:plano} = await sb.from("plano_contas").select("*")
+  const lista = document.getElementById("lista")
+  lista.innerHTML=""
 
-  render("pessoas",pessoas)
-  render("contas",contas)
-  render("plano",plano)
-}
-
-function render(id,data){
-  const el = document.getElementById(id)
-  el.innerHTML=""
-
-  data.forEach(i=>{
-    const div = document.createElement("div")
-    div.className="item"
-
-    div.innerHTML = `
-      <span>${i.nome || i.banco}</span>
-      <button class="btn-delete" onclick="remover('${id}','${i.id}')">X</button>
+  data.forEach(p=>{
+    lista.innerHTML+=`
+      <tr>
+        <td>${p.nome}</td>
+        <td>${p.documento||''}</td>
+        <td>${p.telefone||''}</td>
+        <td>
+          <button onclick="editar('${p.id}')">✏️</button>
+          <button onclick="del('${p.id}')">🗑️</button>
+        </td>
+      </tr>
     `
-
-    el.appendChild(div)
   })
 }
 
-/* ================= ADD ================= */
+/* SALVAR */
+async function salvar(){
 
-async function addPessoa(){
-  const nome = document.getElementById("inputPessoa").value
-  if(!nome) return
+  const obj = {
+    nome:nome.value,
+    documento:doc.value,
+    telefone:tel.value,
+    email:email.value,
+    codigo_externo:codigo.value,
 
-  await sb.from("pessoas").insert([{nome,tipo:"FORNECEDOR"}])
-  document.getElementById("inputPessoa").value=""
-  carregar()
-}
+    cep:cep.value,
+    logradouro:log.value,
+    numero:num.value,
+    bairro:bairro.value,
+    cidade:cidade.value,
 
-async function addConta(){
-  const nome = document.getElementById("inputConta").value
-  if(!nome) return
+    banco:banco.value,
+    agencia:agencia.value,
+    conta:conta.value,
+    pix:pix.value,
 
-  await sb.from("contas_bancarias").insert([{banco:nome}])
-  document.getElementById("inputConta").value=""
-  carregar()
-}
-
-async function addPlano(){
-  const nome = document.getElementById("inputPlano").value
-  if(!nome) return
-
-  await sb.from("plano_contas").insert([{nome,tipo:"DESPESA"}])
-  document.getElementById("inputPlano").value=""
-  carregar()
-}
-
-/* ================= DELETE ================= */
-
-async function remover(tipo,id){
-
-  if(!confirm("Excluir?")) return
-
-  const tabela = {
-    pessoas:"pessoas",
-    contas:"contas_bancarias",
-    plano:"plano_contas"
+    observacoes:obs.value
   }
 
-  await sb.from(tabela[tipo]).delete().eq("id",id)
+  if(editId){
+    await sb.from("pessoas_financeiro").update(obj).eq("id",editId)
+  }else{
+    await sb.from("pessoas_financeiro").insert([obj])
+  }
 
-  carregar()
+  fechar()
+  load()
 }
 
-/* ================= BUSCA ================= */
+/* EDITAR */
+async function editar(id){
+  const {data} = await sb.from("pessoas_financeiro").select("*").eq("id",id).single()
 
-function filtrar(lista,valor){
-  valor = valor.toLowerCase()
+  editId=id
 
-  document.querySelectorAll(`#${lista} .item`).forEach(el=>{
-    el.style.display = el.innerText.toLowerCase().includes(valor) ? "flex":"none"
-  })
+  nome.value=data.nome
+  doc.value=data.documento
+  tel.value=data.telefone
+  email.value=data.email
+
+  abrir()
 }
 
-carregar()
+/* DELETE */
+async function del(id){
+  if(confirm("Excluir?")){
+    await sb.from("pessoas_financeiro").delete().eq("id",id)
+    load()
+  }
+}
+
+/* MODAL */
+function abrir(){modal.style.display="flex"}
+function fechar(){modal.style.display="none";editId=null}
+
+/* TABS */
+function tab(i){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"))
+  document.querySelectorAll(".tab")[i].classList.add("active")
+
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.add("hidden"))
+  document.querySelectorAll(".tab-content")[i].classList.remove("hidden")
+}
+
+load()
 
 </script>
 
