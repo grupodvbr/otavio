@@ -312,89 +312,67 @@ function gerarHTML(m){
 
 let html = ""
 
-/* TEMPLATE */
-if(m.tipo === "template"){
+/* ===== MIDIA ===== */
 
-  let nomeTemplate = ""
-
-  try{
-    const parsed = JSON.parse(m.mensagem)
-    nomeTemplate = parsed.template
-  }catch{
-    nomeTemplate = m.mensagem
-  }
-
-  html += `
-  <div style="
-    background:#fff3cd;
-    padding:8px 10px;
-    border-radius:8px;
-    font-size:13px;
-    border-left:4px solid #f59e0b;
-  ">
-    📩 Template enviado:<br>
-    <strong>${nomeTemplate}</strong>
-  </div>
-  `
-}
-
-/* MIDIA */
 if(m?.tipo === "imagem" && m?.media_url){
-  html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
+html += `<img src="${m.media_url}" onclick="window.open('${m.media_url}')">`
 }
 
 else if(m?.tipo === "video" && m?.media_url){
-  html += `
-  <video controls style="max-width:220px;border-radius:10px;">
-    <source src="${m.media_url}">
-  </video>`
+html += `
+<video controls style="max-width:220px;border-radius:10px;">
+  <source src="${m.media_url}">
+</video>`
 }
 
 else if(m?.tipo === "audio" && m?.media_url){
-  html += `
-  <audio controls style="width:200px;">
-    <source src="${m.media_url}">
-  </audio>`
+html += `
+<audio controls style="width:200px;">
+  <source src="${m.media_url}">
+</audio>`
 }
 
 else if(m?.tipo === "documento" && m?.media_url){
 
-  const ext = (m.nome_arquivo || "").split(".").pop()?.toLowerCase()
+const ext = (m.nome_arquivo || "").split(".").pop()?.toLowerCase()
 
-  if(ext === "pdf"){
-    html += `
-    <iframe src="${m.media_url}" width="220" height="260"
-    style="border:none;border-radius:10px;"></iframe>`
-  }else{
-    html += `
-    <div class="fileBox" onclick="window.open('${m.media_url}')">
-      📄 ${m.nome_arquivo || "Abrir arquivo"}
-    </div>`
-  }
+if(ext === "pdf"){
+html += `
+<iframe src="${m.media_url}" width="220" height="260"
+style="border:none;border-radius:10px;"></iframe>`
+}else{
+html += `
+<div class="fileBox" onclick="window.open('${m.media_url}')">
+📄 ${m.nome_arquivo || "Abrir arquivo"}
+</div>`
 }
 
-/* TEXTO */
+}
+
+/* ===== TEXTO ===== */
+
 if(m?.mensagem){
-  html += `<div>${m.mensagem}</div>`
+html += `<div>${m.mensagem}</div>`
 }
 
-/* STATUS */
+/* ===== STATUS ===== */
+
 function statusIcon(status){
-  if(status === "sent") return "✓"
-  if(status === "delivered") return "✓✓"
-  if(status === "read") return "<span style='color:#34b7f1'>✓✓</span>"
-  return ""
+if(status === "sent") return "✓"
+if(status === "delivered") return "✓✓"
+if(status === "read") return "<span style='color:#34b7f1'>✓✓</span>"
+return ""
 }
 
-/* TIME */
+/* ===== TIME ===== */
+
 html += `
 <div class="time">
-  ${hora(m.created_at)} ${statusIcon(m.status)}
+${hora(m.created_at)} ${statusIcon(m.status)}
 </div>
 `
 
 return html
-
 }
 
 
@@ -605,7 +583,17 @@ nome_arquivo:nomeArquivo
 
 const messageId = send?.message_id
 
-
+/* BANCO */
+await db.from("conversas_whatsapp").insert({
+telefone,
+mensagem:texto,
+tipo,
+media_url:media,
+nome_arquivo:nomeArquivo,
+role:"assistant",
+message_id: messageId,
+status: "sent"
+})
 
 arquivo=null
 preview.style.display="none"
@@ -624,6 +612,8 @@ function abrirTemplates(){
 async function enviarTemplate(nome){
 
   if(!telefone) return
+
+  console.log("📤 Enviando template:", nome)
 
   let parametros = {}
 
@@ -660,47 +650,13 @@ async function enviarTemplate(nome){
       })
     })
 
-let data
+    const data = await response.json()
 
-try{
-  data = await response.json()
-}catch{
-  const text = await response.text()
-  console.error("❌ RESPOSTA:", text)
-  alert("Erro servidor:\n" + text)
-  return
-}
+    console.log("📩 RESPOSTA:", data)
+
     if(data?.error){
       alert("Erro: " + JSON.stringify(data.error))
-      return
     }
-
-   const messageId = data?.data?.messages?.[0]?.id || data?.messages?.[0]?.id || null
-
-const { error } = await db
-  .from("conversas_whatsapp")
-  .insert({
-    telefone: telefone.replace(/\D/g, ""),
-    mensagem: JSON.stringify({
-      template: nome,
-      parametros
-    }),
-    tipo: "template",
-    role: "assistant",
-    message_id: messageId,
-    status: "sent",
-    created_at: new Date().toISOString()
-  })
-
-if(error){
-  console.error("❌ ERRO AO SALVAR:", error)
-  alert("Erro ao salvar no banco")
-  return
-}else{
-  console.log("💾 SALVO COM SUCESSO")
-}
-
-    
 
   }catch(err){
     console.error("🔥 ERRO:", err)
