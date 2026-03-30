@@ -233,11 +233,6 @@ const ontemISO = ontem.toISOString().split("T")[0]
 const amanhaISO = amanha.toISOString().split("T")[0]
 
 const agoraTexto = `${hojeISO} ${hora}`
-
-  
-const ontem = new Date(hoje)
-ontem.setDate(hoje.getDate() - 1)
-
   
 /* ================= OPENAI ================= */
 
