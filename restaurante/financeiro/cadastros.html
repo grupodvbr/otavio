@@ -209,27 +209,27 @@ async function load(){
 /* SALVAR */
 async function salvar(){
 
-  const obj = {
-    nome:nome.value,
-    documento:doc.value,
-    telefone:tel.value,
-    email:email.value,
-    codigo_externo:codigo.value,
+const obj = {
+  nome:nome.value,
+  documento:doc.value,
+  telefone:tel.value,
+  email:email.value,
+  codigo_externo:codigo.value,
 
-    cep:cep.value,
-    logradouro:log.value,
-    numero:num.value,
-    bairro:bairro.value,
-    cidade:cidade.value,
+  cep:cep.value,
+  logradouro:log.value,
+  numero:num.value,
+  bairro:bairro.value,
+  cidade:cidade.value,
 
-    banco:banco.value,
-    agencia:agencia.value,
-    conta:conta.value,
-    pix:pix.value,
+  banco:banco.value,
+  agencia:agencia.value,
+  conta:conta.value,
 
-    observacoes:obs.value
-  }
+  pix_chave:pix.value,   // 👈 CORRIGIDO
 
+  observacoes:obs.value
+}
   if(editId){
     await sb.from("pessoas_financeiro").update(obj).eq("id",editId)
   }else{
