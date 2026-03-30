@@ -448,13 +448,12 @@ function toggleMobileMenu(){
 function openPage(page){
   document.getElementById("frame").src = page;
 
-  localStorage.setItem("paginaAtual", page); // 🔥 salva
+  localStorage.setItem("paginaAtual", page);
 
   highlightMenu(page);
 
-  if(window.innerWidth<=768){
-    document.querySelector(".sidebar").classList.remove("open");
-  }
+  // 🔥 FECHA SEMPRE (desktop + mobile)
+  document.querySelector(".sidebar").classList.remove("open");
 }
 
 function highlightMenu(page){
