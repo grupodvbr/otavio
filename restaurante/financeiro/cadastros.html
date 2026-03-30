@@ -4,15 +4,48 @@
 <meta charset="UTF-8">
 <title>Configurações Financeiras</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-body{
-  font-family:Inter;
-  background:#f8fafc;
-  margin:0;
+
+/* ================= BASE ================= */
+:root{
+  --primary:#2563eb;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --text:#0f172a;
+  --muted:#64748b;
+  --shadow:0 20px 60px rgba(0,0,0,.08);
 }
 
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Inter;
+}
+
+body{
+  background:var(--bg);
+}
+
+/* ================= HEADER ================= */
+.header{
+  height:60px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  font-weight:800;
+}
+
+/* ================= GRID ================= */
 .container{
   padding:20px;
 }
@@ -23,88 +56,147 @@ body{
   gap:20px;
 }
 
+/* ================= CARD ================= */
 .card{
-  background:#fff;
-  border-radius:16px;
+  background:var(--card);
+  border-radius:18px;
   padding:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,.06);
-  height:420px;
+  box-shadow:var(--shadow);
   display:flex;
   flex-direction:column;
+  height:420px;
 }
 
-h2{
-  font-size:16px;
+.card h2{
+  font-size:15px;
+  font-weight:800;
   margin-bottom:10px;
 }
 
-input{
-  padding:10px;
+/* ================= BUSCA ================= */
+.search{
+  height:38px;
   border-radius:10px;
-  border:1px solid #e5e7eb;
+  border:1px solid var(--border);
+  padding:0 10px;
   margin-bottom:10px;
 }
 
+/* ================= LISTA ================= */
 .list{
   flex:1;
   overflow:auto;
 }
 
 .item{
-  padding:8px;
-  border-bottom:1px solid #eee;
+  padding:10px;
+  border-bottom:1px solid #f1f5f9;
   font-size:13px;
+  display:flex;
+  justify-content:space-between;
 }
 
-button{
-  background:#2563eb;
-  color:#fff;
-  border:none;
-  padding:10px;
+/* ================= FORM ================= */
+.form{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.form input{
+  flex:1;
+  height:38px;
   border-radius:10px;
+  border:1px solid var(--border);
+  padding:0 10px;
+}
+
+.btn{
+  height:38px;
+  padding:0 14px;
+  border:none;
+  border-radius:10px;
+  background:var(--primary);
+  color:#fff;
+  font-weight:700;
   cursor:pointer;
 }
+
+.btn-delete{
+  background:#ef4444;
+  font-size:11px;
+  padding:4px 8px;
+}
+
+/* ================= RESPONSIVO ================= */
+@media(max-width:900px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 </head>
 
 <body>
 
+<div class="header">
+  Configurações Financeiras
+</div>
+
 <div class="container">
+
   <div class="grid">
 
     <!-- PESSOAS -->
     <div class="card">
       <h2>Fornecedores / Clientes</h2>
-      <input placeholder="Buscar..." onkeyup="buscar('pessoas',this.value)">
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('pessoas',this.value)">
+
       <div class="list" id="pessoas"></div>
-      <input id="nomePessoa" placeholder="Nome">
-      <button onclick="addPessoa()">Adicionar</button>
+
+      <div class="form">
+        <input id="inputPessoa" placeholder="Nome">
+        <button class="btn" onclick="addPessoa()">Adicionar</button>
+      </div>
     </div>
 
     <!-- CONTAS -->
     <div class="card">
       <h2>Contas Bancárias</h2>
-      <input placeholder="Buscar..." onkeyup="buscar('contas',this.value)">
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('contas',this.value)">
+
       <div class="list" id="contas"></div>
-      <input id="nomeConta" placeholder="Banco / Conta">
-      <button onclick="addConta()">Adicionar</button>
+
+      <div class="form">
+        <input id="inputConta" placeholder="Banco / Conta">
+        <button class="btn" onclick="addConta()">Adicionar</button>
+      </div>
     </div>
 
     <!-- PLANO -->
     <div class="card">
       <h2>Plano de Contas</h2>
-      <input placeholder="Buscar..." onkeyup="buscar('plano',this.value)">
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('plano',this.value)">
+
       <div class="list" id="plano"></div>
-      <input id="nomePlano" placeholder="Nome">
-      <button onclick="addPlano()">Adicionar</button>
+
+      <div class="form">
+        <input id="inputPlano" placeholder="Nome">
+        <button class="btn" onclick="addPlano()">Adicionar</button>
+      </div>
     </div>
 
     <!-- VAZIO -->
     <div class="card">
-      <h2>Outros</h2>
+      <h2>Outros (em breve)</h2>
     </div>
 
   </div>
+
 </div>
 
 <script>
@@ -118,7 +210,7 @@ const sb = supabase.createClient(
 
 async function carregar(){
 
-  const {data:pessoas} = await sb.from("pessoas").select("*")
+  const {data:pessoas} = await sb.from("pessoas").select("*").order("created_at",{ascending:false})
   const {data:contas} = await sb.from("contas_bancarias").select("*")
   const {data:plano} = await sb.from("plano_contas").select("*")
 
@@ -134,7 +226,12 @@ function render(id,data){
   data.forEach(i=>{
     const div = document.createElement("div")
     div.className="item"
-    div.innerText = i.nome || i.banco
+
+    div.innerHTML = `
+      <span>${i.nome || i.banco}</span>
+      <button class="btn-delete" onclick="remover('${id}','${i.id}')">X</button>
+    `
+
     el.appendChild(div)
   })
 }
@@ -142,36 +239,56 @@ function render(id,data){
 /* ================= ADD ================= */
 
 async function addPessoa(){
-  const nome = document.getElementById("nomePessoa").value
+  const nome = document.getElementById("inputPessoa").value
+  if(!nome) return
 
   await sb.from("pessoas").insert([{nome,tipo:"FORNECEDOR"}])
-
+  document.getElementById("inputPessoa").value=""
   carregar()
 }
 
 async function addConta(){
-  const nome = document.getElementById("nomeConta").value
+  const nome = document.getElementById("inputConta").value
+  if(!nome) return
 
   await sb.from("contas_bancarias").insert([{banco:nome}])
-
+  document.getElementById("inputConta").value=""
   carregar()
 }
 
 async function addPlano(){
-  const nome = document.getElementById("nomePlano").value
+  const nome = document.getElementById("inputPlano").value
+  if(!nome) return
 
   await sb.from("plano_contas").insert([{nome,tipo:"DESPESA"}])
+  document.getElementById("inputPlano").value=""
+  carregar()
+}
+
+/* ================= DELETE ================= */
+
+async function remover(tipo,id){
+
+  if(!confirm("Excluir?")) return
+
+  const tabela = {
+    pessoas:"pessoas",
+    contas:"contas_bancarias",
+    plano:"plano_contas"
+  }
+
+  await sb.from(tabela[tipo]).delete().eq("id",id)
 
   carregar()
 }
 
 /* ================= BUSCA ================= */
 
-function buscar(lista,valor){
+function filtrar(lista,valor){
   valor = valor.toLowerCase()
 
   document.querySelectorAll(`#${lista} .item`).forEach(el=>{
-    el.style.display = el.innerText.toLowerCase().includes(valor) ? "block":"none"
+    el.style.display = el.innerText.toLowerCase().includes(valor) ? "flex":"none"
   })
 }
 
