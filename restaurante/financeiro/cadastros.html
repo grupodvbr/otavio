@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Configurações • Financeiro</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+/* ================= BASE ================= */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Inter",sans-serif;
+}
+
+body{
+  background:#f8fafc;
+}
+
+/* ================= GRID ================= */
+.container{
+  padding:20px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+/* ================= CARD ================= */
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 8px 25px rgba(0,0,0,.06);
+  display:flex;
+  flex-direction:column;
+  height:420px;
+}
+
+.card h2{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:#0f172a;
+}
+
+/* ================= BUSCA ================= */
+.search{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  margin-bottom:10px;
+}
+
+/* ================= LISTA ================= */
+.list{
+  flex:1;
+  overflow:auto;
+}
+
+.item{
+  padding:10px;
+  border-bottom:1px solid #f1f5f9;
+  font-size:14px;
+}
+
+/* ================= FORM ================= */
+.form{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.form input{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+}
+
+.btn{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+/* ================= RESPONSIVO ================= */
+@media(max-width:900px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="grid">
+
+    <!-- FORNECEDORES / CLIENTES -->
+    <div class="card">
+      <h2>Fornecedores / Clientes</h2>
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista1',this.value)">
+
+      <div class="list" id="lista1"></div>
+
+      <div class="form">
+        <input id="input1" placeholder="Nome">
+        <button class="btn" onclick="addItem('lista1','input1')">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- CONTAS BANCARIAS -->
+    <div class="card">
+      <h2>Contas Bancárias</h2>
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista2',this.value)">
+
+      <div class="list" id="lista2"></div>
+
+      <div class="form">
+        <input id="input2" placeholder="Banco / Conta">
+        <button class="btn" onclick="addItem('lista2','input2')">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- PLANO DE CONTAS -->
+    <div class="card">
+      <h2>Plano de Contas</h2>
+
+      <input class="search" placeholder="Buscar..." onkeyup="filtrar('lista3',this.value)">
+
+      <div class="list" id="lista3"></div>
+
+      <div class="form">
+        <input id="input3" placeholder="Ex: Despesas, Receita...">
+        <button class="btn" onclick="addItem('lista3','input3')">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- BLOCO VAZIO -->
+    <div class="card">
+      <h2>Outros (em breve)</h2>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+/* ================= ADD ================= */
+function addItem(lista,input){
+  const valor = document.getElementById(input).value
+  if(!valor) return
+
+  const div = document.createElement("div")
+  div.className="item"
+  div.innerText = valor
+
+  document.getElementById(lista).prepend(div)
+
+  document.getElementById(input).value=""
+}
+
+/* ================= FILTRO ================= */
+function filtrar(lista,valor){
+  valor = valor.toLowerCase()
+
+  document.querySelectorAll(`#${lista} .item`).forEach(el=>{
+    el.style.display = el.innerText.toLowerCase().includes(valor) ? "block":"none"
+  })
+}
+
+</script>
+
+</body>
+</html>
