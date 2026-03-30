@@ -217,19 +217,34 @@ body{
   opacity:.8;
 }
 
-/* MOBILE BUTTON */
 .menu-mobile-btn{
-  display:none;
-  font-size:22px;
-  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:42px;
+  height:42px;
+
+  border-radius:10px;
+
+  background:var(--primary-soft);
   color:var(--primary);
+
+  font-size:20px;
+  font-weight:700;
+
+  cursor:pointer;
+  transition:.2s;
+
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
-@media(max-width:768px){
-  .menu-mobile-btn{
-    display:block;
-  }
+/* HOVER */
+.menu-mobile-btn:hover{
+  background:var(--primary);
+  color:#fff;
 }
+
 
 /* ===================== IFRAME ===================== */
 iframe{
