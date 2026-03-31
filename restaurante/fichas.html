@@ -1563,8 +1563,10 @@ sb.auth.onAuthStateChange((_event, session) => {
    UTIL
 ===================================================== */
 const moeda = v =>
-  "R$ " + Number(v || 0).toLocaleString("pt-BR",{minimumFractionDigits:2});
-
+  "R$ " + Number(v || 0).toLocaleString("pt-BR",{
+    minimumFractionDigits:4,
+    maximumFractionDigits:4
+  });
 /* =====================================================
    STATE
 ===================================================== */
@@ -2200,19 +2202,25 @@ ${precoVenda ? `
   <tbody>
 ${listaItens.map(i=>`
 <tr>
-        <td><b>${i.nome}</b></td>
-        <td>${i.quantidade}</td>
-        <td>${i.unidade_uso}</td>
-        <td>${moeda(i.custo_unitario)}</td>
-        <td><b>${moeda(i.custo_calculado)}</b></td>
-        <td class="acoes">
-          <button class="btn-icon btn-edit"
-            onclick="editarIngrediente('${i.id}')">✏️</button>
-          <button class="btn-icon btn-delete"
-            onclick="excluirIngrediente('${i.id}')">🗑️</button>
-        </td>
-      </tr>
-    `).join("")}
+  <td><b>${i.nome}</b></td>
+
+  <td>${Number(i.quantidade || 0).toLocaleString("pt-BR",{
+    minimumFractionDigits:4,
+    maximumFractionDigits:4
+  })}</td>
+
+  <td>${i.unidade_uso}</td>
+  <td>${moeda(i.custo_unitario)}</td>
+  <td><b>${moeda(i.custo_calculado)}</b></td>
+
+  <td class="acoes">
+    <button class="btn-icon btn-edit"
+      onclick="editarIngrediente('${i.id}')">✏️</button>
+    <button class="btn-icon btn-delete"
+      onclick="excluirIngrediente('${i.id}')">🗑️</button>
+  </td>
+</tr>
+`).join("")}
   </tbody>
 </table>
 
