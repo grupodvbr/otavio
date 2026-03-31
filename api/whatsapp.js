@@ -1817,6 +1817,49 @@ REGRAS CRÍTICAS:
 })
 
 resposta = completion.choices[0].message.content
+/* 🚨 BLOQUEIO TOTAL DE ALERTA */
+
+if(resposta.includes("🚨 DÚVIDA DO CLIENTE")){
+
+  console.log("🚨 ALERTA DETECTADO → ENVIAR PARA ADMIN")
+
+  const resumo = mensagens
+    .map(m => `${m.role}: ${m.content}`)
+    .join("\n")
+
+  const alerta = `
+🚨 *DÚVIDA DO CLIENTE*
+
+📱 Telefone: ${cliente}
+👤 Nome: ${nomeMemoria || "Não identificado"}
+
+💬 Pergunta:
+"${mensagem}"
+
+📄 Histórico:
+${resumo}
+`
+
+  for(const admin of ADMINS){
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        to: admin,
+        type:"text",
+        text:{ body: alerta }
+      })
+    })
+  }
+
+  /* 🚫 BLOQUEIA ENVIO PARA CLIENTE */
+  return res.status(200).end()
+}
+  
 
 /* ================= 🔥 DETECTAR SE NÃO SABE ================= */
 
@@ -2669,23 +2712,7 @@ Math.max(resposta.length * 35, 1500), // mínimo 1.5s
 
 await new Promise(resolve => setTimeout(resolve, tempoDigitando))
 
-/* ================= ENVIAR WHATSAPP ================= */
 
-await fetch(url,{
-method:"POST",
-headers:{
-Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-messaging_product:"whatsapp",
-to:cliente,
-type:"text",
-text:{
-body:resposta
-}
-})
-})
 
 }catch(error){
 
