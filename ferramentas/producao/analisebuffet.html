@@ -9,6 +9,8 @@
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
@@ -44,8 +46,42 @@ html,body{margin:0;background:var(--bg)}
   margin-bottom:10px;
 }
 
+/* ===== FILTROS RESPONSIVOS PROFISSIONAIS ===== */
+
 .filters{
-  display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;
+  display:grid;
+  grid-template-columns:repeat(6, minmax(0,1fr));
+  gap:8px;
+  align-items:stretch;
+}
+
+.filters input,
+.filters select{
+  grid-column:span 2;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  font-size:14px;
+}
+
+.filters button{
+  grid-column:span 1;
+  padding:10px 12px;
+  border-radius:12px;
+  border:none;
+  font-size:13px;
+  font-weight:800;
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.2s;
+}
+
+.filters button:active{
+  transform:scale(.97);
 }
 .filters input,.filters select,.filters button{
   padding:10px 12px;border-radius:12px;border:1px solid var(--border);font-size:14px
@@ -85,35 +121,20 @@ th,td{
   word-break:break-word;
 }
 
-/* Ajustes finos só no mobile */
 @media(max-width: 899px){
-  th:nth-child(1), td:nth-child(1){ width:30% } /* Prato */
-  th:nth-child(2), td:nth-child(2){ width:10% } /* Montado */
-  th:nth-child(3), td:nth-child(3){ width:10% } /* Reposto */
-  th:nth-child(4), td:nth-child(4){ width:12% } /* Total */
-  th:nth-child(5), td:nth-child(5){ width:10% } /* Retirado */
-  th:nth-child(6), td:nth-child(6){ width:8% }  /* % Ret */
-  th:nth-child(7), td:nth-child(7){ width:10% } /* Desperdício */
-}
 
-th{
-  background:#fafafa;
-  position:sticky;
-  top:0;
-  z-index:1;
-}
+  th:nth-child(1), td:nth-child(1){ width:30% }
+  th:nth-child(2), td:nth-child(2){ width:10% }
+  th:nth-child(3), td:nth-child(3){ width:10% }
+  th:nth-child(4), td:nth-child(4){ width:12% }
+  th:nth-child(5), td:nth-child(5){ width:10% }
+  th:nth-child(6), td:nth-child(6){ width:8% }
+  th:nth-child(7), td:nth-child(7){ width:10% }
 
-/* Ajustes finos no mobile */
-@media(max-width: 899px){
-  .filters{
-    grid-template-columns:1fr 1fr; /* 2 por linha no celular */
-  }
-  .filters button{
-    grid-column:1 / -1; /* botão ocupa a linha inteira */
-  }
   .title{font-size:18px}
   .sub{font-size:12px}
   .chart-wrap{height:200px}
+
 }
 
 /* ===== MODAL ===== */
@@ -169,18 +190,29 @@ html, body {
   max-width: 100%;
 }
 
-/* 📱 Inputs e selects 100% no mobile */
-@media(max-width: 899px){
-  .filters input,
-  .filters select,
-  .filters button{
-    width: 100%;
+/* ===== MOBILE LIMPO E PROFISSIONAL ===== */
+
+@media(max-width:899px){
+
+  /* 3 colunas no mobile */
+  .filters{
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
   }
 
-  /* 🔽 Esconde o botão Atualizar no mobile (já é automático) */
-  #btnFiltrar{
-    display:none;
+  /* Inputs ocupam linha inteira */
+  .filters select,
+  .filters input{
+    grid-column:1 / -1;
   }
+
+  /* Botões ocupam 1 coluna cada */
+  .filters button{
+    grid-column:span 1;
+    font-size:12px;
+    padding:9px;
+  }
+
 }
 
 /* ===== CORREÇÃO CARDS RESUMO ===== */
@@ -211,6 +243,33 @@ html, body {
 .card > div[style*="grid"]{
   overflow:hidden;
 }
+
+/* ===== BLOCO COMPARAÇÃO GRANDE ===== */
+
+.comparacao-box{
+  margin-top:12px;
+  padding:14px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f8fafc,#eef2ff);
+  border:1px solid #e5e7eb;
+  font-weight:800;
+  font-size:18px;
+  line-height:1.5;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+
+.comparacao-box b{
+  font-size:20px;
+}
+
+@media(max-width:899px){
+  .comparacao-box{
+    font-size:16px;
+  }
+  .comparacao-box b{
+    font-size:18px;
+  }
+}
 </style>
 </head>
 
@@ -224,29 +283,63 @@ html, body {
 
   <div class="card">
 <div class="filters">
+
 <select id="empresaSelect">
   <option value="MERCATTO DELÍCIA">Mercatto Delícia</option>
 </select>
-    <input type="text" id="rangeDatas" placeholder="Selecione o período">
 
-  <!-- 🔎 NOVO -->
-  <input
-    type="text"
-    id="searchPrato"
-    placeholder="Buscar prato..."
-  >
+<input type="text" id="rangeDatas" placeholder="Selecione o período">
+
+<input
+  type="text"
+  id="searchPrato"
+  placeholder="Buscar prato..."
+>
+
+<button type="button" onclick="exportarExcel()">
+  <i class="ri-file-excel-2-line"></i> Excel
+</button>
+
+<button type="button" onclick="baixarImagem()">
+  <i class="ri-image-line"></i> Imagem
+</button>
+
+<button type="button" id="btnRetirada40">
+  🔥 > 40% Ret.
+</button>
 
 </div>
   </div>
 
-  <div class="card">
-    <b>Total produzido por dia (Montagem + Reposição)</b>
-    <div class="chart-wrap">
-      <canvas id="chart"></canvas>
-    </div>
+<div class="card" id="cardGrafico">
+  <b>Total produzido por dia (Montagem + Reposição)</b>
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
   </div>
+</div>
 <div class="card">
   <b>Resumo do período selecionado</b>
+  <hr style="margin:14px 0">
+
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+
+  <input type="date" id="dataVarejo"
+         style="padding:10px;border-radius:10px;border:1px solid #e5e7eb">
+
+  <input type="number"
+         id="kgVarejo"
+         step="0.001"
+         placeholder="KG vendido no Varejo"
+         style="padding:10px;border-radius:10px;border:1px solid #e5e7eb;flex:1">
+
+  <button onclick="salvarVendaVarejo()"
+          style="background:#16a34a;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-weight:800">
+    Salvar
+  </button>
+
+</div>
+
+<div id="infoComparacao" class="comparacao-box"></div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
     <div class="card" style="padding:10px">
       <small>Produz.</small>
@@ -327,6 +420,7 @@ flatpickr("#rangeDatas", {
   }
 });
 let chart;
+let filtroRetirada40 = false;
 let cacheDesperdicio = {};
 function formatBR(iso){
   const [y,m,d]=iso.split("-");
@@ -375,7 +469,28 @@ let totalDesperdicio = 0;
 const termo = (searchPrato.value || "").toLowerCase();
 
 const pratosFiltrados = Object.entries(porPrato)
-  .filter(([nome]) => (nome || "").toLowerCase().includes(termo))
+  .filter(([nome,v]) => {
+
+    // filtro por busca
+    if(!(nome || "").toLowerCase().includes(termo)){
+      return false;
+    }
+
+    // filtro retirada > 40%
+    if(filtroRetirada40){
+
+      const total = v.MONTAGEM + v.REPOSICAO;
+
+      const percentual =
+        total > 0
+          ? (v.RETIRADA / total * 100)
+          : 0;
+
+      return percentual > 40;
+    }
+
+    return true;
+  })
   .sort((a,b)=> (a[0] || "").localeCompare(b[0] || "", 'pt-BR'));
 
 list.innerHTML = pratosFiltrados.map(([nome,v])=>{
@@ -445,29 +560,8 @@ tbody.innerHTML = pratosFiltrados.map(([nome,v])=>{
         ${percentualRetirada.toFixed(1)}%
       </td>
 
-<td>
-  ${
-    (() => {
+      <td>${v.DEVOLUCAO.toFixed(2)} ${v.UNIDADE}</td>
 
-      const desperdicio = v.DEVOLUCAO;
-      
-      const percentualSistema =
-        totalSistemaProduzido > 0
-          ? (desperdicio / totalSistemaProduzido * 100)
-          : 0;
-
-      return `
-        <div style="display:flex;flex-direction:column">
-          <span>${desperdicio.toFixed(2)} ${v.UNIDADE}</span>
-          <small style="color:#dc2626;font-weight:800">
-            ${percentualSistema.toFixed(1)}% do sistema
-          </small>
-        </div>
-      `;
-
-    })()
-  }
-</td>
     </tr>
   `;
 }).join("");
@@ -478,11 +572,77 @@ tbody.innerHTML = pratosFiltrados.map(([nome,v])=>{
   if(chart) chart.destroy();
 // ===== RESUMO DO PERÍODO (REGRA CORRETA) =====
 const totalProduzido = totalMontado + totalReposto;
-const totalSistemaProduzido = totalProduzido;
 
 // Vendido real do buffet
 let totalVendido = totalProduzido - totalRetirado - totalDesperdicio;
+// 🔥 Buscar vendas do varejo no período
+let totalVarejo = 0;
 
+let queryVarejo = sb
+  .from("vendas_varejo")
+  .select("quantidade")
+  .eq("empresa", empresa);
+
+if(rangeSelecionado.length === 2){
+  queryVarejo = queryVarejo
+    .gte("data", rangeSelecionado[0])
+    .lte("data", rangeSelecionado[1]);
+}
+
+const { data: vendasVarejo } = await queryVarejo;
+
+(vendasVarejo || []).forEach(v=>{
+  totalVarejo += Number(v.quantidade || 0);
+});
+
+// Atualiza card Vendido com comparação
+document.getElementById("totalVendido").innerText =
+  totalVendido.toFixed(2);
+
+// Mostra diferença
+const diferenca = totalVendido - totalVarejo;
+
+const percentualDiferenca =
+  totalVendido > 0
+    ? (diferenca / totalVendido * 100)
+    : 0;
+
+document.getElementById("infoComparacao").innerHTML = `
+<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+
+  <div>
+    Sistema:
+    <b>${totalVendido.toFixed(2)} KG</b>
+  </div>
+
+  <div>
+    Varejo:
+    <b>${totalVarejo.toFixed(2)} KG</b>
+  </div>
+
+  <div>
+    Diferença:
+    <div style="display:flex;flex-direction:column">
+
+      <b style="
+        color:${diferenca === 0 ? '#16a34a' : '#dc2626'};
+        font-size:22px;
+      ">
+        ${diferenca.toFixed(2)} KG
+      </b>
+
+      <small style="
+        font-weight:900;
+        color:${diferenca === 0 ? '#16a34a' : '#dc2626'};
+      ">
+        ${percentualDiferenca.toFixed(1)}% do sistema
+      </small>
+
+    </div>
+  </div>
+
+</div>
+`;
 // nunca deixa negativo
 if (totalVendido < 0) totalVendido = 0;
 
@@ -539,10 +699,96 @@ empresaSelect.onchange = () => {
 // 🔎 Atualiza enquanto digita o prato
 searchPrato.oninput = carregar;
 
+// 🔥 BOTÃO FILTRO > 40%
+document.getElementById("btnRetirada40").onclick = function(){
+
+  filtroRetirada40 = !filtroRetirada40;
+
+  this.style.background = filtroRetirada40
+    ? "#dc2626"
+    : "var(--primary)";
+
+  carregar();
+};
 
 carregar();
 let modalAberto = false;
 
+
+async function exportarExcel(){
+
+  const empresa = empresaSelect.value;
+  const termo = (searchPrato.value || "").toLowerCase();
+
+  let q = sb.from("buffet_lancamentos")
+    .select("*")
+    .eq("empresa", empresa);
+
+  if(rangeSelecionado.length === 2){
+    q = q.gte("data", rangeSelecionado[0]);
+    q = q.lte("data", rangeSelecionado[1]);
+  }
+
+  const { data } = await q;
+
+  const porPrato = {};
+
+  (data || []).forEach(r=>{
+    porPrato[r.produto_nome] ||= {
+      MONTAGEM:0,
+      REPOSICAO:0,
+      RETIRADA:0,
+      DEVOLUCAO:0,
+      UNIDADE:r.unidade
+    };
+
+    porPrato[r.produto_nome][r.tipo] += Number(r.quantidade || 0);
+  });
+
+  const linhas = Object.entries(porPrato)
+    .filter(([nome]) => (nome || "").toLowerCase().includes(termo))
+    .sort((a,b)=> a[0].localeCompare(b[0],'pt-BR'))
+    .map(([nome,v])=>{
+
+      const total = v.MONTAGEM + v.REPOSICAO;
+
+      const percentualRetirada =
+        total > 0
+          ? (v.RETIRADA / total * 100)
+          : 0;
+
+      return {
+        Empresa: empresa,
+        "Data Inicial": rangeSelecionado[0],
+        "Data Final": rangeSelecionado[1],
+        Prato: nome,
+        Montado: v.MONTAGEM,
+        Reposto: v.REPOSICAO,
+        Total: total,
+        Retirado: v.RETIRADA,
+        "% Retirada": Number(percentualRetirada.toFixed(1)),
+        Desperdicio: v.DEVOLUCAO,
+        Unidade: v.UNIDADE
+      };
+    });
+
+  if(!linhas.length){
+    alert("Nenhum dado para exportar.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(linhas);
+
+  XLSX.utils.book_append_sheet(wb, ws, "Relatorio Buffet");
+
+  const nomeArquivo =
+    `Buffet_${empresa}_${rangeSelecionado[0]}_${rangeSelecionado[1]}.xlsx`;
+
+  XLSX.writeFile(wb, nomeArquivo);
+}
+
+  
 async function abrirResumoConsumo(nome){
   if(nome !== "CONSUMO AUTORIZADO" || modalAberto) return;
   modalAberto = true;
@@ -632,6 +878,7 @@ async function abrirResumoConsumo(nome){
   document.getElementById("modalResumoConsumo").style.display = "flex";
   document.body.style.overflow = "hidden";
 }
+
 async function abrirResumoRetirada(nomePrato){
   if(modalAberto) return;
   modalAberto = true;
@@ -1119,6 +1366,66 @@ function voltarListaDesperdicio(){
 
   document.getElementById("listaResumoTotalDesperdicio").innerHTML =
     htmlLista;
+}
+
+async function salvarVendaVarejo(){
+
+  const empresa = empresaSelect.value;
+  const data = document.getElementById("dataVarejo").value;
+  const kg = parseFloat(document.getElementById("kgVarejo").value || 0);
+
+  if(!data || !kg){
+    alert("Informe data e quantidade.");
+    return;
+  }
+
+  const { error } = await sb
+    .from("vendas_varejo")
+    .upsert({
+      empresa,
+      data,
+      quantidade: kg
+    }, { onConflict: "empresa,data" });
+
+  if(error){
+    alert("Erro ao salvar.");
+    console.error(error);
+    return;
+  }
+
+  document.getElementById("kgVarejo").value = "";
+
+  alert("Venda registrada com sucesso!");
+
+  carregar(); // atualiza tudo
+}
+
+async function baixarImagem(){
+
+  const empresa = empresaSelect.value;
+  const periodo = `${rangeSelecionado[0]}_${rangeSelecionado[1]}`;
+
+  const elemento = document.querySelector(".app");
+  const grafico = document.getElementById("cardGrafico");
+
+  // 🔒 Esconde gráfico temporariamente
+  grafico.style.display = "none";
+
+  window.scrollTo(0,0);
+
+  const canvas = await html2canvas(elemento, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#f6f7fb"
+  });
+
+  // 🔓 Mostra gráfico novamente
+  grafico.style.display = "";
+
+  const link = document.createElement("a");
+  link.download = `Relatorio_${empresa}_${periodo}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
 }
 </script>
 <!-- MODAL RESUMO CONSUMO AUTORIZADO -->
