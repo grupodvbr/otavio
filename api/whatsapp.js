@@ -2538,8 +2538,10 @@ pessoas: parseInt(reservaVip.pessoas) || 1,
 mesa: salaBanco,
 cardapio: "",
 
-observacoes: "Reserva sala VIP via WhatsApp",
-
+observacoes: reservaVip.observacoes && reservaVip.observacoes.trim() !== ""
+  ? reservaVip.observacoes
+  : "Reserva sala VIP via WhatsApp",
+  
 datahora: datahora,
 
 valorEstimado: 0,
@@ -2551,8 +2553,7 @@ banco: "",
 comandaindividual: false,
 comandaIndividual: reservaVip.comandaIndividual || "Não",
 
-origem: "whatsapp"
-
+origem: "whatsapp",
 })
 
 if(error){
