@@ -588,7 +588,69 @@ break
 const cliente = mensagensRecebidas[0]?.from
   const isAdmin = ADMINS.includes(cliente)
 const message_id = mensagensRecebidas[0]?.id
-/* ================= VERIFICAR PAUSA BOT ================= */
+
+  /* ================= BLOQUEAR DUPLICIDADE ================= */
+
+const { data: jaProcessada } = await supabase
+.from("mensagens_processadas")
+.select("*")
+.eq("message_id", message_id)
+.maybeSingle()
+
+if(jaProcessada){
+  console.log("⚠️ DUPLICADA IGNORADA:", message_id)
+  return res.status(200).end()
+}
+
+/* ================= REGISTRA PROCESSAMENTO ================= */
+
+await supabase
+.from("mensagens_processadas")
+.insert({ message_id })
+
+/* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
+
+try{
+
+  const { error } = await supabase
+  .from("conversas_whatsapp")
+  .insert({
+    telefone:cliente,
+    mensagem:
+      mensagem ||
+      (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
+    tipo,
+    media_url,
+    nome_arquivo,
+    role:"user",
+    message_id,
+    status:"received"
+  })
+
+  if(error){
+    console.log("❌ ERRO AO SALVAR:", error)
+
+    // 🔥 fallback (garante salvar mesmo assim)
+    await supabase
+    .from("conversas_whatsapp")
+    .insert({
+      telefone:cliente,
+      mensagem:
+        mensagem ||
+        (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
+      tipo,
+      media_url,
+      nome_arquivo,
+      role:"user",
+      status:"received"
+    })
+
+    console.log("⚠️ SALVO SEM MESSAGE_ID")
+  }
+
+}catch(err){
+  console.log("🔥 ERRO GRAVE AO SALVAR:", err)
+}
 
 const { data: pausaBot } = await supabase
 .from("controle_bot")
@@ -629,7 +691,8 @@ let nomeMemoria = memoriaCliente?.nome || null
 const ADMIN_NUMERO = "557798253249"
 const phone_number_id = change.metadata.phone_number_id
 const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
-if(!mensagem){
+  
+if(!mensagem && tipo === "texto"){
 console.log("Mensagem vazia")
 return res.status(200).end()
 }
@@ -1383,22 +1446,7 @@ await supabase
 .from("mensagens_processadas")
 .insert({ message_id })
 
-/* ================= SALVAR MENSAGEM CLIENTE ================= */
 
-await supabase
-.from("conversas_whatsapp")
-.insert({
-  telefone:cliente,
-  mensagem:
-    mensagem ||
-    (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
-  tipo,
-  media_url,
-  nome_arquivo,
-  role:"user",
-  message_id: message_id, // 🔥 ESSENCIAL
-  status: "received"      // 🔥 ESSENCIAL
-})
 
 if(querEndereco){
 
