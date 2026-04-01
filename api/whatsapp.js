@@ -521,94 +521,69 @@ switch(msg.type){
   break
 
   case "button":
-
     tipo = "botao"
-
     mensagem =
       msg.button?.text ||
       msg.button?.payload ||
       "[Botão]"
-
     console.log("🔘 BOTÃO CLICADO:", mensagem)
-
   break
 
   case "interactive":
-
     tipo = "botao"
-
     mensagem =
       msg.interactive?.button_reply?.title ||
       msg.interactive?.button_reply?.id ||
       msg.interactive?.list_reply?.title ||
       "[Interação]"
-
     console.log("🔘 INTERAÇÃO:", mensagem)
-
   break
 
-}
-
   case "image":
-
     tipo = "imagem"
     mensagem = "[Imagem]"
-
     media_url = await baixarESalvarMidia(
       msg.image.id,
       "jpg",
       msg.image.mime_type || "image/jpeg"
     )
-
   break
 
   case "video":
-
     tipo = "video"
     mensagem = "[Vídeo]"
-
     media_url = await baixarESalvarMidia(
       msg.video.id,
       "mp4",
       msg.video.mime_type || "video/mp4"
     )
-
   break
 
   case "audio":
-
     tipo = "audio"
     mensagem = "[Áudio]"
-
     media_url = await baixarESalvarMidia(
       msg.audio.id,
       "ogg",
       msg.audio.mime_type || "audio/ogg"
     )
-
   break
 
   case "document":
-
     tipo = "documento"
-
     nome_arquivo = msg.document.filename || "arquivo"
     mensagem = `[Documento: ${nome_arquivo}]`
-
     const ext = nome_arquivo.split(".").pop() || "bin"
-
     media_url = await baixarESalvarMidia(
       msg.document.id,
       ext,
       msg.document.mime_type
     )
-
   break
 
   default:
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
-
   
 
 
