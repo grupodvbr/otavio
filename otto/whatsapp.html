@@ -837,16 +837,17 @@ div.className = pausado ? "client pausado" : "client"
   `
 
   /* 🔥 CLICK CORRETO */
+
 div.addEventListener("click", () => {
 
-  // 📱 CELULAR → abre chat.html
+  // 📱 Se for celular → abre outra página
   if(window.innerWidth <= 768){
-    window.location.assign("chat.html?telefone=" + c.telefone)
-    return
+window.location.assign("chat.html?telefone=" + c.telefone)
+  return
   }
 
-  // 💻 DESKTOP → abre whatsapp.html
-  window.location.assign("whatsapp.html?telefone=" + c.telefone)
+  // 💻 Se for desktop → iframe normal
+  abrirChatIframe(c.telefone)
 
 })
 
