@@ -1,3 +1,11 @@
+const { createClient } = require("@supabase/supabase-js")
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE
+)
+
+
 module.exports = async function(req, res){
 
   try {
@@ -44,8 +52,7 @@ module.exports = async function(req, res){
 
  /* ================= BUSCAR RESERVA REAL ================= */
 
-let dadosReserva = parametros
-
+let dadosReserva = {}
 if(template === "confirmao_de_reserva"){
 
   const { data: reserva } = await supabase
@@ -59,8 +66,13 @@ if(template === "confirmao_de_reserva"){
 
   if(reserva){
 
-    const dataObj = new Date(reserva.datahora)
+let dataObj = new Date(reserva.datahora)
 
+if(isNaN(dataObj)){
+  console.log("❌ DATA INVÁLIDA:", reserva.datahora)
+  dataObj = new Date()
+}
+    
     dadosReserva = {
       nome: reserva.nome,
       data: dataObj.toLocaleDateString("pt-BR"),
@@ -146,15 +158,6 @@ if(!templateData){
     error: "Template não configurado"
   })
 }
-    /* ================= MONTA TEMPLATE ================= */
-
-    const templateData = montarTemplate(template, parametros)
-
-    if(!templateData){
-      return res.status(400).json({
-        error: "Template não configurado"
-      })
-    }
 
     /* ================= PAYLOAD ================= */
 
@@ -178,8 +181,18 @@ if(!templateData){
       body: JSON.stringify(payload)
     })
 
-    const data = await resp.json()
+let data
 
+try{
+  data = await resp.json()
+}catch(e){
+  const text = await resp.text()
+  console.log("❌ ERRO META RAW:", text)
+
+  return res.status(500).json({
+    error:"Erro ao interpretar resposta da Meta"
+  })
+}
     console.log("📩 META RESPONSE:", data)
 
 if(data.error){
