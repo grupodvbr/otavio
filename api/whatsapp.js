@@ -521,23 +521,48 @@ switch(msg.type){
     mensagem = msg.text?.body || ""
   break
 
-case "image":
+  case "button":
 
-  tipo = "imagem"
-  mensagem = "[Imagem]"
+    tipo = "botao"
 
-  console.log("🖼️ IMAGEM RECEBIDA")
+    mensagem =
+      msg.button?.text ||
+      msg.button?.payload ||
+      "[Botão]"
 
-  // 🔥 SEMPRE baixar e salvar
-  media_url = await baixarESalvarMidia(
-    msg.image.id,
-    "jpg",
-    msg.image.mime_type || "image/jpeg"
-  )
+    console.log("🔘 BOTÃO CLICADO:", mensagem)
 
-break
+  break
+
+  case "interactive":
+
+    tipo = "botao"
+
+    mensagem =
+      msg.interactive?.button_reply?.title ||
+      msg.interactive?.button_reply?.id ||
+      msg.interactive?.list_reply?.title ||
+      "[Interação]"
+
+    console.log("🔘 INTERAÇÃO:", mensagem)
+
+  break
+
+  case "image":
+
+    tipo = "imagem"
+    mensagem = "[Imagem]"
+
+    media_url = await baixarESalvarMidia(
+      msg.image.id,
+      "jpg",
+      msg.image.mime_type || "image/jpeg"
+    )
+
+  break
 
   case "video":
+
     tipo = "video"
     mensagem = "[Vídeo]"
 
@@ -546,9 +571,11 @@ break
       "mp4",
       msg.video.mime_type || "video/mp4"
     )
+
   break
 
   case "audio":
+
     tipo = "audio"
     mensagem = "[Áudio]"
 
@@ -557,13 +584,14 @@ break
       "ogg",
       msg.audio.mime_type || "audio/ogg"
     )
+
   break
 
   case "document":
+
     tipo = "documento"
 
     nome_arquivo = msg.document.filename || "arquivo"
-
     mensagem = `[Documento: ${nome_arquivo}]`
 
     const ext = nome_arquivo.split(".").pop() || "bin"
@@ -573,24 +601,12 @@ break
       ext,
       msg.document.mime_type
     )
+
   break
 
   default:
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
-
-case "button":
-
-  tipo = "botao"
-
-  mensagem =
-    msg.button?.text ||
-    msg.button?.payload ||
-    "[Botão]"
-
-  console.log("🔘 BOTÃO CLICADO:", mensagem)
-
-break
 
   
 
