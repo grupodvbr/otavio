@@ -104,10 +104,10 @@ switch(template){
         {
           type: "body",
           parameters: [
-            { type:"text", text: dadosReserva.nome },
-            { type:"text", text: dadosReserva.data },
-            { type:"text", text: dadosReserva.hora },
-            { type:"text", text: String(dadosReserva.pessoas) }
+            { type:"text", text: dadosReserva?.nome || "Cliente" },
+{ type:"text", text: dadosReserva?.data || "--/--" },
+{ type:"text", text: dadosReserva?.hora || "--:--" },
+{ type:"text", text: String(dadosReserva?.pessoas || "1") }
           ]
         }
       ]
