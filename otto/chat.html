@@ -533,17 +533,21 @@ canal = db.channel("chat-"+telefone)
 
   const m = payload.new
 
-  // 🔥 evita duplicar mensagem já renderizada
-const id = m.id || m.message_id
+  const id = m.id || m.message_id
 
-// 🔥 evita erro com id vazio
-if(id && mensagensIds.has(id)) return
-render(m)
+  if(id && mensagensIds.has(id)) return
 
-// 🔥 FORÇA DESCER SEMPRE
-setTimeout(() => {
-  scrollBottom()
-}, 50)
+  render(m)
+
+  // 🔥 NOVO — VERIFICA POSIÇÃO DO USUÁRIO
+  const pertoDoFim =
+    msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 200
+
+  if(pertoDoFim){
+    setTimeout(() => {
+      scrollBottom()
+    }, 50)
+  }
 
 })
 
