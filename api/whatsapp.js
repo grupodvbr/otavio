@@ -710,16 +710,65 @@ if(tipo === "botao" && texto.includes("confirmar")){
   console.log("🔥 CONFIRMAÇÃO DE RESERVA DETECTADA")
 
   const { data: reserva } = await supabase
-  .from("reservas_mercatto")
-  .select("*")
-  .eq("telefone", cliente)
-  .in("status", ["Pendente"])
-  .order("datahora",{ ascending:false })
-  .limit(1)
-  .maybeSingle()
+    .from("reservas_mercatto")
+    .select("*")
+    .eq("telefone", cliente)
+    .in("status", ["Pendente"])
+    .order("datahora",{ ascending:false })
+    .limit(1)
+    .maybeSingle()
 
   if(!reserva){
     console.log("⚠️ SEM RESERVA PARA CONFIRMAR")
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        to:cliente,
+        type:"text",
+        text:{ body:"Não encontrei reserva pendente para confirmar." }
+      })
+    })
+
+    return res.status(200).end()
+  }
+
+  /* 🔥 ATUALIZA STATUS */
+  const { error:updateError } = await supabase
+    .from("reservas_mercatto")
+    .update({
+      status:"Confirmada"
+    })
+.eq("telefone", cliente)
+.eq("datahora", reserva.datahora)
+  if(updateError){
+    console.log("❌ ERRO AO ATUALIZAR:", updateError)
+  }else{
+    console.log("✅ RESERVA CONFIRMADA:", reserva.id)
+  }
+
+  /* 🔥 RESPONDE CLIENTE */
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      messaging_product:"whatsapp",
+      to:cliente,
+      type:"text",
+      text:{ body:"✅ Sua reserva foi confirmada com sucesso!" }
+    })
+  })
+
+  return res.status(200).end()
+}
 
     await fetch(url,{
       method:"POST",
@@ -742,8 +791,10 @@ if(tipo === "botao" && texto.includes("confirmar")){
   await supabase
   .from("reservas_mercatto")
   .update({ status:"Confirmado" })
-  .eq("id", reserva.id)
+.eq("telefone", cliente)
+.eq("datahora", reserva.datahora)
 
+  
   console.log("✅ RESERVA CONFIRMADA:", reserva.id)
 
   const resposta = `✅ Sua reserva foi confirmada!
