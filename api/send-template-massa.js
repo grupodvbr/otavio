@@ -21,7 +21,7 @@ module.exports = async function(req,res){
 
   try{
 
-    /* ================= GET → STATUS ================= */
+    /* ================= GET STATUS ================= */
     if(req.method === "GET"){
       return res.json(status)
     }
@@ -42,8 +42,7 @@ module.exports = async function(req,res){
       })
     }
 
-    /* ================= BUSCAR CLIENTES ================= */
-
+    /* ================= CLIENTES ================= */
     const { data: clientes, error } = await supabase
       .from("memoria_clientes")
       .select("telefone, nome")
@@ -58,7 +57,6 @@ module.exports = async function(req,res){
     }
 
     /* ================= RESET ================= */
-
     status = {
       rodando:true,
       total:clientes.length,
@@ -72,8 +70,9 @@ module.exports = async function(req,res){
 
     res.json({ ok:true, iniciado:true })
 
-    /* ================= PROCESSO BACKGROUND ================= */
+    const baseUrl = `https://${req.headers.host}`
 
+    /* ================= BACKGROUND ================= */
     ;(async ()=>{
 
       for(const cliente of clientes){
@@ -83,7 +82,7 @@ module.exports = async function(req,res){
 
         try{
 
-          const resp = await fetch(`/api/send-template`,{
+          const resp = await fetch(`${baseUrl}/api/send-template`,{
             method:"POST",
             headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({
@@ -103,7 +102,7 @@ module.exports = async function(req,res){
           try{
             result = await resp.json()
           }catch{
-            result = { error:"Resposta inválida" }
+            result = { error:"Resposta inválida da API" }
           }
 
           if(!resp.ok || result?.error){
