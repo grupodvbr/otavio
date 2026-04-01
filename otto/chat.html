@@ -79,17 +79,17 @@ body::before{
 
 /* ===== CHAT ===== */
 .messages{
-  position:fixed;
-  top:60px;
-  bottom:80px;
-  left:0;
-  right:0;
-  overflow-y:auto;
-  padding:20px 14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  scroll-behavior:smooth;
+position:fixed;
+top:60px;
+bottom:80px;
+left:0;
+right:0;
+overflow:auto;
+padding:20px;
+display:flex;
+flex-direction:column;
+gap:10px;
+scroll-behavior:smooth;
 }
 
 /* ===== DATA ===== */
@@ -170,18 +170,17 @@ body::before{
 
 /* ===== INPUT ===== */
 .inputBox{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:70px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px;
-  background:#ffffff;
-  border-top:1px solid #ddd;
-  z-index:20;
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+gap:8px;
+padding:10px;
+background:#f0f0f0;
+align-items:center;
+border-top:1px solid #ddd;
+z-index:10;
 }
 
 /* TEXTAREA */
@@ -295,12 +294,34 @@ button:hover{
   background:#ccc;
   border-radius:10px;
 }
+
+.avatar{
+width:38px;
+height:38px;
+border-radius:50%;
+background:linear-gradient(135deg,#25d366,#128c7e);
+color:#fff;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:700;
+font-size:14px;
+text-transform:uppercase;
+}
 </style>
 
 </head>
 
 <body>
-
+<div class="header">
+  <div class="title">
+    <div class="avatar" id="avatar">--</div>
+    <div>
+      <div id="nomeCliente">Carregando...</div>
+      <div style="font-size:11px;opacity:.7">online</div>
+    </div>
+  </div>
+</div>
 
 <div id="msgs" class="messages"></div>
 
@@ -369,6 +390,34 @@ let canal = null
 let arquivo = null
 let ultimaDataRender = null
 
+
+  async function carregarNomeCliente(){
+
+  if(!telefone) return
+
+  const {data} = await db
+    .from("memoria_clientes")
+    .select("nome")
+    .eq("telefone", telefone)
+    .single()
+
+  let nome = data?.nome || telefone
+
+  document.getElementById("nomeCliente").innerText = nome
+
+  gerarAvatar(nome)
+}
+function gerarAvatar(nome){
+
+  let iniciais = nome
+    .split(" ")
+    .slice(0,2)
+    .map(n => n[0])
+    .join("")
+    .toUpperCase()
+
+  document.getElementById("avatar").innerText = iniciais
+}
 /* ===== TIME ===== */
 function hora(d){
 
@@ -595,7 +644,7 @@ setTimeout(() => {
   scrollBottom()
 }, 100)
 realtime()
-
+carregarNomeCliente()
 }
 
 /* ===== LOAD MAIS ===== */
