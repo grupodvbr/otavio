@@ -5,116 +5,107 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE
 )
 
+/* 🔥 CONTROLE GLOBAL (em memória) */
+let statusDisparo = {
+  total: 0,
+  enviados: 0,
+  erros: 0,
+  atual: null,
+  finalizado: false,
+  logs: []
+}
+
 module.exports = async function(req, res){
 
   try{
 
-    /* ================= CORREÇÃO VERCEL BODY ================= */
-    let body = req.body
+    if(req.method === "GET"){
+      return res.json(statusDisparo)
+    }
 
+    let body = req.body
     if(typeof body === "string"){
       body = JSON.parse(body)
     }
 
     const { template, parametros = {} } = body
 
-    /* ================= VALIDAÇÃO ================= */
-
     if(!template){
-      return res.status(400).json({
-        error:"template obrigatório"
-      })
+      return res.status(400).json({ error:"template obrigatório" })
     }
 
-    console.log("🚀 DISPARO EM MASSA INICIADO:", template)
+    /* ================= CLIENTES ================= */
 
-    /* ================= BUSCAR CLIENTES ================= */
-
-    const { data: clientes, error } = await supabase
+    const { data: clientes } = await supabase
       .from("memoria_clientes")
       .select("telefone, nome")
       .not("telefone","is",null)
 
-    if(error){
-      return res.status(500).json({ error:error.message })
+    statusDisparo = {
+      total: clientes.length,
+      enviados: 0,
+      erros: 0,
+      atual: null,
+      finalizado: false,
+      logs: []
     }
 
-    if(!clientes || clientes.length === 0){
-      return res.json({
-        ok:false,
-        mensagem:"Nenhum cliente encontrado"
-      })
-    }
+    /* 🔥 RESPONDE IMEDIATO */
+    res.json({ ok:true, iniciado:true })
 
-    console.log(`👥 Total clientes: ${clientes.length}`)
+    /* ================= DISPARO EM BACKGROUND ================= */
 
-    /* ================= CONTROLE ================= */
+    ;(async () => {
 
-    let enviados = 0
-    let erros = 0
-
-    /* ================= LOOP DE ENVIO ================= */
-
-    for(const cliente of clientes){
-
-      try{
+      for(const cliente of clientes){
 
         const telefone = cliente.telefone
+        statusDisparo.atual = telefone
 
-        if(!telefone) continue
+        try{
 
-        console.log("📤 Enviando para:", telefone)
-
-        await fetch(`${process.env.URL}/api/send-template`,{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json"
-          },
-          body: JSON.stringify({
-            telefone,
-            template,
-            parametros:{
-              nome: cliente.nome || "Cliente",
-              data: parametros.data || "20/03",
-              hora: parametros.hora || "20:00",
-              pessoas: parametros.pessoas || "2"
-            }
+          await fetch(`${process.env.URL}/api/send-template`,{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({
+              telefone,
+              template,
+              parametros:{
+                nome: cliente.nome || "Cliente",
+                data: parametros.data || "20/03",
+                hora: parametros.hora || "20:00",
+                pessoas: parametros.pessoas || "2"
+              }
+            })
           })
-        })
 
-        enviados++
+          statusDisparo.enviados++
 
-        /* ================= DELAY (ANTI BLOQUEIO META) ================= */
-        await new Promise(resolve => setTimeout(resolve, 1500))
+          statusDisparo.logs.push({
+            telefone,
+            status:"enviado"
+          })
 
-      }catch(err){
+        }catch(e){
 
-        console.log("❌ Erro ao enviar para:", cliente.telefone)
-        erros++
+          statusDisparo.erros++
 
+          statusDisparo.logs.push({
+            telefone,
+            status:"erro"
+          })
+
+        }
+
+        await new Promise(r => setTimeout(r, 1500))
       }
 
-    }
+      statusDisparo.finalizado = true
 
-    /* ================= FINAL ================= */
-
-    console.log("✅ DISPARO FINALIZADO")
-
-    return res.json({
-      ok:true,
-      total: clientes.length,
-      enviados,
-      erros
-    })
+    })()
 
   }catch(err){
-
-    console.error("🔥 ERRO GERAL:", err)
-
-    return res.status(500).json({
-      error: err.message
-    })
-
+    res.status(500).json({ error: err.message })
   }
 
 }
