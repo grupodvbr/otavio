@@ -356,8 +356,7 @@ z-index:999;
 
 <button onclick="enviarTemplate('confirmao_de_reserva')">Reserva</button>
 <button onclick="enviarTemplate('reserva_especial')">Sala VIP</button>
-<button onclick="enviarTemplate('hello_world')">Teste</button>
-
+<button onclick="abrirDisparoMassa()">📢 Disparo em Massa</button>
 </div>
 
 
@@ -961,7 +960,13 @@ async function enviarTemplate(nome){
   document.getElementById("menuTemplates").style.display = "none"
 }
 
-
+function abrirDisparoMassa(){
+  window.open(
+    "popupmassa.html",
+    "massa",
+    "width=500,height=700"
+  )
+}
 
 
   
