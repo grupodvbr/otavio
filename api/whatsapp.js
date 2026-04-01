@@ -618,9 +618,6 @@ const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
 
 if(isAdmin){
 
-  console.log("👨‍💼 ADMIN DETECTADO:", cliente)
-  console.log("💬 MENSAGEM:", mensagem)
-
   await fetch(url,{
     method:"POST",
     headers:{
@@ -631,13 +628,12 @@ if(isAdmin){
       messaging_product:"whatsapp",
       to: cliente,
       type:"text",
-      text:{ body:`👨‍💼 ADMIN ONLINE\n\n${mensagem}` }
+      text:{ body:"ADMIN OK: " + mensagem }
     })
   })
 
   return res.status(200).end()
 }
-
 /* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
 
 try{
