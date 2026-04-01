@@ -24,8 +24,26 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  opacity:.9;
+.progress{
+  margin-top:20px;
+  height:20px;
+  background:#1e293b;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.bar{
+  height:100%;
+  background:#22c55e;
+  width:0%;
+  transition:.3s;
+}
+
+.log{
+  margin-top:20px;
+  max-height:200px;
+  overflow:auto;
+  font-size:12px;
 }
 </style>
 </head>
@@ -35,60 +53,68 @@ button:hover{
 <h2>📢 Disparo em Massa</h2>
 
 <button onclick="disparar('confirmao_de_reserva')">
-Confirmar Reservas
+Iniciar Disparo
 </button>
 
-<button onclick="disparar('reserva_especial')">
-Sala VIP
-</button>
+<div class="progress">
+  <div class="bar" id="bar"></div>
+</div>
 
-<button onclick="disparar('hello_world')">
-Teste
-</button>
+<div id="info"></div>
+
+<div class="log" id="log"></div>
 
 <script>
+
+let interval = null
+
 async function disparar(template){
 
-  console.log("TEMPLATE:", template) // 🔥 DEBUG
+  await fetch("/api/send-template-massa",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ template })
+  })
 
-  if(!template){
-    alert("Template inválido")
-    return
-  }
+  interval = setInterval(atualizar, 1000)
+}
 
-  if(!confirm("Deseja enviar para TODOS os clientes?")) return
+async function atualizar(){
 
-  try{
+  const res = await fetch("/api/send-template-massa")
+  const data = await res.json()
 
-    const res = await fetch("/api/send-template-massa",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        template: template, // 🔥 FORÇA GARANTIA
-        parametros:{
-          data:"20/03",
-          hora:"20:00",
-          pessoas:"2"
-        }
-      })
-    })
+  const total = data.total || 0
+  const enviados = data.enviados || 0
+  const erros = data.erros || 0
 
-    const data = await res.json()
+  const percent = total ? ((enviados+erros)/total)*100 : 0
 
-    console.log("RESPOSTA:", data)
+  document.getElementById("bar").style.width = percent + "%"
 
-    if(!res.ok){
-      alert("Erro: " + JSON.stringify(data))
-      return
-    }
+  document.getElementById("info").innerHTML = `
+    📊 ${enviados} enviados<br>
+    ❌ ${erros} erros<br>
+    👥 ${total} total<br>
+    🔄 Atual: ${data.atual || "-"}<br>
+    📈 ${percent.toFixed(0)}%
+  `
 
-    alert("🚀 Disparo iniciado!")
+  const log = document.getElementById("log")
 
-  }catch(err){
-    console.error(err)
-    alert("Erro na requisição")
+  log.innerHTML = data.logs
+    .slice(-20)
+    .map(l => `
+      <div>
+        ${l.telefone} - 
+        ${l.status === "enviado" ? "✅" : "❌"}
+      </div>
+    `)
+    .join("")
+
+  if(data.finalizado){
+    clearInterval(interval)
+    alert("✅ Disparo finalizado!")
   }
 
 }
