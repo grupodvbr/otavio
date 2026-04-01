@@ -95,10 +95,10 @@ switch(template){
         {
           type: "body",
           parameters: [
-            { type:"text", text: dadosReserva.nome },
-            { type:"text", text: dadosReserva.data },
-            { type:"text", text: dadosReserva.hora },
-            { type:"text", text: dadosReserva.pessoas }
+{ type:"text", text: dadosReserva?.nome || "Cliente" },
+{ type:"text", text: dadosReserva?.data || "--/--" },
+{ type:"text", text: dadosReserva?.hora || "--:--" },
+{ type:"text", text: dadosReserva?.pessoas || "1" }
           ]
         }
       ]
@@ -151,16 +151,7 @@ if(!templateData){
   return res.status(400).json({
     error: "Template não configurado"
   })
-}
-    /* ================= MONTA TEMPLATE ================= */
-
-    const templateData = montarTemplate(template, parametros)
-
-    if(!templateData){
-      return res.status(400).json({
-        error: "Template não configurado"
-      })
-    }
+}}
 
     /* ================= PAYLOAD ================= */
 
