@@ -770,22 +770,7 @@ if(tipo === "botao" && texto.includes("confirmar")){
   return res.status(200).end()
 }
 
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        messaging_product:"whatsapp",
-        to: cliente,
-        type:"text",
-        text:{ body:"❌ Não encontrei nenhuma reserva pendente para confirmar." }
-      })
-    })
 
-    return res.status(200).end()
-  }
 
   /* 🔥 ATUALIZA STATUS */
   await supabase
@@ -838,16 +823,25 @@ Esperamos você no Mercatto Delícia! 🍝✨`
 
 if(isAdmin){
 
-  console.log("👨‍💼 MENSAGEM DO ADMIN DETECTADA")
+  console.log("👨‍💼 ADMIN DETECTADO")
 
-  /* 🔥 BUSCAR ÚLTIMA DÚVIDA */
-const match = mensagem.match(/^([a-z0-9\-]+)\s+([\s\S]+)/i)
+  /* 🔥 RESPONDE DIRETO (SEM ID) */
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to: cliente,
+      type:"text",
+      text:{ body:"✅ Mensagem recebida (modo admin ativo)" }
+    })
+  })
 
-if(!match){
-  console.log("❌ ADMIN NÃO INFORMOU ID")
   return res.status(200).end()
 }
-
 const id = match[1]
 const respostaAdmin = match[2]
 
