@@ -612,24 +612,6 @@ const cliente = mensagensRecebidas[0]?.from
   const isAdmin = ADMINS.includes(cliente)
 const message_id = mensagensRecebidas[0]?.id
 
-  /* ================= BLOQUEAR DUPLICIDADE ================= */
-
-const { data: jaProcessada } = await supabase
-.from("mensagens_processadas")
-.select("*")
-.eq("message_id", message_id)
-.maybeSingle()
-
-if(jaProcessada){
-  console.log("⚠️ DUPLICADA IGNORADA:", message_id)
-  return res.status(200).end()
-}
-
-/* ================= REGISTRA PROCESSAMENTO ================= */
-
-await supabase
-.from("mensagens_processadas")
-.insert({ message_id })
 
 /* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
 
