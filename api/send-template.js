@@ -42,9 +42,11 @@ module.exports = async function(req, res){
       })
     }
 
-/* ================= BUSCAR DADOS DINÂMICOS ================= */
+    /* ================= FUNÇÃO TEMPLATE ================= */
 
-let dadosReserva = null
+/* ================= BUSCAR RESERVA REAL ================= */
+
+let dadosReserva = parametros
 
 if(template === "confirmao_de_reserva"){
 
@@ -61,97 +63,91 @@ if(template === "confirmao_de_reserva"){
     console.log("❌ ERRO AO BUSCAR RESERVA:", error)
   }
 
-  if(!reserva){
+  if(reserva){
+
+    console.log("✅ RESERVA REAL ENCONTRADA:", reserva)
+
+    const dataObj = new Date(reserva.datahora)
+
+    const dataFormatada =
+      dataObj.toLocaleDateString("pt-BR")
+
+    const horaFormatada =
+      dataObj.toTimeString().substring(0,5)
+
+    dadosReserva = {
+      nome: reserva.nome,
+      data: dataFormatada,
+      hora: horaFormatada,
+      pessoas: reserva.pessoas
+    }
+
+  }else{
+
     console.log("⚠️ CLIENTE NÃO TEM RESERVA")
 
-    return res.status(200).json({
-      ok:false,
-      mensagem:"Cliente não possui reserva"
-    })
-  }
+    dadosReserva = {
+      nome: parametros.nome || "Cliente",
+      data: parametros.data || "--/--",
+      hora: parametros.hora || "--:--",
+      pessoas: parametros.pessoas || "1"
+    }
 
-  const dataObj = new Date(reserva.datahora)
-
-  dadosReserva = {
-    nome: reserva.nome,
-    data: dataObj.toLocaleDateString("pt-BR"),
-    hora: dataObj.toTimeString().substring(0,5),
-    pessoas: reserva.pessoas
   }
 }
 
-/* ================= MONTAR TEMPLATE ================= */
+/* ================= MONTA TEMPLATE ================= */
 
-let templateData = null
+const templateData = montarTemplate(template, dadosReserva)
 
-switch(template){
+        /* ================= RESERVA ESPECIAL (VIDEO) ================= */
 
-  case "confirmao_de_reserva":
+        case "reserva_especial":
 
-    templateData = {
-      name: template,
-      language: { code: idioma },
-      components: [
-        {
-          type: "body",
-          parameters: [
-{ type:"text", text: dadosReserva?.nome || "Cliente" },
-{ type:"text", text: dadosReserva?.data || "--/--" },
-{ type:"text", text: dadosReserva?.hora || "--:--" },
-{ type:"text", text: dadosReserva?.pessoas || "1" }
-          ]
-        }
-      ]
-    }
+          if(!parametros.video){
+            throw new Error("Template reserva_especial precisa de video")
+          }
 
-  break
-
-  case "reserva_especial":
-
-    if(!parametros.video){
-      throw new Error("Template reserva_especial precisa de video")
-    }
-
-    templateData = {
-      name: template,
-      language: { code: idioma },
-      components: [
-        {
-          type: "header",
-          parameters: [
-            {
-              type: "video",
-              video: {
-                link: parametros.video
+          return {
+            name: template,
+            language: { code: idioma },
+            components: [
+              {
+                type: "header",
+                parameters: [
+                  {
+                    type: "video",
+                    video: {
+                      link: parametros.video
+                    }
+                  }
+                ]
               }
-            }
-          ]
-        }
-      ]
+            ]
+          }
+
+        /* ================= HELLO WORLD ================= */
+
+        case "hello_world":
+          return {
+            name: template,
+            language: { code: idioma }
+          }
+
+        default:
+          return null
+      }
     }
 
-  break
+    /* ================= MONTA TEMPLATE ================= */
 
-  case "hello_world":
+    const templateData = montarTemplate(template, parametros)
 
-    templateData = {
-      name: template,
-      language: { code: idioma }
+    if(!templateData){
+      return res.status(400).json({
+        error: "Template não configurado"
+      })
     }
-
-  break
-
-  default:
-    templateData = null
-}
-
-/* ================= VALIDA TEMPLATE ================= */
-
-if(!templateData){
-  return res.status(400).json({
-    error: "Template não configurado"
-  })
-}}
 
     /* ================= PAYLOAD ================= */
 
