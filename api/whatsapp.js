@@ -514,7 +514,6 @@ let media_url = null
 let nome_arquivo = null
 
 /* ================= SWITCH CORRETO ================= */
-
 switch(msg.type){
 
   case "text":
@@ -547,6 +546,8 @@ switch(msg.type){
     console.log("🔘 INTERAÇÃO:", mensagem)
 
   break
+
+}
 
   case "image":
 
@@ -862,10 +863,10 @@ body:JSON.stringify({
   console.log("📤 RESPOSTA ENVIADA PARA CLIENTE")
 
   /* 🔥 LIMPAR DÚVIDA */
-  await supabase
-  .from("duvidas_pendentes")
-  .delete()
-  .eq("id", ultimaDuvida.id)
+await supabase
+.from("duvidas_pendentes")
+.delete()
+.eq("id", duvida.id)
 
   return res.status(200).end()
 }
@@ -1535,22 +1536,7 @@ assuntoMusica = querMusica
 if(querMusica){
 console.log("FORÇANDO ASSUNTO MUSICA")
 }
-/* ================= BLOQUEAR DUPLICIDADE ================= */
 
-const { data: jaProcessada } = await supabase
-.from("mensagens_processadas")
-.select("*")
-.eq("message_id", message_id)
-.maybeSingle()
-
-if(jaProcessada){
-console.log("Mensagem duplicada ignorada")
-return res.status(200).end()
-}
-
-await supabase
-.from("mensagens_processadas")
-.insert({ message_id })
 
 
 
