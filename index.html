@@ -321,28 +321,29 @@ iframe{
 }
 
 .menu-mobile-btn{
-  width:42px;
-  height:42px;
+  width:40px;
+  height:40px;
 
   display:flex;
   align-items:center;
   justify-content:center;
 
-  border-radius:12px;
+  border-radius:10px;
 
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
-  color:#fff;
+  background:#ffffff;
+  color:#000;
 
-  font-size:20px;
+  font-size:22px;
 
   cursor:pointer;
-  transition:.25s;
+  transition:.2s;
 
-  box-shadow:0 10px 25px rgba(37,99,235,.5);
+  box-shadow:0 6px 18px rgba(0,0,0,.15);
 }
 
 .menu-mobile-btn:hover{
-  transform:scale(1.08);
+  transform:scale(1.05);
+  background:#f1f5f9;
 }
 
 .overlay{
@@ -473,11 +474,9 @@ iframe{
 <div class="header">
 
   <div style="display:flex;align-items:center;gap:10px">
-
-    <!-- MENU (AGORA PRIMEIRO) -->
-    <div class="menu-mobile-btn" onclick="toggleMobileMenu()">
-      ☰
-    </div>
+<div class="menu-mobile-btn" onclick="toggleMobileMenu()">
+  <i class="ri-arrow-right-line"></i>
+</div>
 
     <!-- VOLTAR
     <div class="btn-voltar" onclick="voltarPagina()">
