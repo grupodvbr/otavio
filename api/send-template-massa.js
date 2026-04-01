@@ -115,14 +115,37 @@ module.exports = async function(req,res){
               detalhe: result?.error || "Erro desconhecido"
             })
 
+            /* 🔥 SALVA ERRO */
+            await supabase
+              .from("conversas_whatsapp")
+              .insert({
+                telefone,
+                mensagem: `[ERRO TEMPLATE: ${template}]`,
+                role:"assistant",
+                status:"erro"
+              })
+
           }else{
 
             status.enviados++
+
+            const messageId = result?.data?.messages?.[0]?.id || null
 
             status.logs.push({
               telefone,
               status:"ok"
             })
+
+            /* 🔥 SALVA SUCESSO (IGUAL SEND-TEMPLATE) */
+            await supabase
+              .from("conversas_whatsapp")
+              .insert({
+                telefone,
+                mensagem:`[TEMPLATE ENVIADO EM MASSA: ${template}]`,
+                role:"assistant",
+                message_id: messageId,
+                status:"sent"
+              })
 
           }
 
@@ -135,6 +158,16 @@ module.exports = async function(req,res){
             status:"erro",
             detalhe: e.message
           })
+
+          /* 🔥 SALVA ERRO CRÍTICO */
+          await supabase
+            .from("conversas_whatsapp")
+            .insert({
+              telefone,
+              mensagem:`[ERRO CRÍTICO: ${template}]`,
+              role:"assistant",
+              status:"erro"
+            })
 
         }
 
