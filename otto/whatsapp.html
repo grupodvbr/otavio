@@ -6,12 +6,7 @@
 <meta charset="UTF-8">
 <title>Gestor de Conversas • Mercatto Delícia</title>
 
-<meta name="viewport"
-content="width=device-width,
-initial-scale=1,
-maximum-scale=1,
-user-scalable=no,
-viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1490,5 +1485,31 @@ Fechar
 </div>
 
 </div>
+
+
+<script>
+// 🔥 BLOQUEAR ZOOM (GESTOS iPhone)
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
+
+// 🔥 BLOQUEAR DOUBLE TAP
+let lastTouchEnd = 0;
+
+document.addEventListener('touchend', function (event) {
+  const now = new Date().getTime();
+  if (now - lastTouchEnd <= 300) {
+    event.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
+
+// 🔥 BLOQUEAR PINCH
+document.addEventListener('touchmove', function (event) {
+  if (event.scale !== 1) {
+    event.preventDefault();
+  }
+}, { passive: false });
+</script>
 </body>
 </html>
