@@ -579,19 +579,18 @@ break
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
 
- case "interactive":
+case "button":
 
-    tipo = "botao"
+  tipo = "botao"
 
-    mensagem =
-      msg.interactive?.button_reply?.title ||
-      msg.interactive?.button_reply?.id ||
-      msg.interactive?.list_reply?.title ||
-      "[Interação]"
+  mensagem =
+    msg.button?.text ||
+    msg.button?.payload ||
+    "[Botão]"
 
-    console.log("🔘 BOTÃO CLICADO:", mensagem)
+  console.log("🔘 BOTÃO CLICADO:", mensagem)
 
-  break
+break
 
   
 
