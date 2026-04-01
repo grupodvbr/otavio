@@ -49,15 +49,48 @@ Teste
 <script>
 async function disparar(template){
 
+  console.log("TEMPLATE:", template) // 🔥 DEBUG
+
+  if(!template){
+    alert("Template inválido")
+    return
+  }
+
   if(!confirm("Deseja enviar para TODOS os clientes?")) return
 
-  await fetch("/api/send-template-massa",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ template })
-  })
+  try{
 
-  alert("🚀 Disparo iniciado!")
+    const res = await fetch("/api/send-template-massa",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        template: template, // 🔥 FORÇA GARANTIA
+        parametros:{
+          data:"20/03",
+          hora:"20:00",
+          pessoas:"2"
+        }
+      })
+    })
+
+    const data = await res.json()
+
+    console.log("RESPOSTA:", data)
+
+    if(!res.ok){
+      alert("Erro: " + JSON.stringify(data))
+      return
+    }
+
+    alert("🚀 Disparo iniciado!")
+
+  }catch(err){
+    console.error(err)
+    alert("Erro na requisição")
+  }
+
 }
 </script>
 
