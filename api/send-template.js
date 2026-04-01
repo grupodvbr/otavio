@@ -203,12 +203,30 @@ if(data.error){
   })
 }
 
-    return res.json({
-      ok:true,
-      enviado:true,
-      template,
-      data
-    })
+/* ================= SALVAR CONVERSA ================= */
+
+const messageId = data?.messages?.[0]?.id || null
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+  telefone: telefone,
+  mensagem: `[TEMPLATE ENVIADO: ${template}]`,
+  role: "assistant",
+  message_id: messageId,
+  status: "sent"
+})
+
+/* ================= RESPOSTA ================= */
+
+return res.json({
+  ok:true,
+  enviado:true,
+  template,
+  data
+})
+
+    
 
   } catch (err){
 
