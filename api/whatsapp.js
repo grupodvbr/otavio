@@ -579,16 +579,19 @@ break
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
 
-case "interactive":
+ case "interactive":
 
-  tipo = "botao"
-  mensagem =
-    msg.interactive?.button_reply?.title ||
-    msg.interactive?.list_reply?.title ||
-    "[Interação]"
+    tipo = "botao"
 
-break
+    mensagem =
+      msg.interactive?.button_reply?.title ||
+      msg.interactive?.button_reply?.id ||
+      msg.interactive?.list_reply?.title ||
+      "[Interação]"
 
+    console.log("🔘 BOTÃO CLICADO:", mensagem)
+
+  break
 
   
 
@@ -706,6 +709,86 @@ return res.status(200).end()
 }
 
 const texto = mensagem.toLowerCase()
+/* ================= CONFIRMAR RESERVA AUTOMATICO ================= */
+
+if(tipo === "botao" && texto.includes("confirmar")){
+
+  console.log("🔥 CONFIRMAÇÃO DE RESERVA DETECTADA")
+
+  const { data: reserva } = await supabase
+  .from("reservas_mercatto")
+  .select("*")
+  .eq("telefone", cliente)
+  .in("status", ["Pendente"])
+  .order("datahora",{ ascending:false })
+  .limit(1)
+  .maybeSingle()
+
+  if(!reserva){
+    console.log("⚠️ SEM RESERVA PARA CONFIRMAR")
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        messaging_product:"whatsapp",
+        to: cliente,
+        type:"text",
+        text:{ body:"❌ Não encontrei nenhuma reserva pendente para confirmar." }
+      })
+    })
+
+    return res.status(200).end()
+  }
+
+  /* 🔥 ATUALIZA STATUS */
+  await supabase
+  .from("reservas_mercatto")
+  .update({ status:"Confirmado" })
+  .eq("id", reserva.id)
+
+  console.log("✅ RESERVA CONFIRMADA:", reserva.id)
+
+  const resposta = `✅ Sua reserva foi confirmada!
+
+📅 Data: ${new Date(reserva.datahora).toLocaleDateString("pt-BR")}
+⏰ Hora: ${new Date(reserva.datahora).toTimeString().substring(0,5)}
+👥 Pessoas: ${reserva.pessoas}
+
+Esperamos você no Mercatto Delícia! 🍝✨`
+
+  /* 🔥 ENVIA RESPOSTA */
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to: cliente,
+      type:"text",
+      text:{ body: resposta }
+    })
+  })
+
+  /* 🔥 SALVA RESPOSTA NO BANCO */
+  await supabase
+  .from("conversas_whatsapp")
+  .insert({
+    telefone:cliente,
+    mensagem:resposta,
+    role:"assistant"
+  })
+
+  return res.status(200).end()
+}
+
+
+  
 /* ================= ADMIN RESPONDENDO CLIENTE ================= */
 
 if(isAdmin){
