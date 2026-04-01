@@ -514,34 +514,45 @@ let media_url = null
 let nome_arquivo = null
 
 /* ================= SWITCH CORRETO ================= */
+/* ================= SWITCH CORRETO ================= */
+
 switch(msg.type){
 
   case "text":
+    tipo = "texto"
     mensagem = msg.text?.body || ""
   break
 
+
   case "button":
     tipo = "botao"
+
     mensagem =
       msg.button?.text ||
       msg.button?.payload ||
       "[Botão]"
+
     console.log("🔘 BOTÃO CLICADO:", mensagem)
   break
 
+
   case "interactive":
     tipo = "botao"
+
     mensagem =
       msg.interactive?.button_reply?.title ||
       msg.interactive?.button_reply?.id ||
       msg.interactive?.list_reply?.title ||
       "[Interação]"
+
     console.log("🔘 INTERAÇÃO:", mensagem)
   break
+
 
   case "image":
     tipo = "imagem"
     mensagem = "[Imagem]"
+
     media_url = await baixarESalvarMidia(
       msg.image.id,
       "jpg",
@@ -549,9 +560,11 @@ switch(msg.type){
     )
   break
 
+
   case "video":
     tipo = "video"
     mensagem = "[Vídeo]"
+
     media_url = await baixarESalvarMidia(
       msg.video.id,
       "mp4",
@@ -559,9 +572,11 @@ switch(msg.type){
     )
   break
 
+
   case "audio":
     tipo = "audio"
     mensagem = "[Áudio]"
+
     media_url = await baixarESalvarMidia(
       msg.audio.id,
       "ogg",
@@ -569,11 +584,15 @@ switch(msg.type){
     )
   break
 
+
   case "document":
     tipo = "documento"
-    nome_arquivo = msg.document.filename || "arquivo"
+
+    nome_arquivo = msg.document?.filename || "arquivo"
     mensagem = `[Documento: ${nome_arquivo}]`
+
     const ext = nome_arquivo.split(".").pop() || "bin"
+
     media_url = await baixarESalvarMidia(
       msg.document.id,
       ext,
@@ -581,11 +600,13 @@ switch(msg.type){
     )
   break
 
+
   default:
+    tipo = "desconhecido"
+    mensagem = `[Tipo não tratado: ${msg.type}]`
+
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
-  
-
 
 const cliente = mensagensRecebidas[0]?.from
   const isAdmin = ADMINS.includes(cliente)
