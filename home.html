@@ -2,6 +2,15 @@
 <html lang="pt-BR">
 <head>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#020617">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Prompts IA">
+
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta charset="UTF-8">
 <title>GRUPO DV - MERCATTO DELÍCIA</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,9 +45,9 @@
 }
 
 body{
-  height:100vh;
+  min-height:100vh;
   background:var(--bg);
-  overflow:hidden;
+  overflow:auto;
 }
 
 .app{
@@ -539,6 +548,12 @@ function voltarPagina(){
   frame.contentWindow.history.back();
 }
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("SW registrado"))
+    .catch(err => console.log("Erro SW", err));
+}
+</script>
 </body>
 </html>
