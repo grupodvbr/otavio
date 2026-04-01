@@ -2732,7 +2732,9 @@ mesa:mesa,
 cardapio:"",
 comandaIndividual: reserva.comandaIndividual || "Não",
   datahora:datahora,
-observacoes:"Reserva via Automação WhatsApp",
+observacoes: reserva.observacoes && reserva.observacoes.trim() !== ""
+  ? reserva.observacoes
+  : "",
 valorEstimado:0,
 pagamentoAntecipado:0,
 banco:"",
