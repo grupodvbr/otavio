@@ -829,7 +829,7 @@ const message_id = mensagensRecebidas[0]?.id
 
 if(isAdmin){
 
-  console.log("👨‍💼 ADMIN DETECTADO:", cliente)
+  console.log("👨‍💼 ADMIN:", mensagem)
 
   await fetch(url,{
     method:"POST",
@@ -841,7 +841,7 @@ if(isAdmin){
       messaging_product:"whatsapp",
       to: cliente,
       type:"text",
-      text:{ body:"✅ ADMIN ONLINE - sistema funcionando" }
+      text:{ body:"🧠 Recebi sua mensagem como ADMIN:\n\n" + mensagem }
     })
   })
 
