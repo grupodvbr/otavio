@@ -609,10 +609,12 @@ switch(msg.type){
 }
 
 const cliente = mensagensRecebidas[0]?.from
-  const isAdmin = ADMINS.includes(cliente)
+const isAdmin = ADMINS.includes(cliente)
 const message_id = mensagensRecebidas[0]?.id
 
-/* ================= ADMIN PRIORIDADE MÁXIMA ================= */
+/* 🔥 DEFINE URL ANTES */
+const phone_number_id = change.metadata.phone_number_id
+const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
 
 if(isAdmin){
 
