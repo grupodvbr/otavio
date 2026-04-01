@@ -44,28 +44,61 @@ module.exports = async function(req, res){
 
     /* ================= FUNÇÃO TEMPLATE ================= */
 
-    function montarTemplate(template, parametros){
+/* ================= BUSCAR RESERVA REAL ================= */
 
-      switch(template){
+let dadosReserva = parametros
 
-        /* ================= CONFIRMAÇÃO ================= */
+if(template === "confirmao_de_reserva"){
 
-        case "confirmao_de_reserva":
-          return {
-            name: template,
-            language: { code: idioma },
-            components: [
-              {
-                type: "body",
-                parameters: [
-                  { type:"text", text: parametros.nome || "Cliente" },
-                  { type:"text", text: parametros.data || "20/03" },
-                  { type:"text", text: parametros.hora || "20:00" },
-                  { type:"text", text: parametros.pessoas || "2" }
-                ]
-              }
-            ]
-          }
+  const { data: reserva, error } = await supabase
+  .from("reservas_mercatto")
+  .select("*")
+  .eq("telefone", telefone)
+  .in("status", ["Pendente","Confirmado"])
+  .order("datahora",{ ascending:false })
+  .limit(1)
+  .maybeSingle()
+
+  if(error){
+    console.log("❌ ERRO AO BUSCAR RESERVA:", error)
+  }
+
+  if(reserva){
+
+    console.log("✅ RESERVA REAL ENCONTRADA:", reserva)
+
+    const dataObj = new Date(reserva.datahora)
+
+    const dataFormatada =
+      dataObj.toLocaleDateString("pt-BR")
+
+    const horaFormatada =
+      dataObj.toTimeString().substring(0,5)
+
+    dadosReserva = {
+      nome: reserva.nome,
+      data: dataFormatada,
+      hora: horaFormatada,
+      pessoas: reserva.pessoas
+    }
+
+  }else{
+
+    console.log("⚠️ CLIENTE NÃO TEM RESERVA")
+
+    dadosReserva = {
+      nome: parametros.nome || "Cliente",
+      data: parametros.data || "--/--",
+      hora: parametros.hora || "--:--",
+      pessoas: parametros.pessoas || "1"
+    }
+
+  }
+}
+
+/* ================= MONTA TEMPLATE ================= */
+
+const templateData = montarTemplate(template, dadosReserva)
 
         /* ================= RESERVA ESPECIAL (VIDEO) ================= */
 
