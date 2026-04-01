@@ -821,11 +821,16 @@ Esperamos você no Mercatto Delícia! 🍝✨`
   
 /* ================= ADMIN RESPONDENDO CLIENTE ================= */
 
+const cliente = mensagensRecebidas[0]?.from
+const isAdmin = ADMINS.includes(cliente)
+const message_id = mensagensRecebidas[0]?.id
+
+/* ================= ADMIN PRIORIDADE MÁXIMA ================= */
+
 if(isAdmin){
 
-  console.log("👨‍💼 ADMIN DETECTADO")
+  console.log("👨‍💼 ADMIN DETECTADO:", cliente)
 
-  /* 🔥 RESPONDE DIRETO (SEM ID) */
   await fetch(url,{
     method:"POST",
     headers:{
@@ -836,7 +841,7 @@ if(isAdmin){
       messaging_product:"whatsapp",
       to: cliente,
       type:"text",
-      text:{ body:"✅ Mensagem recebida (modo admin ativo)" }
+      text:{ body:"✅ ADMIN ONLINE - sistema funcionando" }
     })
   })
 
