@@ -613,6 +613,7 @@ const cliente = mensagensRecebidas[0]?.from
 const message_id = mensagensRecebidas[0]?.id
 
 
+
 /* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
 
 try{
