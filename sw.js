@@ -1,11 +1,12 @@
-const CACHE = "zaapdv-v1"
+self.addEventListener("install", event => {
+  console.log("SW instalado");
+  self.skipWaiting();
+});
 
-self.addEventListener("install", e=>{
-  self.skipWaiting()
-})
+self.addEventListener("activate", event => {
+  console.log("SW ativo");
+});
 
-self.addEventListener("fetch", e=>{
-  e.respondWith(
-    fetch(e.request).catch(()=>new Response("Offline"))
-  )
-})
+self.addEventListener("fetch", event => {
+  // pode melhorar depois com cache
+});
