@@ -21,12 +21,12 @@ module.exports = async function(req,res){
 
   try{
 
-    /* 🔥 GET → CONSULTA STATUS */
+    /* ================= GET → STATUS ================= */
     if(req.method === "GET"){
       return res.json(status)
     }
 
-    /* 🔥 BODY SAFE */
+    /* ================= BODY SAFE ================= */
     let body = req.body
     if(typeof body === "string") body = JSON.parse(body)
 
@@ -83,7 +83,7 @@ module.exports = async function(req,res){
 
         try{
 
-          const resp = await fetch(`${process.env.URL}/api/send-template`,{
+          const resp = await fetch(`/api/send-template`,{
             method:"POST",
             headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({
@@ -99,9 +99,12 @@ module.exports = async function(req,res){
           })
 
           let result = {}
+
           try{
             result = await resp.json()
-          }catch{}
+          }catch{
+            result = { error:"Resposta inválida" }
+          }
 
           if(!resp.ok || result?.error){
 
@@ -149,9 +152,7 @@ module.exports = async function(req,res){
     })()
 
   }catch(err){
-
     res.status(500).json({ error: err.message })
-
   }
 
 }
