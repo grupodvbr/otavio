@@ -710,17 +710,17 @@ db
     table:"conversas_whatsapp",
     filter:`telefone=neq.null`
   },
-  payload => {
+payload => {
 
-    const m = payload.new
+  const m = payload.new
 
-    // 🔥 atualiza lista instantâneo
-    atualizarClientesSilencioso()
+  // 🔥 ATUALIZA SOMENTE O CLIENTE AFETADO
+  atualizarClienteUnico(m)
 
-    // 🔔 notifica
-    notificarLista(m)
+  // 🔔 notifica
+  notificarLista(m)
 
-  }
+}
 )
 .subscribe()
 
@@ -1400,13 +1400,49 @@ card.style.background = "#dcfce7"
   atualizando = false
 }
 
-/* ================= INTERVALO ================= */
+async function atualizarClienteUnico(m){
 
-setInterval(() => {
-  atualizarClientesSilencioso()
-}, 5000)
+  const telefone = m.telefone
 
+  let card = document.querySelector(`[data-telefone="${telefone}"]`)
 
+  const nome = nomes[telefone] || telefone
+  const pausado = await verificarPausa(telefone)
+
+  // 🔥 SE NÃO EXISTE → RECARREGA UMA VEZ
+  if(!card){
+    await carregarClientes()
+    return
+  }
+
+  const previewEl = card.querySelector(".preview")
+  const statusEl = card.querySelector(".status")
+  const phoneEl = card.querySelector(".phone")
+
+  // 🔥 atualiza somente se mudou
+  if(previewEl && previewEl.innerText !== m.mensagem){
+    previewEl.innerText = m.mensagem
+
+    // move para o topo (tipo WhatsApp)
+    card.parentNode.prepend(card)
+
+    card.style.background = "#dcfce7"
+
+    setTimeout(()=>{
+      card.style.background = ""
+    },200)
+  }
+
+  if(phoneEl && phoneEl.innerText !== nome){
+    phoneEl.innerText = nome
+  }
+
+  if(statusEl){
+    statusEl.innerHTML = `● ${pausado?'BOT PAUSADO':'BOT ATIVO'}`
+    statusEl.className = "status " + (pausado ? "off" : "on")
+  }
+
+}
 
   
 
