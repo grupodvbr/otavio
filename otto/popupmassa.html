@@ -7,25 +7,43 @@
 <style>
 body{
   font-family:Inter;
-  background:#0f172a;
+  background:linear-gradient(135deg,#020617,#0f172a);
   color:#fff;
   padding:20px;
 }
 
+/* CARD */
+.container{
+  max-width:500px;
+  margin:auto;
+}
+
+/* TITULO */
+h1{
+  font-size:22px;
+  margin-bottom:20px;
+}
+
+/* BOTÃO */
 button{
   width:100%;
   padding:14px;
-  margin:10px 0;
   border:none;
-  border-radius:10px;
-  background:#22c55e;
+  border-radius:12px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#fff;
   font-weight:700;
   cursor:pointer;
+  margin-bottom:20px;
+  transition:.2s;
 }
 
+button:hover{
+  transform:scale(1.02);
+}
+
+/* PROGRESS */
 .progress{
-  margin-top:20px;
   height:20px;
   background:#1e293b;
   border-radius:10px;
@@ -34,87 +52,98 @@ button{
 
 .bar{
   height:100%;
-  background:#22c55e;
   width:0%;
+  background:linear-gradient(90deg,#22c55e,#4ade80);
   transition:.3s;
 }
 
+/* INFO */
+.info{
+  margin-top:15px;
+  font-size:14px;
+  line-height:1.6;
+}
+
+/* LOG */
 .log{
   margin-top:20px;
-  max-height:200px;
+  background:#020617;
+  border-radius:10px;
+  padding:10px;
+  max-height:250px;
   overflow:auto;
   font-size:12px;
+}
+
+.log div{
+  padding:4px;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
 </style>
 </head>
 
 <body>
 
-<h2>📢 Disparo em Massa</h2>
+<div class="container">
 
-<button onclick="disparar('confirmao_de_reserva')">
-Iniciar Disparo
-</button>
+<h1>📢 Disparo em Massa</h1>
+
+<button onclick="iniciar()">🚀 Iniciar Disparo</button>
 
 <div class="progress">
   <div class="bar" id="bar"></div>
 </div>
 
-<div id="info"></div>
+<div class="info" id="info"></div>
 
 <div class="log" id="log"></div>
 
+</div>
+
 <script>
 
-let interval = null
+let interval
 
-async function disparar(template){
+async function iniciar(){
 
   await fetch("/api/send-template-massa",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ template })
+    body: JSON.stringify({
+      template:"confirmao_de_reserva"
+    })
   })
 
-  interval = setInterval(atualizar, 1000)
+  interval = setInterval(update, 1000)
 }
 
-async function atualizar(){
+async function update(){
 
   const res = await fetch("/api/send-template-massa")
   const data = await res.json()
 
-  const total = data.total || 0
-  const enviados = data.enviados || 0
-  const erros = data.erros || 0
-
-  const percent = total ? ((enviados+erros)/total)*100 : 0
-
-  document.getElementById("bar").style.width = percent + "%"
+  document.getElementById("bar").style.width = data.progresso + "%"
 
   document.getElementById("info").innerHTML = `
-    📊 ${enviados} enviados<br>
-    ❌ ${erros} erros<br>
-    👥 ${total} total<br>
-    🔄 Atual: ${data.atual || "-"}<br>
-    📈 ${percent.toFixed(0)}%
+    📊 Enviados: ${data.enviados}<br>
+    ❌ Erros: ${data.erros}<br>
+    👥 Total: ${data.total}<br>
+    📱 Atual: ${data.atual || "-"}<br>
+    📈 ${data.progresso}%
   `
 
-  const log = document.getElementById("log")
-
-  log.innerHTML = data.logs
-    .slice(-20)
-    .map(l => `
+  document.getElementById("log").innerHTML =
+    data.logs.slice(-30).map(l => `
       <div>
-        ${l.telefone} - 
-        ${l.status === "enviado" ? "✅" : "❌"}
+        ${l.telefone} → 
+        ${l.status === "ok" ? "✅" : "❌"} 
+        ${l.detalhe || ""}
       </div>
-    `)
-    .join("")
+    `).join("")
 
   if(data.finalizado){
     clearInterval(interval)
-    alert("✅ Disparo finalizado!")
+    alert("✅ Disparo finalizado")
   }
 
 }
