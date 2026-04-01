@@ -42,15 +42,13 @@ module.exports = async function(req, res){
       })
     }
 
-    /* ================= FUNÇÃO TEMPLATE ================= */
-
-/* ================= BUSCAR RESERVA REAL ================= */
+ /* ================= BUSCAR RESERVA REAL ================= */
 
 let dadosReserva = parametros
 
 if(template === "confirmao_de_reserva"){
 
-  const { data: reserva, error } = await supabase
+  const { data: reserva } = await supabase
   .from("reservas_mercatto")
   .select("*")
   .eq("telefone", telefone)
@@ -59,86 +57,95 @@ if(template === "confirmao_de_reserva"){
   .limit(1)
   .maybeSingle()
 
-  if(error){
-    console.log("❌ ERRO AO BUSCAR RESERVA:", error)
-  }
-
   if(reserva){
-
-    console.log("✅ RESERVA REAL ENCONTRADA:", reserva)
 
     const dataObj = new Date(reserva.datahora)
 
-    const dataFormatada =
-      dataObj.toLocaleDateString("pt-BR")
-
-    const horaFormatada =
-      dataObj.toTimeString().substring(0,5)
-
     dadosReserva = {
       nome: reserva.nome,
-      data: dataFormatada,
-      hora: horaFormatada,
+      data: dataObj.toLocaleDateString("pt-BR"),
+      hora: dataObj.toTimeString().substring(0,5),
       pessoas: reserva.pessoas
     }
 
   }else{
 
-    console.log("⚠️ CLIENTE NÃO TEM RESERVA")
-
-    dadosReserva = {
-      nome: parametros.nome || "Cliente",
-      data: parametros.data || "--/--",
-      hora: parametros.hora || "--:--",
-      pessoas: parametros.pessoas || "1"
-    }
-
+    return res.status(200).json({
+      ok:false,
+      mensagem:"Cliente não possui reserva"
+    })
   }
 }
 
-/* ================= MONTA TEMPLATE ================= */
+/* ================= MONTAR TEMPLATE ================= */
 
-const templateData = montarTemplate(template, dadosReserva)
+let templateData = null
 
-        /* ================= RESERVA ESPECIAL (VIDEO) ================= */
+switch(template){
 
-        case "reserva_especial":
+  case "confirmao_de_reserva":
 
-          if(!parametros.video){
-            throw new Error("Template reserva_especial precisa de video")
-          }
-
-          return {
-            name: template,
-            language: { code: idioma },
-            components: [
-              {
-                type: "header",
-                parameters: [
-                  {
-                    type: "video",
-                    video: {
-                      link: parametros.video
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-
-        /* ================= HELLO WORLD ================= */
-
-        case "hello_world":
-          return {
-            name: template,
-            language: { code: idioma }
-          }
-
-        default:
-          return null
-      }
+    templateData = {
+      name: template,
+      language: { code: idioma },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type:"text", text: dadosReserva.nome },
+            { type:"text", text: dadosReserva.data },
+            { type:"text", text: dadosReserva.hora },
+            { type:"text", text: String(dadosReserva.pessoas) }
+          ]
+        }
+      ]
     }
 
+  break
+
+  case "reserva_especial":
+
+    if(!parametros.video){
+      throw new Error("Template reserva_especial precisa de video")
+    }
+
+    templateData = {
+      name: template,
+      language: { code: idioma },
+      components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "video",
+              video: {
+                link: parametros.video
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  break
+
+  case "hello_world":
+
+    templateData = {
+      name: template,
+      language: { code: idioma }
+    }
+
+  break
+}
+
+/* ================= VALIDA TEMPLATE ================= */
+
+if(!templateData){
+  return res.status(400).json({
+    error: "Template não configurado"
+  })
+}
     /* ================= MONTA TEMPLATE ================= */
 
     const templateData = montarTemplate(template, parametros)
