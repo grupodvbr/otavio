@@ -1116,13 +1116,12 @@ observacao: pedido.observacao || "",
 status: "novo"
 }])
 
-return res.status(200).end()
-/* limpar pedido pendente */
-
 await supabase
 .from("pedidos_pendentes")
 .delete()
 .eq("cliente_telefone",cliente)
+
+return res.status(200).end()
 }
 
 /* limpar estado conversa */
