@@ -22,6 +22,7 @@ h1{
   margin-bottom:20px;
 }
 
+/* BOTÃO */
 button{
   width:100%;
   padding:14px;
@@ -32,12 +33,18 @@ button{
   font-weight:700;
   cursor:pointer;
   margin-bottom:20px;
+  transition:.2s;
 }
 
+button:hover{
+  transform:scale(1.02);
+}
+
+/* PROGRESS */
 .progress{
-  height:20px;
+  height:22px;
   background:#1e293b;
-  border-radius:10px;
+  border-radius:12px;
   overflow:hidden;
 }
 
@@ -45,15 +52,17 @@ button{
   height:100%;
   width:0%;
   background:linear-gradient(90deg,#22c55e,#4ade80);
-  transition:.3s;
+  transition:.4s;
 }
 
+/* INFO */
 .info{
   margin-top:15px;
   font-size:14px;
   line-height:1.6;
 }
 
+/* LOG */
 .log{
   margin-top:20px;
   background:#020617;
@@ -63,6 +72,9 @@ button{
   overflow:auto;
   font-size:12px;
 }
+
+.ok{ color:#4ade80 }
+.err{ color:#f87171 }
 </style>
 </head>
 
@@ -125,9 +137,9 @@ async function update(){
 
   document.getElementById("log").innerHTML =
     data.logs.slice(-30).map(l => `
-      <div>
+      <div class="${l.status === "ok" ? "ok" : "err"}">
         ${l.telefone} → 
-        ${l.status === "ok" ? "✅" : "❌"} 
+        ${l.status === "ok" ? "ENVIADO" : "ERRO"} 
         ${l.detalhe || ""}
       </div>
     `).join("")
