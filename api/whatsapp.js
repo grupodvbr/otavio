@@ -612,7 +612,29 @@ const cliente = mensagensRecebidas[0]?.from
   const isAdmin = ADMINS.includes(cliente)
 const message_id = mensagensRecebidas[0]?.id
 
+/* ================= ADMIN PRIORIDADE MÁXIMA ================= */
 
+if(isAdmin){
+
+  console.log("👨‍💼 ADMIN DETECTADO:", cliente)
+  console.log("💬 MENSAGEM:", mensagem)
+
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to: cliente,
+      type:"text",
+      text:{ body:`👨‍💼 ADMIN ONLINE\n\n${mensagem}` }
+    })
+  })
+
+  return res.status(200).end()
+}
 
 /* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
 
@@ -819,35 +841,7 @@ Esperamos você no Mercatto Delícia! 🍝✨`
 }
 
 
-  
-/* ================= ADMIN RESPONDENDO CLIENTE ================= */
 
-const cliente = mensagensRecebidas[0]?.from
-const isAdmin = ADMINS.includes(cliente)
-const message_id = mensagensRecebidas[0]?.id
-
-/* ================= ADMIN PRIORIDADE MÁXIMA ================= */
-
-if(isAdmin){
-
-  console.log("👨‍💼 ADMIN:", mensagem)
-
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      messaging_product:"whatsapp",
-      to: cliente,
-      type:"text",
-      text:{ body:"🧠 Recebi sua mensagem como ADMIN:\n\n" + mensagem }
-    })
-  })
-
-  return res.status(200).end()
-}
 const id = match[1]
 const respostaAdmin = match[2]
 
