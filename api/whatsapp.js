@@ -2822,15 +2822,19 @@ const retorno = await envio.json()
 
 const messageId = retorno?.messages?.[0]?.id
 
-await supabase
+const { error: erroResposta } = await supabase
 .from("conversas_whatsapp")
 .insert({
   telefone:cliente,
   mensagem:resposta,
   role:"assistant",
-  message_id: messageId, // 🔥 ESSENCIAL
-  status:"sent"          // 🔥 ESSENCIAL
+  message_id: messageId || null,
+  status:"sent"
 })
+
+if(erroResposta){
+  console.log("❌ ERRO AO SALVAR RESPOSTA:", erroResposta)
+}
 /* ================= TEMPO NATURAL ================= */
 
 const tempoDigitando = Math.min(
