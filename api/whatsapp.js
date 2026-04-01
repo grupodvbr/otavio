@@ -514,52 +514,28 @@ let media_url = null
 let nome_arquivo = null
 
 /* ================= SWITCH CORRETO ================= */
-/* ================= SWITCH CORRETO ================= */
 
 switch(msg.type){
 
   case "text":
-    tipo = "texto"
     mensagem = msg.text?.body || ""
   break
 
+case "image":
 
-  case "button":
-    tipo = "botao"
+  tipo = "imagem"
+  mensagem = "[Imagem]"
 
-    mensagem =
-      msg.button?.text ||
-      msg.button?.payload ||
-      "[Botão]"
+  console.log("🖼️ IMAGEM RECEBIDA")
 
-    console.log("🔘 BOTÃO CLICADO:", mensagem)
-  break
+  // 🔥 SEMPRE baixar e salvar
+  media_url = await baixarESalvarMidia(
+    msg.image.id,
+    "jpg",
+    msg.image.mime_type || "image/jpeg"
+  )
 
-
-  case "interactive":
-    tipo = "botao"
-
-    mensagem =
-      msg.interactive?.button_reply?.title ||
-      msg.interactive?.button_reply?.id ||
-      msg.interactive?.list_reply?.title ||
-      "[Interação]"
-
-    console.log("🔘 INTERAÇÃO:", mensagem)
-  break
-
-
-  case "image":
-    tipo = "imagem"
-    mensagem = "[Imagem]"
-
-    media_url = await baixarESalvarMidia(
-      msg.image.id,
-      "jpg",
-      msg.image.mime_type || "image/jpeg"
-    )
-  break
-
+break
 
   case "video":
     tipo = "video"
@@ -572,7 +548,6 @@ switch(msg.type){
     )
   break
 
-
   case "audio":
     tipo = "audio"
     mensagem = "[Áudio]"
@@ -584,11 +559,11 @@ switch(msg.type){
     )
   break
 
-
   case "document":
     tipo = "documento"
 
-    nome_arquivo = msg.document?.filename || "arquivo"
+    nome_arquivo = msg.document.filename || "arquivo"
+
     mensagem = `[Documento: ${nome_arquivo}]`
 
     const ext = nome_arquivo.split(".").pop() || "bin"
@@ -600,83 +575,20 @@ switch(msg.type){
     )
   break
 
-
   default:
-    tipo = "desconhecido"
-    mensagem = `[Tipo não tratado: ${msg.type}]`
-
     console.log("⚠️ TIPO NÃO TRATADO:", msg.type)
 }
 
+
+
+
+  
+
+
 const cliente = mensagensRecebidas[0]?.from
-const isAdmin = ADMINS.includes(cliente)
+  const isAdmin = ADMINS.includes(cliente)
 const message_id = mensagensRecebidas[0]?.id
-
-/* 🔥 DEFINE URL ANTES */
-const phone_number_id = change.metadata.phone_number_id
-const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
-
-if(isAdmin){
-
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      messaging_product:"whatsapp",
-      to: cliente,
-      type:"text",
-      text:{ body:"ADMIN OK: " + mensagem }
-    })
-  })
-
-  return res.status(200).end()
-}
-/* ================= SALVAR MENSAGEM CLIENTE (GARANTIDO) ================= */
-
-try{
-
-  const { error } = await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone:cliente,
-    mensagem:
-      mensagem ||
-      (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
-    tipo,
-    media_url,
-    nome_arquivo,
-    role:"user",
-    message_id,
-    status:"received"
-  })
-
-  if(error){
-    console.log("❌ ERRO AO SALVAR:", error)
-
-    // 🔥 fallback (garante salvar mesmo assim)
-    await supabase
-    .from("conversas_whatsapp")
-    .insert({
-      telefone:cliente,
-      mensagem:
-        mensagem ||
-        (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
-      tipo,
-      media_url,
-      nome_arquivo,
-      role:"user",
-      status:"received"
-    })
-
-    console.log("⚠️ SALVO SEM MESSAGE_ID")
-  }
-
-}catch(err){
-  console.log("🔥 ERRO GRAVE AO SALVAR:", err)
-}
+/* ================= VERIFICAR PAUSA BOT ================= */
 
 const { data: pausaBot } = await supabase
 .from("controle_bot")
@@ -717,129 +629,77 @@ let nomeMemoria = memoriaCliente?.nome || null
 const ADMIN_NUMERO = "557798253249"
 const phone_number_id = change.metadata.phone_number_id
 const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
-  
-if(!mensagem && tipo === "texto"){
+if(!mensagem){
 console.log("Mensagem vazia")
 return res.status(200).end()
 }
 
 const texto = mensagem.toLowerCase()
-/* ================= CONFIRMAR RESERVA AUTOMATICO ================= */
+/* ================= ADMIN RESPONDENDO CLIENTE ================= */
 
-if(tipo === "botao" && texto.includes("confirmar")){
+if(isAdmin){
 
-  console.log("🔥 CONFIRMAÇÃO DE RESERVA DETECTADA")
+  console.log("👨‍💼 MENSAGEM DO ADMIN DETECTADA")
 
-  const { data: reserva } = await supabase
-    .from("reservas_mercatto")
-    .select("*")
-    .eq("telefone", cliente)
-    .in("status", ["Pendente"])
-    .order("datahora",{ ascending:false })
-    .limit(1)
-    .maybeSingle()
+  /* 🔥 BUSCAR ÚLTIMA DÚVIDA */
+const match = mensagem.match(/^([a-z0-9\-]+)\s+([\s\S]+)/i)
 
-  if(!reserva){
-    console.log("⚠️ SEM RESERVA PARA CONFIRMAR")
+if(!match){
+  console.log("❌ ADMIN NÃO INFORMOU ID")
+  return res.status(200).end()
+}
 
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        messaging_product:"whatsapp",
-        to:cliente,
-        type:"text",
-        text:{ body:"Não encontrei reserva pendente para confirmar." }
-      })
-    })
+const id = match[1]
+const respostaAdmin = match[2]
 
-    return res.status(200).end()
-  }
+const { data: duvida } = await supabase
+.from("duvidas_pendentes")
+.select("*")
+.eq("id", id)
+.maybeSingle()
 
-  /* 🔥 ATUALIZA STATUS */
-  const { error:updateError } = await supabase
-    .from("reservas_mercatto")
-    .update({
-      status:"Confirmada"
-    })
-.eq("telefone", cliente)
-.eq("datahora", reserva.datahora)
-  if(updateError){
-    console.log("❌ ERRO AO ATUALIZAR:", updateError)
-  }else{
-    console.log("✅ RESERVA CONFIRMADA:", reserva.id)
-  }
+if(!duvida){
+  console.log("❌ DÚVIDA NÃO ENCONTRADA")
+  return res.status(200).end()
+}
 
-  /* 🔥 RESPONDE CLIENTE */
+const telefoneCliente = duvida.telefone
+
+  /* 🔥 SALVAR APRENDIZADO */
+await supabase
+.from("aprendizado_bot")
+.insert({
+  pergunta: duvida.pergunta,
+  resposta: respostaAdmin
+})
+
+  console.log("🧠 APRENDIZADO SALVO")
+
+  /* 🔥 RESPONDER CLIENTE */
   await fetch(url,{
     method:"POST",
     headers:{
       Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
       "Content-Type":"application/json"
     },
-    body:JSON.stringify({
-      messaging_product:"whatsapp",
-      to:cliente,
-      type:"text",
-      text:{ body:"✅ Sua reserva foi confirmada com sucesso!" }
-    })
+body:JSON.stringify({
+  messaging_product:"whatsapp",
+  to: telefoneCliente,
+  type:"text",
+  text:{ body: respostaAdmin }
+})
   })
+
+  console.log("📤 RESPOSTA ENVIADA PARA CLIENTE")
+
+  /* 🔥 LIMPAR DÚVIDA */
+  await supabase
+  .from("duvidas_pendentes")
+  .delete()
+  .eq("id", ultimaDuvida.id)
 
   return res.status(200).end()
 }
-
-
-
-  /* 🔥 ATUALIZA STATUS */
-  await supabase
-  .from("reservas_mercatto")
-  .update({ status:"Confirmado" })
-.eq("telefone", cliente)
-.eq("datahora", reserva.datahora)
-
-  
-  console.log("✅ RESERVA CONFIRMADA:", reserva.id)
-
-  const resposta = `✅ Sua reserva foi confirmada!
-
-📅 Data: ${new Date(reserva.datahora).toLocaleDateString("pt-BR")}
-⏰ Hora: ${new Date(reserva.datahora).toTimeString().substring(0,5)}
-👥 Pessoas: ${reserva.pessoas}
-
-Esperamos você no Mercatto Delícia! 🍝✨`
-
-  /* 🔥 ENVIA RESPOSTA */
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      messaging_product:"whatsapp",
-      to: cliente,
-      type:"text",
-      text:{ body: resposta }
-    })
-  })
-
-  /* 🔥 SALVA RESPOSTA NO BANCO */
-  await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone:cliente,
-    mensagem:resposta,
-    role:"assistant"
-  })
-
-  return res.status(200).end()
-}
-
-
-
   
 const textoNormalizado = normalizar(texto)
 /* ================= DETECTAR NOME INTELIGENTE ================= */
@@ -1506,9 +1366,39 @@ assuntoMusica = querMusica
 if(querMusica){
 console.log("FORÇANDO ASSUNTO MUSICA")
 }
+/* ================= BLOQUEAR DUPLICIDADE ================= */
 
+const { data: jaProcessada } = await supabase
+.from("mensagens_processadas")
+.select("*")
+.eq("message_id", message_id)
+.maybeSingle()
 
+if(jaProcessada){
+console.log("Mensagem duplicada ignorada")
+return res.status(200).end()
+}
 
+await supabase
+.from("mensagens_processadas")
+.insert({ message_id })
+
+/* ================= SALVAR MENSAGEM CLIENTE ================= */
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+  telefone:cliente,
+  mensagem:
+    mensagem ||
+    (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
+  tipo,
+  media_url,
+  nome_arquivo,
+  role:"user",
+  message_id: message_id, // 🔥 ESSENCIAL
+  status: "received"      // 🔥 ESSENCIAL
+})
 
 if(querEndereco){
 
@@ -2884,19 +2774,15 @@ const retorno = await envio.json()
 
 const messageId = retorno?.messages?.[0]?.id
 
-const { error: erroResposta } = await supabase
+await supabase
 .from("conversas_whatsapp")
 .insert({
   telefone:cliente,
   mensagem:resposta,
   role:"assistant",
-  message_id: messageId || null,
-  status:"sent"
+  message_id: messageId, // 🔥 ESSENCIAL
+  status:"sent"          // 🔥 ESSENCIAL
 })
-
-if(erroResposta){
-  console.log("❌ ERRO AO SALVAR RESPOSTA:", erroResposta)
-}
 /* ================= TEMPO NATURAL ================= */
 
 const tempoDigitando = Math.min(
