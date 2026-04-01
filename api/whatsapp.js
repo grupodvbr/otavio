@@ -693,10 +693,10 @@ body:JSON.stringify({
   console.log("📤 RESPOSTA ENVIADA PARA CLIENTE")
 
   /* 🔥 LIMPAR DÚVIDA */
-  await supabase
-  .from("duvidas_pendentes")
-  .delete()
-  .eq("id", ultimaDuvida.id)
+await supabase
+.from("duvidas_pendentes")
+.delete()
+.eq("id", id)
 
   return res.status(200).end()
 }
@@ -2750,6 +2750,12 @@ const [anoR, mesR, diaR] = dataISO.split("-")
 
 const dataClienteReserva = `${diaR}/${mesR}/${anoR}`
 
+let textoObs = ""
+
+if(reserva.observacoes && reserva.observacoes.trim() !== ""){
+  textoObs = `\n📝 Observação: ${reserva.observacoes}`
+}
+
 resposta =
 `✅ *Reserva confirmada!*
 
@@ -2757,7 +2763,7 @@ Nome: ${reserva.nome}
 Pessoas: ${reserva.pessoas}
 Data: ${dataClienteReserva}
 Hora: ${reserva.hora}
-Área: ${mesa}
+Área: ${mesa}${textoObs}
 
 📍 Mercatto Delícia
 Avenida Rui Barbosa 1264
