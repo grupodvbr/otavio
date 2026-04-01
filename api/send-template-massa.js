@@ -5,28 +5,30 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE
 )
 
-/* 🔥 CONTROLE GLOBAL (em memória) */
-let statusDisparo = {
-  total: 0,
-  enviados: 0,
-  erros: 0,
-  atual: null,
-  finalizado: false,
-  logs: []
+/* ================= ESTADO GLOBAL ================= */
+let status = {
+  rodando:false,
+  total:0,
+  enviados:0,
+  erros:0,
+  atual:null,
+  progresso:0,
+  finalizado:false,
+  logs:[]
 }
 
-module.exports = async function(req, res){
+module.exports = async function(req,res){
 
   try{
 
+    /* 🔥 GET → CONSULTA STATUS */
     if(req.method === "GET"){
-      return res.json(statusDisparo)
+      return res.json(status)
     }
 
+    /* 🔥 BODY SAFE */
     let body = req.body
-    if(typeof body === "string"){
-      body = JSON.parse(body)
-    }
+    if(typeof body === "string") body = JSON.parse(body)
 
     const { template, parametros = {} } = body
 
@@ -34,37 +36,54 @@ module.exports = async function(req, res){
       return res.status(400).json({ error:"template obrigatório" })
     }
 
-    /* ================= CLIENTES ================= */
+    if(status.rodando){
+      return res.status(400).json({
+        error:"Já existe um disparo em andamento"
+      })
+    }
 
-    const { data: clientes } = await supabase
+    /* ================= BUSCAR CLIENTES ================= */
+
+    const { data: clientes, error } = await supabase
       .from("memoria_clientes")
       .select("telefone, nome")
       .not("telefone","is",null)
 
-    statusDisparo = {
-      total: clientes.length,
-      enviados: 0,
-      erros: 0,
-      atual: null,
-      finalizado: false,
-      logs: []
+    if(error){
+      return res.status(500).json({ error:error.message })
     }
 
-    /* 🔥 RESPONDE IMEDIATO */
+    if(!clientes.length){
+      return res.json({ ok:false, mensagem:"Sem clientes" })
+    }
+
+    /* ================= RESET ================= */
+
+    status = {
+      rodando:true,
+      total:clientes.length,
+      enviados:0,
+      erros:0,
+      atual:null,
+      progresso:0,
+      finalizado:false,
+      logs:[]
+    }
+
     res.json({ ok:true, iniciado:true })
 
-    /* ================= DISPARO EM BACKGROUND ================= */
+    /* ================= PROCESSO BACKGROUND ================= */
 
-    ;(async () => {
+    ;(async ()=>{
 
       for(const cliente of clientes){
 
         const telefone = cliente.telefone
-        statusDisparo.atual = telefone
+        status.atual = telefone
 
         try{
 
-          await fetch(`${process.env.URL}/api/send-template`,{
+          const resp = await fetch(`${process.env.URL}/api/send-template`,{
             method:"POST",
             headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({
@@ -79,33 +98,60 @@ module.exports = async function(req, res){
             })
           })
 
-          statusDisparo.enviados++
+          let result = {}
+          try{
+            result = await resp.json()
+          }catch{}
 
-          statusDisparo.logs.push({
-            telefone,
-            status:"enviado"
-          })
+          if(!resp.ok || result?.error){
+
+            status.erros++
+
+            status.logs.push({
+              telefone,
+              status:"erro",
+              detalhe: result?.error || "Erro desconhecido"
+            })
+
+          }else{
+
+            status.enviados++
+
+            status.logs.push({
+              telefone,
+              status:"ok"
+            })
+
+          }
 
         }catch(e){
 
-          statusDisparo.erros++
+          status.erros++
 
-          statusDisparo.logs.push({
+          status.logs.push({
             telefone,
-            status:"erro"
+            status:"erro",
+            detalhe: e.message
           })
 
         }
 
+        status.progresso = Math.round(
+          ((status.enviados + status.erros) / status.total) * 100
+        )
+
         await new Promise(r => setTimeout(r, 1500))
       }
 
-      statusDisparo.finalizado = true
+      status.finalizado = true
+      status.rodando = false
 
     })()
 
   }catch(err){
+
     res.status(500).json({ error: err.message })
+
   }
 
 }
