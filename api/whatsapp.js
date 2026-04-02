@@ -826,6 +826,56 @@ if(tipo === "texto" && mensagem && mensagem.trim()){
   
 console.log("CLASSIFICAÇÃO:", tipoMensagem)
 
+/* ================= BLOQUEIO GERENTE ================= */
+
+const querGerente =
+textoNormalizado.includes("gerente") ||
+textoNormalizado.includes("responsavel") ||
+textoNormalizado.includes("falar com alguem") ||
+textoNormalizado.includes("atendimento humano") ||
+textoNormalizado.includes("contato") ||
+textoNormalizado.includes("whatsapp") ||
+textoNormalizado.match(/\d{2}\s?\d{4,5}-?\d{4}/) // 🔥 detecta telefone
+
+if(querGerente){
+
+console.log("📞 BLOQUEANDO CLASSIFICAÇÃO → CONTATO GERENTE")
+
+const resposta = `Claro! 😊
+
+Você pode falar diretamente com um dos nossos gerentes:
+
+📱 77 99846-5586
+
+Eles vão te atender com prioridade 👌`
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{body:resposta}
+})
+})
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+telefone:cliente,
+mensagem:resposta,
+role:"assistant"
+})
+
+return res.status(200).end()
+}
+
+/* ================= CONTINUA NORMAL ================= */
+
 if(
   tipoMensagem === "reclamacao" ||
   tipoMensagem === "feedback"
