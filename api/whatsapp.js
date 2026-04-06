@@ -11,6 +11,8 @@ const supabase = createClient(
 )
 const ADMINS = [
   "557798253249",
+  "557798315510",
+  "557781293963",
   "5577981291635"
 ]
 
@@ -267,6 +269,41 @@ return item.produto_nome
 
 return null
 }
+
+
+
+
+
+/* ================= ENCONTRAR PRATO COM FOTO ================= */
+
+function encontrarPratoComFoto(cardapio, texto){
+
+  const textoLimpo = normalizar(texto)
+
+  for(const item of cardapio){
+
+    if(!item.foto_url) continue // 🔥 IGNORA PRATO SEM FOTO
+
+    const nome = normalizar(item.nome)
+
+    if(nome.includes(textoLimpo)){
+      return item
+    }
+
+  }
+
+  return null
+}
+
+
+
+
+
+
+
+
+
+
 /* ================= CLASSIFICAR MENSAGEM ================= */
 
 async function classificarMensagem(texto){
@@ -399,6 +436,10 @@ model:"gpt-4.1-mini",
 messages:[
 
 {
+
+
+
+  
 role:"system",
 content:`
 Você é o agente administrador do Mercatto Delícia.
@@ -419,6 +460,22 @@ Responda sempre de forma clara e direta.
 `
 },
 
+
+{
+role:"system",
+content:`
+REGRAS CRÍTICAS DE CONVERSA
+
+- Nunca repita respostas
+- Nunca envie promoções sem o cliente demonstrar interesse
+- Se o cliente mudar de assunto, abandone o anterior
+- Responda apenas o que foi perguntado
+- Seja natural e direto (como humano)
+`
+},
+
+
+  
 {
 role:"user",
 content:pergunta
@@ -702,6 +759,51 @@ await supabase
 }
   
 const textoNormalizado = normalizar(texto)
+
+/* ================= FORÇAR PROMOÇÕES ================= */
+
+const querPromocao =
+textoNormalizado.includes("promo") ||
+textoNormalizado.includes("oferta") ||
+textoNormalizado.includes("rodizio") ||
+textoNormalizado.includes("rodízio") ||
+textoNormalizado.includes("desconto") ||
+textoNormalizado.includes("oriental") ||
+textoNormalizado.includes("italiano") ||
+textoNormalizado.includes("happy") ||
+textoNormalizado.includes("tem rodizio") ||
+textoNormalizado.includes("tem rodízio") ||
+textoNormalizado.includes("tem promoção") ||
+textoNormalizado.includes("tem promocao") ||
+textoNormalizado.includes("vende oriental") ||
+textoNormalizado.includes("todo dia")
+
+const hojeInicio = getHojeBahia() + "T00:00"
+const hojeFim = getHojeBahia() + "T23:59"
+
+const { data: promosHoje } = await supabase
+.from("conversas_whatsapp")
+.select("mensagem")
+.eq("telefone", cliente)
+.eq("role", "assistant")
+.gte("created_at", hojeInicio)
+.lte("created_at", hojeFim)
+.ilike("mensagem", "%PROMO%")
+
+const { data: controlePromo } = await supabase
+.from("controle_envio")
+.select("*")
+.eq("telefone", cliente)
+.eq("tipo", "promo")
+.eq("data", getHojeBahia())
+.maybeSingle()
+
+const jaEnviouPromoHoje = !!controlePromo
+
+
+  
+const bloqueiaPromo = false
+
 /* ================= DETECTAR NOME INTELIGENTE ================= */
 
 let nomeDetectado = null
@@ -826,26 +928,30 @@ if(tipo === "texto" && mensagem && mensagem.trim()){
   
 console.log("CLASSIFICAÇÃO:", tipoMensagem)
 
-/* ================= BLOQUEIO GERENTE ================= */
+/* ================= PRIORIDADE MÁXIMA — CONTATO HUMANO ================= */
 
 const querGerente =
-textoNormalizado.includes("gerente") ||
-textoNormalizado.includes("responsavel") ||
-textoNormalizado.includes("falar com alguem") ||
-textoNormalizado.includes("atendimento humano") ||
-textoNormalizado.includes("contato") ||
-textoNormalizado.includes("whatsapp") ||
-textoNormalizado.match(/\d{2}\s?\d{4,5}-?\d{4}/) // 🔥 detecta telefone
+texto.includes("gerente") ||
+texto.includes("responsavel") ||
+texto.includes("falar com alguem") ||
+texto.includes("atendimento humano") ||
+texto.includes("falar com atendente") ||
+texto.includes("contato") ||
+texto.includes("telefone") ||
+texto.includes("numero") ||
+texto.includes("whatsapp") ||
+texto.match(/\d{2}\s?\d{4,5}-?\d{4}/)
 
 if(querGerente){
 
-console.log("📞 BLOQUEANDO CLASSIFICAÇÃO → CONTATO GERENTE")
+console.log("🚨 PRIORIDADE TOTAL → CONTATO HUMANO")
 
 const resposta = `Claro! 😊
 
 Você pode falar diretamente com um dos nossos gerentes:
 
-📱 77 99846-5586
+Dheure França
+📱 77 9 8129-3963
 
 Eles vão te atender com prioridade 👌`
 
@@ -1287,9 +1393,60 @@ textoDia = "ontem"
 if(texto.includes("amanhã")){
 textoDia = "amanhã"
 }
-const dataISO = dataConsulta.toISOString().split("T")[0]
+/* ================= RESPOSTA DIRETA DIA (HOJE / AMANHÃ / ONTEM) ================= */
 
-const agendaDia = await buscarAgendaDoDia(dataISO)
+if(assuntoMusica){
+
+if(!agendaDia.length){
+
+if(texto.includes("amanhã")){
+resposta = "Ainda não temos música ao vivo programada para amanhã 🎶"
+}else if(texto.includes("ontem")){
+resposta = "Não houve música ao vivo ontem 🎶"
+}else{
+resposta = "Hoje não temos música ao vivo programada 🎶"
+}
+
+}else{
+
+if(texto.includes("amanhã")){
+resposta = "🎶 Música ao vivo amanhã:\n\n"
+}else if(texto.includes("ontem")){
+resposta = "🎶 Música ao vivo ontem:\n\n"
+}else{
+resposta = "🎶 Música ao vivo hoje:\n\n"
+}
+
+agendaDia.forEach(m => {
+
+resposta += `🎤 ${m.cantor}\n`
+resposta += `🕒 ${m.hora}\n`
+resposta += `🎵 ${m.estilo}\n\n`
+
+})
+
+}
+
+/* ENVIA RESPOSTA */
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{body:resposta}
+})
+})
+
+return res.status(200).end()
+}
+
+
+  
 const couvertHoje = calcularCouvert(agendaDia)
 const agora = new Date()
 
@@ -1338,6 +1495,64 @@ POSTER: ${m.foto || "sem"}
 
 })
 
+
+
+/* ================= RESPOSTA SEMANA ================= */
+
+const querSemana =
+texto.includes("semana") ||
+texto.includes("essa semana") ||
+texto.includes("da semana")
+
+if(querSemana){
+
+if(!agendaSemana.length){
+
+resposta = "Ainda não temos música ao vivo programada para essa semana 🎶"
+
+}else{
+
+resposta = "🎶 Programação da semana:\n\n"
+
+agendaSemana.forEach(m => {
+
+resposta += `📅 ${m.data}\n`
+resposta += `🎤 ${m.cantor}\n`
+resposta += `🕒 ${m.hora}\n\n`
+
+})
+
+}
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{body:resposta}
+})
+})
+
+return res.status(200).end()
+}
+
+
+
+
+
+
+  
+
+
+
+
+
+  
 let agendaHojeTexto = "SEM SHOW HOJE"
 
 if(agendaDia.length){
@@ -1382,9 +1597,11 @@ const querVideo =
 textoNormalizado.includes("video") ||
 textoNormalizado.includes("vídeo")
 
-const querFotos =
-textoNormalizado.includes("foto") ||
-textoNormalizado.includes("imagem")
+const pediuFotoEspecifica =
+textoNormalizado.includes("foto") &&
+(
+  textoNormalizado.length > 10 // evita "tem foto?"
+)
 
 const querEndereco =
 textoNormalizado.includes("onde fica") ||
@@ -1393,6 +1610,63 @@ textoNormalizado.includes("endereço") ||
 textoNormalizado.includes("localizacao") ||
 textoNormalizado.includes("localização")
 
+
+
+/* ================= DATA ESPECIFICA ================= */
+
+const matchData = texto.match(/(\d{2})\/(\d{2})/)
+
+if(matchData){
+
+const dia = matchData[1]
+const mes = matchData[2]
+
+const ano = new Date().getFullYear()
+
+const dataISO = `${ano}-${mes}-${dia}`
+
+const agendaDia = await buscarAgendaDoDia(dataISO)
+
+if(!agendaDia.length){
+
+resposta = `Ainda não temos música ao vivo programada para o dia ${dia}/${mes} 🎶`
+
+}else{
+
+resposta = `🎶 Programação do dia ${dia}/${mes}:\n\n`
+
+agendaDia.forEach(m => {
+
+resposta += `🎤 ${m.cantor}\n`
+resposta += `🕒 ${m.hora}\n\n`
+
+})
+
+}
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{body:resposta}
+})
+})
+
+return res.status(200).end()
+}
+
+
+
+
+
+
+  
 
 const querMusica =
 texto.includes("musica") ||
@@ -1521,6 +1795,9 @@ resposta = `🎶 Música ao vivo amanhã no Mercatto:\n\n`
 else{
 resposta = `🎶 Música ao vivo hoje no Mercatto:\n\n`
 }
+
+
+  
 agendaDia.forEach(m=>{
 
 resposta += `🎤 ${m.cantor}\n`
@@ -1625,6 +1902,70 @@ return res.status(200).end()
 }
   
 
+/* ================= FOTO DE PRATO ================= */
+
+if(pediuFotoEspecifica){
+
+  console.log("📸 CLIENTE PEDIU FOTO")
+
+  const cardapio = await buscarCardapio()
+
+  const prato = encontrarPratoComFoto(cardapio, mensagem)
+
+  if(prato){
+
+    console.log("✅ FOTO ENCONTRADA:", prato.nome)
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        messaging_product:"whatsapp",
+        to:cliente,
+        type:"image",
+        image:{
+          link:prato.foto_url,
+          caption:prato.nome
+        }
+      })
+    })
+
+    await supabase.from("conversas_whatsapp").insert({
+      telefone:cliente,
+      mensagem:`[FOTO ENVIADA: ${prato.nome}]`,
+      role:"assistant"
+    })
+
+    return res.status(200).end()
+
+  }else{
+
+    console.log("❌ PRATO SEM FOTO")
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        messaging_product:"whatsapp",
+        to:cliente,
+        type:"text",
+        text:{ body:"Esse prato ainda não tem foto disponível 😅" }
+      })
+    })
+
+    return res.status(200).end()
+  }
+
+}
+
+
+  
 
 
 /* ================= HISTÓRICO ================= */
@@ -1642,7 +1983,7 @@ const mensagens = (historico || [])
   role: m.role === "assistant" ? "assistant" : "user",
   content: m.mensagem
 }))
-.slice(-6)
+.slice(-15)
 
 /* ================= 🔥 BUSCAR APRENDIZADO ================= */
 
@@ -1895,8 +2236,11 @@ Regras importantes:
 - Utilize apenas pratos desta lista.
 - Nunca invente pratos.
 - Se o cliente perguntar preço use PRECO.
-- Se pedir foto de um prato responda com ENVIAR_FOTO_PRATO.
-`
+- Só ofereça foto se o cliente pedir explicitamente
+- Só ofereça foto de UM prato específico
+- Nunca ofereça foto de vários pratos
+- Nunca invente imagem
+- Se não tiver foto, diga que não possui`
 },
 
 
@@ -1955,13 +2299,16 @@ resposta = completion.choices[0].message.content
 
 if(resposta.includes("🚨 DÚVIDA DO CLIENTE")){
 
-  console.log("🚨 ALERTA DETECTADO → ENVIAR PARA ADMIN")
+  const { data: novaDuvida } = await supabase
+  .from("duvidas_pendentes")
+  .insert({
+    telefone: cliente,
+    pergunta: mensagem
+  })
+  .select()
+  .single()
 
-  const resumo = mensagens
-    .map(m => `${m.role}: ${m.content}`)
-    .join("\n")
-
-const alerta = `
+  const alerta = `
 🚨 *DÚVIDA DO CLIENTE*
 
 🆔 ID: ${novaDuvida.id}
@@ -2155,8 +2502,19 @@ const resp = await fetch(url,{
 
 
 
-  
-if(resposta.includes("ENVIAR_FOTOS")){
+
+
+/* ===== SALA VIP 1 ===== */
+
+if(resposta.includes("ENVIAR_FOTOS_VIP1")){
+
+const fotos = [
+"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/salas_vip/sala1.jpg",
+"https://link2.jpg",
+"https://link3.jpg"
+]
+
+for(const foto of fotos){
 
 await fetch(url,{
 method:"POST",
@@ -2169,8 +2527,97 @@ messaging_product:"whatsapp",
 to:cliente,
 type:"image",
 image:{
-link:"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/images%20(1).jpg",
-caption:"Mercatto Delícia"
+link:foto,
+caption:"Sala VIP 1 • Mercatto Delícia"
+}
+})
+})
+
+}
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+telefone:cliente,
+mensagem:"[FOTOS SALA VIP 1 ENVIADAS]",
+role:"assistant"
+})
+
+resposta = resposta.replace(/ENVIAR_FOTOS_VIP1/g,"").trim()
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===== SALA VIP 2 ===== */
+
+if(resposta.includes("ENVIAR_FOTOS_VIP2")){
+
+const fotos = [
+"https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-04-02%20at%2010.28.26.jpeg",
+"https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Video%202026-03-27%20at%2011.14.47.mp4"
+]
+
+for(const foto of fotos){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"image",
+image:{
+link:foto,
+caption:"Sala VIP 2 • Mercatto Delícia"
+}
+})
+})
+
+}
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+telefone:cliente,
+mensagem:"[FOTOS SALA VIP 2 ENVIADAS]",
+role:"assistant"
+})
+
+resposta = resposta.replace(/ENVIAR_FOTOS_VIP2/g,"").trim()
+
+}
+
+
+/* ===== VIDEO SALA VIP 2 ===== */
+
+if(resposta.includes("ENVIAR_VIDEO_VIP2")){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"video",
+video:{
+link:"https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Video%202026-03-27%20at%2011.14.47.mp4",
+caption:"Sala VIP 2 • Mercatto Delícia"
 }
 })
 })
@@ -2179,14 +2626,26 @@ await supabase
 .from("conversas_whatsapp")
 .insert({
 telefone:cliente,
-mensagem:"[FOTOS DO RESTAURANTE ENVIADAS]",
+mensagem:"[VIDEO SALA VIP 2 ENVIADO]",
 role:"assistant"
 })
 
-resposta = resposta.replace(/ENVIAR_FOTOS/g,"").trim()
+resposta = resposta.replace(/ENVIAR_VIDEO_VIP2/g,"").trim()
 
 }
-if(resposta.includes("ENVIAR_FOTOS_SALA_VIP")){
+
+
+
+/* ===== SACADA ===== */
+
+if(resposta.includes("ENVIAR_FOTOS_SACADA")){
+
+const fotos = [
+"https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-03-27%20at%2011.21.01.jpeg",
+"https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-03-27%20at%2011.24.01.jpeg"
+]
+
+for(const foto of fotos){
 
 await fetch(url,{
 method:"POST",
@@ -2199,11 +2658,42 @@ messaging_product:"whatsapp",
 to:cliente,
 type:"image",
 image:{
-link:"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/salas_vip/sala1.jpg",
-caption:"Sala VIP Mercatto Delícia"
+link:foto,
+caption:"Sacada • Mercatto Delícia"
 }
 })
 })
+
+}
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+telefone:cliente,
+mensagem:"[FOTOS SACADA ENVIADAS]",
+role:"assistant"
+})
+
+resposta = resposta.replace(/ENVIAR_FOTOS_SACADA/g,"").trim()
+
+}
+
+
+
+
+
+
+
+  /* ===== SALÃO ===== */
+
+if(resposta.includes("ENVIAR_FOTOS_SALAO")){
+
+const fotos = [
+"https://link-salao1.jpg",
+"https://link-salao2.jpg"
+]
+
+for(const foto of fotos){
 
 await fetch(url,{
 method:"POST",
@@ -2216,15 +2706,303 @@ messaging_product:"whatsapp",
 to:cliente,
 type:"image",
 image:{
-link:"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/salas_vip/sala2.jpg",
-caption:"Ambiente da Sala VIP"
+link:foto,
+caption:"Salão • Mercatto Delícia"
 }
 })
 })
 
-resposta = resposta.replace(/ENVIAR_FOTOS_SALA_VIP/g,"").trim()
+}
+
+await supabase
+.from("conversas_whatsapp")
+.insert({
+telefone:cliente,
+mensagem:"[FOTOS SALÃO ENVIADAS]",
+role:"assistant"
+})
+
+resposta = resposta.replace(/ENVIAR_FOTOS_SALAO/g,"").trim()
 
 }
+
+
+
+
+
+
+
+  /* ===== VIDEO SALA VIP ===== */
+
+if(resposta.includes("ENVIAR_VIDEO_VIP")){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"video",
+video:{
+link:"https://seu-video.mp4",
+caption:"Sala VIP • Mercatto Delícia"
+}
+})
+})
+
+resposta = resposta.replace(/ENVIAR_VIDEO_VIP/g,"").trim()
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===== PROMO HAPPY HOUR ===== */
+
+if(resposta.includes("ENVIAR_PROMO_HAPPY")){
+
+const midias = [
+"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-04-02%20at%2010.27.52.jpeg"
+]
+
+for(const midia of midias){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"image",
+image:{
+link:midia,
+caption:"🍻 Happy Hour • Todos os dias das 17h às 20h"
+}
+})
+})
+
+}
+
+await supabase.from("conversas_whatsapp").insert({
+telefone:cliente,
+mensagem:"[PROMO HAPPY HOUR ENVIADA]",
+role:"assistant"
+})
+
+// 🔥 ADICIONA ISSO
+await supabase
+.from("controle_envio")
+.upsert({
+  telefone: cliente,
+  tipo: "promo",
+  data: getHojeBahia()
+}, { onConflict: "telefone,tipo,data" })
+resposta = resposta.replace(/ENVIAR_PROMO_HAPPY/g,"").trim()
+}
+
+
+
+/* ===== PROMO RODIZIO ORIENTAL ===== */
+
+if(resposta.includes("ENVIAR_PROMO_ORIENTAL")){
+
+const midias = [
+"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-04-02%20at%2010.28.03.jpeg"
+]
+
+for(const midia of midias){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"image",
+image:{
+link:midia,
+caption:"🍣 Rodízio Oriental • Domingo a partir das 19h"
+}
+})
+})
+
+}
+
+await supabase.from("conversas_whatsapp").insert({
+telefone:cliente,
+mensagem:"[PROMO ORIENTAL ENVIADA]",
+role:"assistant"
+})
+
+// 🔥 ADICIONA ISSO
+await supabase
+.from("controle_envio")
+.upsert({
+  telefone: cliente,
+  tipo: "promo",
+  data: getHojeBahia()
+}, { onConflict: "telefone,tipo,data" })
+resposta = resposta.replace(/ENVIAR_PROMO_ORIENTAL/g,"").trim()
+}
+
+
+
+
+
+  
+
+/* ===== PROMO RODIZIO ITALIANO ===== */
+
+if(resposta.includes("ENVIAR_PROMO_ITALIANO")){
+
+const hoje = new Date().toLocaleString("pt-BR",{
+timeZone:"America/Bahia",
+weekday:"long"
+}).toLowerCase()
+
+if(true){
+const midias = [
+"https://dxkszikemntfusfyrzos.supabase.co/storage/v1/object/public/MERCATTO/WhatsApp%20Image%202026-04-02%20at%2010.28.26.jpeg"
+]
+
+for(const midia of midias){
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"image",
+image:{
+link:midia,
+caption:"🍝 Rodízio Italiano • Toda quinta"
+}
+})
+})
+
+}
+
+await supabase.from("conversas_whatsapp").insert({
+telefone:cliente,
+mensagem:"[PROMO ITALIANO ENVIADA]",
+role:"assistant"
+})
+
+// 🔥 ADICIONA ISSO
+await supabase
+.from("controle_envio")
+.upsert({
+  telefone: cliente,
+  tipo: "promo",
+  data: getHojeBahia()
+}, { onConflict: "telefone,tipo,data" })
+}else{
+
+await fetch(url,{
+method:"POST",
+headers:{
+Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+messaging_product:"whatsapp",
+to:cliente,
+type:"text",
+text:{
+body:"O rodízio italiano acontece às quintas 🍝"
+}
+})
+})
+
+}
+
+resposta = resposta.replace(/ENVIAR_PROMO_ITALIANO/g,"").trim()
+}
+
+
+
+  
+
+// 🔥 CARDÁPIO EM PDF
+
+
+  if(resposta.includes("ENVIAR_CARDAPIO")){
+
+  const pdfLink = "https://ehxrrpsiksceljmhsfxk.supabase.co/storage/v1/object/public/MERCATTO/CARDAPIO.pdf"
+
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to:cliente,
+      type:"document",
+      document:{
+        link: pdfLink,
+        filename:"Cardápio Mercatto Delícia.pdf"
+      }
+    })
+  })
+
+  await supabase
+  .from("conversas_whatsapp")
+  .insert({
+    telefone:cliente,
+    mensagem:"[CARDÁPIO PDF ENVIADO]",
+    role:"assistant"
+  })
+
+  resposta = resposta.replace(/ENVIAR_CARDAPIO/g,"").trim()
+}
+
+  
+
+
+
+
+
+
+
+  
+
+
+
+  
 
 if(resposta.includes("ENVIAR_POSTER")){
 
@@ -2285,9 +3063,17 @@ if(fotoMatch){
 
 const nomePratoIA = fotoMatch[1].trim()
 
-const prato = cardapio.find(p =>
-normalizar(p.nome).includes(normalizar(nomePratoIA))
-)
+const nomeBusca = normalizar(nomePratoIA)
+
+const prato = cardapio.find(p => {
+  const nome = normalizar(p.nome)
+
+  return (
+    nome === nomeBusca ||                 // match exato
+    nome.includes(nomeBusca) ||           // nome contém busca
+    nomeBusca.includes(nome)              // busca contém nome
+  )
+})
 
 if(prato && prato.foto_url){
 
@@ -2828,9 +3614,33 @@ Aguardamos você!`
 console.log("Erro ao processar reserva:",e)
 
 }
+const { data: ultimaMsg } = await supabase
+.from("conversas_whatsapp")
+.select("mensagem")
+.eq("telefone", cliente)
+.eq("role", "assistant")
+.order("created_at", { ascending: false })
+.limit(1)
+.maybeSingle()
 
+const temMidia =
+resposta.includes("ENVIAR_CARDAPIO") ||
+resposta.includes("ENVIAR_FOTOS") ||
+resposta.includes("ENVIAR_VIDEO") ||
+resposta.includes("ENVIAR_POSTER")
+
+if(
+  ultimaMsg?.mensagem === resposta &&
+  !temMidia
+){
+  console.log("🚫 BLOQUEADO: TEXTO REPETIDO")
+  return res.status(200).end()
+}
 /* ================= SALVAR RESPOSTA ================= */
 
+
+
+  
 const envio = await fetch(url,{
 method:"POST",
 headers:{
