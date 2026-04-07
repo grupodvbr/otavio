@@ -1470,38 +1470,46 @@ function renderBuffet(){
     .filter(i =>
       (i.nome || "").toLowerCase().includes(term) &&
       (!setor || i.tipo === setor)
-    )
-    .map(i=>`
-      <div class="buffet-item" onclick="selectItem('${i.id}')">
-
-        <img src="${i.foto_url || ''}">
-
-<div>
-  <b>${i.nome}</b><br>
-  <small>${i.descricao || ''}</small><br>
-  <small style="opacity:.6">${i.tipo || ''}</small><br>
-
-  <small style="font-weight:800;color:#16a34a">
-    ${i.preco_venda ? "R$ " + Number(i.preco_venda).toFixed(2) : "Sem preço"}
-  </small>
-</div>
-
-
-<button 
-  class="toggle ${i.cardapio?'on':'off'}"
-  style="${(!i.preco_venda || i.preco_venda <= 0) ? 'opacity:.4;cursor:not-allowed' : ''}"
-  onclick="toggleCardapio(event,'${i.id}',${i.cardapio})">
-  
-  ${i.cardapio?'NO CARDÁPIO':'FORA'}
-</button>
+    ),
 
 
 
-          ${i.cardapio?'NO CARDÁPIO':'FORA'}
-        </button>
 
-      </div>
-    `).join("");
+    
+   .map(i=>`
+  <div class="buffet-item" onclick="selectItem('${i.id}')">
+
+    <img src="${i.foto_url || ''}">
+
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <b>${i.nome}</b>
+
+      <small style="opacity:.6">
+        ${i.tipo || ''}
+      </small>
+
+      <small style="
+        font-weight:800;
+        color:${i.preco_venda ? '#16a34a' : '#dc2626'}
+      ">
+        ${i.preco_venda 
+          ? "R$ " + Number(i.preco_venda).toFixed(2) 
+          : "Sem preço"}
+      </small>
+    </div>
+
+    <button 
+      class="toggle ${i.cardapio?'on':'off'}"
+      style="${(!i.preco_venda || i.preco_venda <= 0) 
+        ? 'opacity:.4;cursor:not-allowed' 
+        : ''}"
+      onclick="toggleCardapio(event,'${i.id}',${i.cardapio})">
+      
+      ${i.cardapio ? 'ATIVO' : 'FORA'}
+    </button>
+
+  </div>
+`).join("");
 }
 
 function selectItem(id){
