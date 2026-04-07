@@ -1449,8 +1449,9 @@ function closeBuffetModal(){
 
 async function loadBuffet(){
   const {data}=await sb.from("buffet")
-    .select("id,nome,descricao,foto_url,cardapio,tipo")
-    .order("nome");
+.select("id,nome,descricao,foto_url,cardapio,tipo,preco_venda")
+    
+.order("nome");
 
   buffetItems=data||[];
   renderBuffet();
@@ -1475,14 +1476,27 @@ function renderBuffet(){
 
         <img src="${i.foto_url || ''}">
 
-        <div>
-          <b>${i.nome}</b><br>
-          <small>${i.descricao || ''}</small><br>
-          <small style="opacity:.6">${i.tipo || ''}</small>
-        </div>
+<div>
+  <b>${i.nome}</b><br>
+  <small>${i.descricao || ''}</small><br>
+  <small style="opacity:.6">${i.tipo || ''}</small><br>
 
-        <button class="toggle ${i.cardapio?'on':'off'}"
-          onclick="toggleCardapio(event,'${i.id}',${i.cardapio})">
+  <small style="font-weight:800;color:#16a34a">
+    ${i.preco_venda ? "R$ " + Number(i.preco_venda).toFixed(2) : "Sem preço"}
+  </small>
+</div>
+
+
+<button 
+  class="toggle ${i.cardapio?'on':'off'}"
+  style="${(!i.preco_venda || i.preco_venda <= 0) ? 'opacity:.4;cursor:not-allowed' : ''}"
+  onclick="toggleCardapio(event,'${i.id}',${i.cardapio})">
+  
+  ${i.cardapio?'NO CARDÁPIO':'FORA'}
+</button>
+
+
+
           ${i.cardapio?'NO CARDÁPIO':'FORA'}
         </button>
 
@@ -1498,29 +1512,22 @@ function selectItem(id){
 
 async function toggleCardapio(ev,id,atual){
   ev.stopPropagation();
-  await sb.from("buffet").update({cardapio:!atual}).eq("id",id);
-  loadBuffet();
-}
 
-async function salvarItem(){
-  if(!currentEdit)return;
-  let foto_url=currentEdit.foto_url;
+  const item = buffetItems.find(i => i.id === id);
 
-  const f=editFoto.files[0];
-  if(f){
-    const ext=f.name.split(".").pop();
-    const path=`buffet/${Date.now()}.${ext}`;
-    await sb.storage.from("buffet").upload(path,f);
-    foto_url=sb.storage.from("buffet").getPublicUrl(path).data.publicUrl;
+  /* 🚫 BLOQUEIO */
+  if(!atual){
+
+    if(!item.preco_venda || Number(item.preco_venda) <= 0){
+      alert("⚠️ Defina o PREÇO DE VENDA antes de ativar no cardápio");
+      return;
+    }
   }
 
-  await sb.from("buffet")
-    .update({
-      nome:editNome.value,
-      descricao:editDesc.value,
-      foto_url
-    })
-    .eq("id",currentEdit.id);
+  await sb
+    .from("buffet")
+    .update({ cardapio: !atual })
+    .eq("id", id);
 
   loadBuffet();
 }
