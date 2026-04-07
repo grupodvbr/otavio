@@ -1564,9 +1564,56 @@ sb.auth.onAuthStateChange((_event, session) => {
 ===================================================== */
 const moeda = v =>
   "R$ " + Number(v || 0).toLocaleString("pt-BR",{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
+    minimumFractionDigits:4,
+    maximumFractionDigits:4
   });
+
+
+
+/* =====================================================
+   UTIL
+===================================================== */
+const moeda = v =>
+  "R$ " + Number(v || 0).toLocaleString("pt-BR",{
+    minimumFractionDigits:4,
+    maximumFractionDigits:4
+  });
+
+function formatPeso(valor, unidade){
+  const v = Number(valor || 0);
+
+  if(unidade === "KG"){
+    if(v < 1){
+      return (v * 1000).toLocaleString("pt-BR", {
+        maximumFractionDigits: 0
+      }) + " g";
+    }
+
+    return v.toLocaleString("pt-BR", {
+      maximumFractionDigits: 3
+    }) + " kg";
+  }
+
+  if(unidade === "L"){
+    if(v < 1){
+      return (v * 1000).toLocaleString("pt-BR", {
+        maximumFractionDigits: 0
+      }) + " ml";
+    }
+
+    return v.toLocaleString("pt-BR", {
+      maximumFractionDigits: 3
+    }) + " L";
+  }
+
+  return v.toLocaleString("pt-BR");
+}
+
+
+
+
+
+  
 /* =====================================================
    STATE
 ===================================================== */
@@ -2204,10 +2251,7 @@ ${listaItens.map(i=>`
 <tr>
   <td><b>${i.nome}</b></td>
 
-  <td>${Number(i.quantidade || 0).toLocaleString("pt-BR",{
-    minimumFractionDigits:4,
-    maximumFractionDigits:4
-  })}</td>
+<td>${formatPeso(i.quantidade, i.unidade_uso)}</td>
 
   <td>${i.unidade_uso}</td>
   <td>${moeda(i.custo_unitario)}</td>
