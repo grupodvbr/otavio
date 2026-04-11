@@ -293,25 +293,64 @@ const sb = supabase.createClient(
 let pratos = [];
 let itensMap = {};
 let impostosMap = {};
+let pageSize = 10;
+let pageIndex = 0;
+let listaFiltrada = [];
+let carregando = false;
 
+async function fetchAll(table){
+  const pageSize = 1000
+  let from = 0
+  let to = pageSize - 1
+  let all = []
+
+  while(true){
+
+    const { data, error } = await sb
+      .from(table)
+      .select("*")
+      .range(from,to)
+
+    if(error){
+      console.error(error)
+      break
+    }
+
+    if(!data || data.length === 0) break
+
+    all = all.concat(data)
+
+    if(data.length < pageSize) break
+
+    from += pageSize
+    to += pageSize
+  }
+
+  return all
+}
 async function carregarDados(){
 
-  const { data: buffet } = await sb.from("buffet").select("*");
-  const { data: itens } = await sb.from("buffet_itens").select("*");
-  const { data: impostos } = await sb.from("impostos").select("*");
+const buffet = await fetchAll("buffet")
+const itens = await fetchAll("buffet_itens")
+const impostos = await fetchAll("impostos")
 
   pratos = buffet || [];
 
   itensMap = {};
   (itens||[]).forEach(i=>{
-    if(!itensMap[i.buffet_id]) itensMap[i.buffet_id]=[];
-    itensMap[i.buffet_id].push(i);
+const id = String(i.buffet_id);
+    if(!itensMap[id]) itensMap[id]=[];
+
+    itensMap[id].push(i);
   });
 
   impostosMap = {};
   (impostos||[]).forEach(i=>{
-    if(!impostosMap[i.buffet_id]) impostosMap[i.buffet_id]=[];
-    impostosMap[i.buffet_id].push(i);
+    const id = String(i.buffet_id).trim();
+
+    if(!impostosMap[id]) impostosMap[id]=[];
+
+    impostosMap[id].push(i);
   });
 
   popularTipos();
@@ -329,43 +368,60 @@ function aplicarFiltros(){
   const nome = search.value.toUpperCase();
   const tipo = tipoFilter.value;
 
-  const filtrados = pratos.filter(p=>{
+  listaFiltrada = pratos.filter(p=>{
     const nomeOk = !nome || p.nome.toUpperCase().includes(nome);
     const tipoOk = !tipo || p.tipo === tipo;
     return nomeOk && tipoOk;
   });
 
-  render(filtrados);
+  pageIndex = 0;
+  conteudo.innerHTML="";
 
-  /* 🔥 VOLTAR PARA O TOPO */
+  renderProximaPagina();
+
   window.scrollTo({
     top: 0,
-    behavior: "smooth" 
+    behavior: "smooth"
   });
 }
 
-function render(lista){
-  conteudo.innerHTML="";
 
-  lista.forEach(p=>{
 
-    const itens=itensMap[p.id]||[];
-    const impostos=impostosMap[p.id]||[];
+function renderProximaPagina(){
 
-    const cmvBase=itens.reduce((s,i)=>s+Number(i.custo_calculado||0),0);
+  if(carregando) return;
 
-    let totalImp=0;
+  const inicio = pageIndex * pageSize;
+
+  if(inicio >= listaFiltrada.length) return;
+
+  carregando = true;
+
+  const fim = inicio + pageSize;
+
+  const pagina = listaFiltrada.slice(inicio,fim);
+
+  pagina.forEach(p=>{
+
+ const itens = itensMap[String(p.id)] || [];
+const impostos = impostosMap[String(p.id)] || [];
+
+    const cmvBase = itens.reduce((s,i)=>s+Number(i.custo_calculado||0),0);
+
+    let totalImp = 0;
+
     impostos.forEach(i=>{
       if(i.modalidade==="FIXO") totalImp+=Number(i.valor);
+
       if(i.modalidade==="PERCENTUAL")
         totalImp+=(cmvBase*Number(i.valor))/100;
     });
 
-    const custoFinal=cmvBase+totalImp;
-    const preco=Number(p.preco_venda||0);
-    const lucro=preco-custoFinal;
-    const margem=preco?(lucro/preco)*100:0;
-    const cmvPerc=preco?(cmvBase/preco)*100:0;
+    const custoFinal = cmvBase + totalImp;
+    const preco = Number(p.preco_venda||0);
+    const lucro = preco - custoFinal;
+    const margem = preco ? (lucro/preco)*100 : 0;
+    const cmvPerc = preco ? (cmvBase/preco)*100 : 0;
 
     const div=document.createElement("div");
     div.className="card";
@@ -404,20 +460,26 @@ function render(lista){
           <th>Custo Unit.</th>
           <th>Custo Total</th>
         </tr>
-        ${itens.map(i=>{
+
+${itens
+.sort((a,b)=>b.custo_calculado - a.custo_calculado)
+.map(i=>{
+  
           const qtd=Number(i.quantidade||0);
           const custoUnit=Number(i.custo_unitario||0);
           const total=qtd*custoUnit;
+
           return `
             <tr>
               <td>${i.nome}</td>
-<td>${qtd.toFixed(4)}</td>
-<td>${i.unidade_uso}</td>
+              <td>${qtd.toFixed(4)}</td>
+              <td>${i.unidade_uso}</td>
               <td>R$ ${custoUnit.toFixed(2)}</td>
-              <td><b>R$ ${total.toFixed(2)}</b></td>
+              <td><b>R$ ${total.toFixed(4)}</b></td>
             </tr>
           `;
         }).join("")}
+
         <tr class="total-row">
           <td colspan="4">Total Ingredientes</td>
           <td>R$ ${cmvBase.toFixed(2)}</td>
@@ -425,8 +487,15 @@ function render(lista){
       </table>
 
       <div class="section-title">Impostos / Custos</div>
+
       <table>
-        <tr><th>Descrição</th><th>Tipo</th><th>Modalidade</th><th>Valor</th></tr>
+        <tr>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Modalidade</th>
+          <th>Valor</th>
+        </tr>
+
         ${impostos.map(i=>`
           <tr>
             <td>${i.descricao}</td>
@@ -435,6 +504,7 @@ function render(lista){
             <td>${i.modalidade==="PERCENTUAL"?i.valor+"%":"R$ "+Number(i.valor).toFixed(2)}</td>
           </tr>
         `).join("")}
+
       </table>
 
       <div class="section-title">Modo de Preparo</div>
@@ -442,13 +512,31 @@ function render(lista){
     `;
 
     conteudo.appendChild(div);
-  });
-}
 
+  });
+
+  pageIndex++;
+
+  carregando=false;
+
+}
 search.oninput=aplicarFiltros;
 tipoFilter.onchange=aplicarFiltros;
 
 carregarDados();
+
+
+window.addEventListener("scroll",()=>{
+
+  const scrollTop = window.pageYOffset;
+  const windowHeight = window.innerHeight;
+  const fullHeight = document.body.scrollHeight;
+
+  if(scrollTop + windowHeight >= fullHeight - 200){
+    renderProximaPagina();
+  }
+
+});
 </script>
 
 </body>
