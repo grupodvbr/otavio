@@ -2097,12 +2097,11 @@ mBody.innerHTML = `
 
   <div>
     <label>STATUS DO PRATO</label>
-<select id="statusPrato">
-  <option value="true">ATIVO</option>
-  <option value="false">INATIVO</option>
-</select>
-
-</div>
+    <select id="statusPrato">
+      <option value="true">ATIVO</option>
+      <option value="false">INATIVO</option>
+    </select>
+  </div>
 
   <div>
     <label>TIPO DO PRATO</label>
@@ -2111,19 +2110,33 @@ mBody.innerHTML = `
 
   <div>
     <label>NO CARDÁPIO</label>
-<select id="cardapioPrato">
-  <option value="true">SIM</option>
-  <option value="false">NÃO</option>
-</select>
+    <select id="cardapioPrato">
+      <option value="true">SIM</option>
+      <option value="false">NÃO</option>
+    </select>
+  </div>
+
+  <div>
+    <label>DELIVERY</label>
+    <select id="deliveryPrato">
+      <option value="true">SIM</option>
+      <option value="false">NÃO</option>
+    </select>
+  </div>
+
 </div>
 
-  <!-- 🔥 AGORA FICA NA MESMA LINHA -->
+<!-- 🔥 TEMPO VAI PRA LINHA DE BAIXO -->
+<div class="grid-2" style="margin-top:10px">
   <div>
     <label>⏱ TEMPO (MIN)</label>
     <input id="tempoPreparo" type="number" placeholder="Ex: 25">
   </div>
-
 </div>
+
+
+
+
 
 <hr>
 <hr>
@@ -2514,6 +2527,41 @@ aplicarFiltros();
   };
 
 },0);
+
+
+
+
+setTimeout(() => {
+  const deliverySelect = document.getElementById("deliveryPrato");
+  if (!deliverySelect) return;
+
+  deliverySelect.value = p.delivery === true ? "true" : "false";
+
+  deliverySelect.onchange = async () => {
+
+    const delivery = deliverySelect.value === "true";
+
+    await sb
+      .from("buffet")
+      .update({ delivery })
+      .eq("id", pratoAtual.id);
+
+    await carregarPratos();
+    aplicarFiltros();
+  };
+
+}, 0);
+
+
+
+
+
+
+  
+
+
+
+  
 setTimeout(() => {
   const mp = document.getElementById("modoPreparo");
   if (!mp) return;
