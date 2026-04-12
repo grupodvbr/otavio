@@ -1121,10 +1121,26 @@ button.danger{
   <div class="modal-box">
 
     <div class="buffet-wrap">
+
+
+      
       <div class="filters">
         <input id="buscaBuffet" placeholder="Buscar..." oninput="renderBuffet()">
 <select id="filtroSetor" onchange="renderBuffet()"></select>
       </div>
+
+
+<select id="filtroDeliveryBuffet" onchange="renderBuffet()">
+  <option value="">Delivery (Todos)</option>
+  <option value="true">Somente Delivery</option>
+  <option value="false">Somente Local</option>
+</select>
+
+
+
+
+
+      
       <div id="buffetList" class="buffet-list"></div>
     </div>
 
@@ -1459,18 +1475,25 @@ async function loadBuffet(){
 
 function renderBuffet(){
 
-  const term = (document.getElementById("buscaBuffet").value || "")
-    .toLowerCase();
+const term = (document.getElementById("buscaBuffet").value || "")
+  .toLowerCase();
 
-  const setor = document.getElementById("filtroSetor").value;
+const setor = document.getElementById("filtroSetor").value;
+const deliveryFiltro = document.getElementById("filtroDeliveryBuffet")?.value || "";
 
   const buffetList = document.getElementById("buffetList");
 
   buffetList.innerHTML = buffetItems
     .filter(i =>
-      (i.nome || "").toLowerCase().includes(term) &&
-      (!setor || i.tipo === setor)
-    )
+ .filter(i =>
+  (i.nome || "").toLowerCase().includes(term) &&
+  (!setor || i.tipo === setor) &&
+  (
+    !deliveryFiltro ||
+    (deliveryFiltro === "true" && i.delivery === true) ||
+    (deliveryFiltro === "false" && i.delivery !== true)
+  )
+)
     .map(i=>`
       <div class="buffet-item" onclick="selectItem('${i.id}')">
 
