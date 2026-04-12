@@ -1483,48 +1483,41 @@ const deliveryFiltro = document.getElementById("filtroDeliveryBuffet")?.value ||
 
   const buffetList = document.getElementById("buffetList");
 
-  buffetList.innerHTML = buffetItems
-    .filter(i =>
- .filter(i =>
-  (i.nome || "").toLowerCase().includes(term) &&
-  (!setor || i.tipo === setor) &&
-  (
-    !deliveryFiltro ||
-    (deliveryFiltro === "true" && i.delivery === true) ||
-    (deliveryFiltro === "false" && i.delivery !== true)
+buffetList.innerHTML = buffetItems
+  .filter(i =>
+    (i.nome || "").toLowerCase().includes(term) &&
+    (!setor || i.tipo === setor) &&
+    (
+      !deliveryFiltro ||
+      (deliveryFiltro === "true" && i.delivery === true) ||
+      (deliveryFiltro === "false" && i.delivery !== true)
+    )
   )
-)
-    .map(i=>`
-      <div class="buffet-item" onclick="selectItem('${i.id}')">
+  .map(i=>`
+    <div class="buffet-item" onclick="selectItem('${i.id}')">
 
-        <img src="${i.foto_url || ''}">
+      <img src="${i.foto_url || ''}">
 
-<div>
-  <b>${i.nome}</b><br>
-  <small>${i.descricao || ''}</small><br>
-  <small style="opacity:.6">${i.tipo || ''}</small><br>
+      <div>
+        <b>${i.nome}</b><br>
+        <small>${i.descricao || ''}</small><br>
+        <small style="opacity:.6">${i.tipo || ''}</small><br>
 
-  <small style="font-weight:800;color:#16a34a">
-    ${i.preco_venda ? "R$ " + Number(i.preco_venda).toFixed(2) : "Sem preço"}
-  </small>
-</div>
-
-
-<button 
-class="toggle ${i.delivery?'on':'off'}"
-  style="${(!i.preco_venda || i.preco_venda <= 0) ? 'opacity:.4;cursor:not-allowed' : ''}"
-onclick="toggleDelivery(event,'${i.id}',${i.delivery})"
-  
-${i.delivery?'DELIVERY':'LOCAL'}
-</button>
-
-
-
-          ${i.cardapio?'NO CARDÁPIO':'FORA'}
-        </button>
-
+        <small style="font-weight:800;color:#16a34a">
+          ${i.preco_venda ? "R$ " + Number(i.preco_venda).toFixed(2) : "Sem preço"}
+        </small>
       </div>
-    `).join("");
+
+      <button 
+        class="toggle ${i.delivery?'on':'off'}"
+        style="${(!i.preco_venda || i.preco_venda <= 0) ? 'opacity:.4;cursor:not-allowed' : ''}"
+        onclick="toggleDelivery(event,'${i.id}',${i.delivery})"
+      >
+        ${i.delivery?'DELIVERY':'LOCAL'}
+      </button>
+
+    </div>
+  `).join("");
 }
 
 function selectItem(id){
