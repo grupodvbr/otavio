@@ -1450,8 +1450,7 @@ function closeBuffetModal(){
 
 async function loadBuffet(){
   const {data}=await sb.from("buffet")
-.select("id,nome,descricao,foto_url,cardapio,tipo,preco_venda")
-    
+.select("id,nome,descricao,foto_url,delivery,tipo,preco_venda")    
 .order("nome");
 
   buffetItems=data||[];
@@ -1489,11 +1488,11 @@ function renderBuffet(){
 
 
 <button 
-  class="toggle ${i.cardapio?'on':'off'}"
+class="toggle ${i.delivery?'on':'off'}"
   style="${(!i.preco_venda || i.preco_venda <= 0) ? 'opacity:.4;cursor:not-allowed' : ''}"
-  onclick="toggleCardapio(event,'${i.id}',${i.cardapio})">
+onclick="toggleDelivery(event,'${i.id}',${i.delivery})"
   
-  ${i.cardapio?'NO CARDÁPIO':'FORA'}
+${i.delivery?'DELIVERY':'LOCAL'}
 </button>
 
 
@@ -1511,7 +1510,7 @@ function selectItem(id){
   editDesc.value=currentEdit.descricao||"";
 }
 
-async function toggleCardapio(ev,id,atual){
+async function toggleDelivery(ev,id,atual){
   ev.stopPropagation();
 
   const item = buffetItems.find(i => i.id === id);
@@ -1527,7 +1526,7 @@ async function toggleCardapio(ev,id,atual){
 
   await sb
     .from("buffet")
-    .update({ cardapio: !atual })
+.update({ delivery: !atual })
     .eq("id", id);
 
   loadBuffet();
