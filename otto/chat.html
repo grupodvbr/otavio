@@ -926,6 +926,17 @@ iniciar()
 
 setInterval(atualizarSilencioso, 5000)
 
+// 🔊 LIBERA SOM NO NAVEGADOR (OBRIGATÓRIO)
+document.body.addEventListener("click", () => {
+  const audio = document.getElementById("somNotificacao")
+  if(audio){
+    audio.play().then(()=>{
+      audio.pause()
+      audio.currentTime = 0
+    }).catch(()=>{})
+  }
+}, { once:true })
+
 function abrirTemplates(){
   const menu = document.getElementById("menuTemplates")
   menu.style.display = menu.style.display === "flex" ? "none" : "flex"
