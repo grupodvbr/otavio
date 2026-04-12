@@ -502,21 +502,29 @@ function notificar(m){
   if (!("Notification" in window)) return
   if (Notification.permission !== "granted") return
 
-  // 🔥 evita notificar mensagem enviada por você
+  // 🔥 só cliente
   if(m.role === "assistant") return
+
+  // 🔥 evita notificar se já estiver na tela
+  if(document.visibilityState === "visible") return
 
   const n = new Notification("Nova mensagem 💬", {
     body: m.mensagem || "Nova mídia recebida",
     icon: "https://cdn-icons-png.flaticon.com/512/733/733585.png"
   })
 
+  // 🔊 SOM
+  const audio = document.getElementById("somNotificacao")
+  if(audio){
+    audio.currentTime = 0
+    audio.play().catch(()=>{})
+  }
+
   n.onclick = () => {
     window.focus()
   }
 
 }
-
-
 
 
   
@@ -698,7 +706,9 @@ canal = db.channel("chat-"+telefone)
 
   render(m)
 
-  // 🔥 NOVO — VERIFICA POSIÇÃO DO USUÁRIO
+  // 🔥 NOTIFICA AQUI (CORRETO)
+  notificar(m)
+
   const pertoDoFim =
     msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 200
 
@@ -721,7 +731,6 @@ canal = db.channel("chat-"+telefone)
 
   // 🔥 atualiza status (✓ ✓✓ azul etc)
 render(m)
-notificar(m)
 })
 
 .subscribe()
@@ -989,6 +998,6 @@ function abrirDisparoMassa(){
 
   
 </script>
-
+<audio id="somNotificacao" src="https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3"></audio>
 </body>
 </html>
