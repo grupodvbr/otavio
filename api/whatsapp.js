@@ -1,3 +1,4 @@
+
 const OpenAI = require("openai")
 const { createClient } = require("@supabase/supabase-js")
 
@@ -16,7 +17,8 @@ const ADMINS = [
   "5577981291635"
 ]
 
-
+// 🔥 BUFFER DE MENSAGENS (AGRUPAR WHATSAPP)
+const bufferMensagens = {}
 
 
 
@@ -575,9 +577,9 @@ let nome_arquivo = null
 
 switch(msg.type){
 
-  case "text":
-    mensagem = msg.text?.body || ""
-  break
+case "text":
+  tipo = "texto"
+break
 
 case "image":
 
@@ -638,9 +640,42 @@ break
 }
 
 
+/* ================= 🔥 BUFFER DE MENSAGENS ================= */
 
+const telefone = msg.from
 
-  
+if(!bufferMensagens[telefone]){
+  bufferMensagens[telefone] = {
+    mensagens: [],
+    timeout: null
+  }
+}
+
+// adiciona mensagem
+bufferMensagens[telefone].mensagens.push(msg.text.body)
+
+// limpa timeout anterior (ESSENCIAL)
+if(bufferMensagens[telefone].timeout){
+  clearTimeout(bufferMensagens[telefone].timeout)
+}
+
+// cria novo timeout (espera o cliente parar)
+await new Promise(resolve => {
+
+  bufferMensagens[telefone].timeout = setTimeout(() => {
+
+    mensagem = bufferMensagens[telefone].mensagens.join(" ")
+
+    // limpa buffer
+    bufferMensagens[telefone] = {
+      mensagens: [],
+      timeout: null
+    }
+
+    resolve()
+
+  }, 2000) // 🔥 tempo ideal (2 segundos)
+})
 
 
 const cliente = mensagensRecebidas[0]?.from
@@ -685,8 +720,15 @@ const { data: memoriaCliente } = await supabase
 
 let nomeMemoria = memoriaCliente?.nome || null
 const ADMIN_NUMERO = "557798253249"
-const phone_number_id = change.metadata.phone_number_id
-const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
+const phone_number_id = change?.metadata?.phone_number_id
+
+if(!phone_number_id){
+  console.log("❌ phone_number_id não encontrado")
+  return res.status(200).end()
+}
+  
+  
+  const url = `https://graph.facebook.com/v19.0/${phone_number_id}/messages`
 if(!mensagem){
 console.log("Mensagem vazia")
 return res.status(200).end()
@@ -694,10 +736,246 @@ return res.status(200).end()
 
 const texto = mensagem.toLowerCase()
 
+/* ================= 🔥 BUSCAR APRENDIZADO ================= */
+
+const { data: aprendizadoContexto } = await supabase
+.from("aprendizado_bot")
+.select("*")
+.limit(50)
+
+let aprendizadoTexto = ""
+let respostaAprendida = null
+
+if(aprendizadoContexto && aprendizadoContexto.length){
+
+  const textoLimpo = normalizar(texto)
+
+  for(const item of aprendizadoContexto){
+
+    const perguntaBanco = normalizar(item.pergunta || "")
+
+    if(
+      textoLimpo.includes(perguntaBanco) ||
+      perguntaBanco.includes(textoLimpo)
+    ){
+      respostaAprendida = item.resposta
+      console.log("🧠 RESPOSTA VINDO DO APRENDIZADO")
+      break
+    }
+
+  }
+
+  // 🔥 CONTEXTO PARA IA
+  aprendizadoTexto = aprendizadoContexto.map(a => `
+PERGUNTA: ${a.pergunta}
+RESPOSTA: ${a.resposta}
+`).join("\n")
+
+}
+
+/* ================= USAR RESPOSTA ================= */
+
+if(respostaAprendida){
+
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to:cliente,
+      type:"text",
+      text:{ body: respostaAprendida }
+    })
+  })
+
+  console.log("✅ RESPONDIDO VIA APRENDIZADO")
+
+  return res.status(200).end()
+}
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+  
+
+/* ================= CANCELAMENTO DE RESERVA ================= */
+
+const querCancelar =
+texto.includes("desmarcar") ||
+texto.includes("não vou mais") ||
+texto.includes("nao vou mais") ||
+texto.includes("cancelar reserva")
+
+if(querCancelar){
+
+  console.log("❌ CANCELAMENTO DETECTADO")
+
+const telefoneLimpo = cliente.replace(/\D/g, "")
+
+
+  
+const hojeBahia = new Date().toLocaleString("sv-SE", {
+  timeZone: "America/Bahia"
+}).split(" ")[0]
+
+const inicio = hojeBahia + "T00:00:00"
+
+  
+let { data: reservas, error } = await supabase
+  .from("reservas_mercatto")
+  .select("*")
+  .in("status", ["Pendente","Confirmada"])
+  .gte("datahora", agoraISO)
+  .order("datahora",{ ascending:true })
+  .limit(50)
+
+  
+// 🔥 FALLBACK POR NOME (SE NÃO ENCONTRAR POR TELEFONE)
+if((!reservas || !reservas.length) && nomeMemoria){
+
+  console.log("⚠️ NÃO ACHOU POR TELEFONE, TENTANDO NOME")
+
+  const nomeBusca = nomeMemoria.toLowerCase()
+
+  const { data: reservasPorNome } = await supabase
+    .from("reservas_mercatto")
+    .select("*")
+    .ilike("nome", `%${nomeBusca}%`)
+    .in("status", ["Pendente","Confirmada"])
+    .gte("datahora", agoraISO)
+    .order("datahora",{ ascending:true })
+    .limit(20)
+
+  reservas = reservasPorNome
+}
+
+  if(error){
+    console.log("❌ ERRO AO BUSCAR RESERVAS:", error)
+  }
+
+ let reserva = null
+
+if(reservas && reservas.length){
+
+  const texto = mensagem.toLowerCase()
+
+// 🔥 DIA
+const matchDia = texto.match(/\b(\d{1,2})\b/)
+const diaDesejado = matchDia ? matchDia[1].padStart(2,"0") : null
+
+// 🔥 NOME (memória + mensagem)
+const nomeBusca = (nomeMemoria || "").toLowerCase()
+
+reserva = reservas.find(r => {
+
+  const dataReserva = r.datahora?.split("T")[0] || ""
+  const diaReserva = dataReserva.split("-")[2]
+
+  const nomeBanco = (r.nome || "").toLowerCase()
+
+  const bateDia = !diaDesejado || diaReserva === diaDesejado
+
+  const bateNome =
+    nomeBanco.includes(nomeBusca) ||
+    texto.includes(nomeBanco) ||
+    nomeBanco.includes(texto)
+
+  return bateDia && bateNome
+
+})
+
+  // 🔥 fallback seguro (mais próxima)
+  if(!reserva){
+    reserva = reservas[0]
+  }
+}
+
+  // 🚫 SE NÃO EXISTE
+  if(!reserva){
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        to: cliente,
+        type:"text",
+        text:{ body:"Não encontrei nenhuma reserva futura ativa para cancelar 😕" }
+      })
+    })
+
+    return res.status(200).end()
+  }
+
+  // 🔥 RESUMO ANTES DE CANCELAR
+  const resumoAntes = `
+📋 *Reserva encontrada*
+
+👤 Nome: ${reserva.nome}
+📅 Data: ${reserva.datahora.split("T")[0]}
+⏰ Hora: ${reserva.datahora.split("T")[1].substring(0,5)}
+👥 Pessoas: ${reserva.pessoas}
+📍 Local: ${reserva.mesa}
+`
+
+  // 🔥 CANCELAR
+  const { error: erroUpdate } = await supabase
+  .from("reservas_mercatto")
+  .update({ status:"Cancelada" })
+  .eq("id", reserva.id)
+
+  if(erroUpdate){
+    console.log("❌ ERRO AO CANCELAR:", erroUpdate)
+  }
+
+  // 🔥 RESPOSTA FINAL
+  const respostaFinal = `
+❌ *Reserva cancelada com sucesso*
+
+👤 Nome: ${reserva.nome}
+📅 Data: ${reserva.datahora.split("T")[0]}
+⏰ Hora: ${reserva.datahora.split("T")[1].substring(0,5)}
+👥 Pessoas: ${reserva.pessoas}
+`
+
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      messaging_product:"whatsapp",
+      to: cliente,
+      type:"text",
+      text:{ body: respostaFinal }
+    })
+  })
+
+  return res.status(200).end()
+}
+
+
+
+
+  
 
 
 
@@ -708,65 +986,6 @@ texto.includes("reserva") ||
 texto.includes("reservar") ||
 texto.includes("mesa") ||
 texto.includes("quero reservar")
-
-if(querReservar){
-
-  console.log("📅 INTENÇÃO DE RESERVA DETECTADA")
-
-  const nome = nomeMemoria || "Cliente"
-  const telefone = cliente
-  const pessoas = 2 // depois você pode melhorar isso
-  const datahora = new Date().toISOString()
-  const mesa = "Não definida"
-
-  // 🔥 SALVA NO BANCO
-  await supabase
-  .from("reservas_mercatto")
-  .insert({
-    nome,
-    telefone,
-    pessoas,
-    datahora,
-    mesa,
-    status: "Pendente"
-  })
-
-  // 🔥 ENVIA PARA ADM
-  const msgAdmin = `
-📅 *NOVA RESERVA*
-
-👤 Nome: ${nome}
-📱 Telefone: ${telefone}
-👥 Pessoas: ${pessoas}
-⏰ Data: ${datahora}
-🍽️ Mesa: ${mesa}
-`
-
-  for(const admin of ADMINS){
-
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        messaging_product:"whatsapp",
-        to: admin,
-        type:"text",
-        text:{ body: msgAdmin }
-      })
-    })
-
-  }
-
-  console.log("📤 RESERVA ENVIADA PARA ADM")
-
-  return res.status(200).end()
-}
-
-
-
 
 
 
@@ -926,11 +1145,68 @@ if(isAdmin){
   console.log("👨‍💼 MENSAGEM DO ADMIN DETECTADA")
 
   /* 🔥 BUSCAR ÚLTIMA DÚVIDA */
-const match = mensagem.match(/^([a-z0-9\-]+)\s+([\s\S]+)/i)
-
+const match = mensagem.match(/^([a-z0-9\-.]+)\s+([\s\S]+)/i)
 if(!match){
-  console.log("❌ ADMIN NÃO INFORMOU ID")
-  return res.status(200).end()
+  console.log("⚠️ ADMIN SEM ID → CONTINUANDO NORMAL")
+}else{
+
+const idRaw = match[1]
+
+// 🔥 REMOVE O .com SE EXISTIR
+const id = idRaw.replace(".com","")
+const respostaAdmin = match[2]
+
+  const { data: duvida } = await supabase
+  .from("duvidas_pendentes")
+  .select("*")
+  .eq("id", id)
+  .maybeSingle()
+
+  if(duvida){
+
+    const telefoneCliente = duvida.telefone
+
+    await supabase
+    .from("aprendizado_bot")
+    .insert({
+      pergunta: duvida.pergunta,
+      resposta: respostaAdmin
+    })
+
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        messaging_product:"whatsapp",
+        to: telefoneCliente,
+        type:"text",
+        text:{ body: respostaAdmin }
+      })
+    })
+
+
+
+
+    
+// ✅ SANVA NAS CONVERSAS A RESPOSTA DOS ADMS
+await supabase
+.from("conversas_whatsapp")
+.insert({
+  telefone: telefoneCliente,
+  mensagem: respostaAdmin,
+  role: "assistant"
+})
+    await supabase
+    .from("duvidas_pendentes")
+    .delete()
+    .eq("id", id)
+
+    return res.status(200).end()
+  }
+
 }
 
 const id = match[1]
@@ -992,18 +1268,7 @@ const textoNormalizado = normalizar(texto)
 const querPromocao =
 textoNormalizado.includes("promo") ||
 textoNormalizado.includes("oferta") ||
-textoNormalizado.includes("rodizio") ||
-textoNormalizado.includes("rodízio") ||
-textoNormalizado.includes("desconto") ||
-textoNormalizado.includes("oriental") ||
-textoNormalizado.includes("italiano") ||
-textoNormalizado.includes("happy") ||
-textoNormalizado.includes("tem rodizio") ||
-textoNormalizado.includes("tem rodízio") ||
-textoNormalizado.includes("tem promoção") ||
-textoNormalizado.includes("tem promocao") ||
-textoNormalizado.includes("vende oriental") ||
-textoNormalizado.includes("todo dia")
+textoNormalizado.includes("desconto")
 
 const hojeInicio = getHojeBahia() + "T00:00"
 const hojeFim = getHojeBahia() + "T23:59"
@@ -1134,7 +1399,6 @@ if(nomeDetectado && nomeValido(nomeDetectado)){
 }
 
 
-  
 
 
 
@@ -1163,11 +1427,10 @@ texto.includes("responsavel") ||
 texto.includes("falar com alguem") ||
 texto.includes("atendimento humano") ||
 texto.includes("falar com atendente") ||
-texto.includes("contato") ||
 texto.includes("falar com gerente") ||
 texto.includes("quero gerente") ||
-texto.includes("atendimento humano") ||
-texto.includes("falar com atendente") ||
+texto.includes("quero falar com alguém") ||
+texto.includes("preciso falar com atendente") ||
 texto.match(/\d{2}\s?\d{4,5}-?\d{4}/)
 
 if(querGerente){
@@ -1210,88 +1473,58 @@ return res.status(200).end()
 
 /* ================= CONTINUA NORMAL ================= */
 
-if(
-  tipoMensagem === "reclamacao" ||
-  tipoMensagem === "feedback"
-){
+const textoReclamacao = mensagem.toLowerCase()
 
-  console.log("🚨 RECLAMAÇÃO OU FEEDBACK DETECTADO")
+const ehReclamacao =
+textoReclamacao.includes("ruim") ||
+textoReclamacao.includes("horrivel") ||
+textoReclamacao.includes("péssimo") ||
+textoReclamacao.includes("pessimo") ||
+textoReclamacao.includes("demorou") ||
+textoReclamacao.includes("atraso") ||
+textoReclamacao.includes("frio") ||
+textoReclamacao.includes("errado") ||
+textoReclamacao.includes("reclamar")
 
-  /* BUSCAR NOME */
-  const nomeCliente = nomeMemoria || nomeDetectado || "Não identificado"
 
-  /* MENSAGEM PARA ADMIN */
+
+
+if(ehReclamacao || tipoMensagem.includes("reclam")){
+
+  console.log("🚨 RECLAMAÇÃO DETECTADA")
+
+  const nomeCliente = nomeMemoria || "Cliente"
+
+  // 🔥 1. SALVA MENSAGEM DO CLIENTE
+  await supabase
+  .from("conversas_whatsapp")
+  .insert({
+    telefone:cliente,
+    mensagem:mensagem,
+    tipo,
+    media_url,
+    nome_arquivo,
+    role:"user",
+    message_id,
+    status:"received"
+  })
+
+  // 🔥 2. ENVIA ALERTA PARA ADM
   const alertaAdmin = `
-🚨 *ALERTA DE CLIENTE*
+🚨 *RECLAMAÇÃO DE CLIENTE*
 
-📱 Telefone: ${cliente}
 👤 Nome: ${nomeCliente}
-
-📝 Tipo: ${tipoMensagem.toUpperCase()}
+📱 Telefone: ${cliente}
 
 💬 Mensagem:
 "${mensagem}"
 `
 
- /* ENVIAR PARA ADMINS */
-  for(const admin of ADMINS){
+for(const admin of ADMINS){
 
-    console.log("ENVIANDO PARA ADMIN:", admin)
+  console.log("📤 ENVIANDO PARA ADM:", admin)
 
-    const resp = await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        messaging_product:"whatsapp",
-        to: admin,
-        type:"text",
-        text:{ body: alertaAdmin }
-      })
-    })
-
-    const data = await resp.json()
-    console.log("RESPOSTA WHATSAPP:", data)
-
-  }
-
-  /* SALVAR NO BANCO (FEEDBACK) */
-  await supabase
-  .from("feedback_clientes")
-  .insert({
-    telefone: cliente,
-    nome: nomeCliente,
-    mensagem: mensagem,
-    tipo: tipoMensagem
-  })
-
-  /* 🔥 NOVO — SALVAR COMO CONVERSA NORMAL */
-  await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone:cliente,
-    mensagem:
-      mensagem ||
-      (tipo !== "texto" ? `[${tipo.toUpperCase()} RECEBIDO]` : ""),
-    tipo,
-    media_url,
-    nome_arquivo,
-    role:"user",
-    message_id: message_id,
-    status: "received"
-  })
-
-  /* RESPOSTA AUTOMÁTICA PARA CLIENTE */
-  resposta = `🙏 Sentimos muito por isso, ${nomeCliente}.
-
-Seu feedback é muito importante para nós e já foi encaminhado para nossa equipe.
-
-Vamos resolver o mais rápido possível. 💛`
-
-  /* ENVIA RESPOSTA */
-  await fetch(url,{
+  const resp = await fetch(url,{
     method:"POST",
     headers:{
       Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
@@ -1299,15 +1532,20 @@ Vamos resolver o mais rápido possível. 💛`
     },
     body: JSON.stringify({
       messaging_product:"whatsapp",
-      to: cliente,
+      to: admin,
       type:"text",
-      text:{ body: resposta }
+      text:{ body: alertaAdmin }
     })
   })
 
-  return res.status(200).end()
+  const data = await resp.json()
+
+  console.log("📩 RESPOSTA WHATSAPP ADM:", data)
+
 }
 
+  // 🔥 3. NÃO RESPONDE AQUI → deixa a IA responder
+}
 
 
 // 🔥 GARANTE CARDÁPIO CARREGADO
@@ -2035,16 +2273,26 @@ textoNormalizado.includes("cardap") ||
 textoNormalizado.includes("menu") ||
 textoNormalizado.includes("pratos")
 
-/* 🔥 BUFFET INTELIGENTE */
+// 🔥 SOMENTE BUFFET
 const querBuffet =
 textoNormalizado.includes("buffet") ||
-textoNormalizado.includes("buffer") ||
 textoNormalizado.includes("almoco") ||
-textoNormalizado.includes("comida") ||
-textoNormalizado.includes("tem o que") ||
+textoNormalizado.includes("comida")
+
+
+
+
+  
+// 🔥 PERGUNTA GENÉRICA (VAI PRA IA)
+const querHoje =
+textoNormalizado.includes("o que tem hoje") ||
 textoNormalizado.includes("tem hoje") ||
-textoNormalizado.includes("o que tem") ||
-textoNormalizado.startsWith("tem ")
+textoNormalizado.includes("vai ter o que hoje") ||
+textoNormalizado === "tem hoje" ||
+textoNormalizado === "o que tem hoje"
+
+
+  
 
 const querVideo =
 textoNormalizado.includes("video") ||
@@ -2171,6 +2419,120 @@ return res.status(200).end()
 }
   
 
+
+
+
+
+
+
+
+
+
+/* ================= O QUE TEM HOJE (COM RODÍZIO ORGANIZADO) ================= */
+
+if(querHoje){
+
+  console.log("📅 RESPOSTA DIRETA → O QUE TEM HOJE")
+
+  const hoje = getHojeBahia()
+  const data = new Date(hoje + "T00:00:00")
+  const dia = data.getDay()
+
+  // 🔥 BUSCAR AGENDA REAL
+  const agendaHoje = await buscarAgendaDoDia(hoje)
+  const couvertHoje = calcularCouvert(agendaHoje)
+
+  // 🔥 BUSCAR BUFFET REAL
+  const buffetHoje = await buscarBuffetHoje()
+
+  let resposta = "Hoje no Mercatto Delícia temos:\n\n"
+
+  /* ================= MUSICA ================= */
+
+  if(agendaHoje.length){
+resposta += "🍹 Happy Hour todos os dias das 17h às 20h\n\n"
+    resposta += "🎶 Música ao vivo:\n\n"
+
+    agendaHoje.forEach(m=>{
+      resposta += `🎤 ${m.cantor}\n`
+      resposta += `🕒 ${m.hora}\n`
+      resposta += `🎵 ${m.estilo}\n\n`
+    })
+
+    resposta += `💰 Couvert artístico: R$ ${couvertHoje.toFixed(2)}\n\n`
+  }
+
+  /* ================= RODÍZIOS (BLOCO SEPARADO) ================= */
+
+
+  
+let rodizioTexto = ""
+
+// ❌ SÓ MOSTRA SE FOR O DIA CERTO
+if(dia === 4){ // quinta
+  rodizioTexto = "🍝 Rodízio Italiano a partir das 19h\n"
+}
+else if(dia === 0){ // domingo
+  rodizioTexto = "🍣 Rodízio Oriental a partir das 19h\n"
+}
+
+// ✅ SE NÃO FOR DIA → NÃO MOSTRA NADA
+if(rodizioTexto){
+  resposta += "🍽️ Rodízio do dia:\n"
+  resposta += rodizioTexto + "\n"
+}
+
+  /* ================= BUFFET ================= */
+
+  if(buffetHoje.length){
+
+    resposta += "🍛 Buffet disponível das 11h às 15h com opções como:\n"
+
+    buffetHoje.slice(0,5).forEach(item=>{
+      resposta += `• ${item.produto_nome}\n`
+    })
+
+    resposta += "\n"
+  }
+
+  resposta += "Será um prazer receber você 😊"
+
+  // 🔥 ENVIA
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      messaging_product:"whatsapp",
+      to:cliente,
+      type:"text",
+      text:{body:resposta}
+    })
+  })
+
+  // 🔥 SALVA
+  await supabase.from("conversas_whatsapp").insert({
+    telefone:cliente,
+    mensagem:resposta,
+    role:"assistant"
+  })
+
+  return res.status(200).end()
+}
+
+
+
+
+
+
+
+
+
+
+
+  
 /* ================= MUSICA AO VIVO ================= */
 
 if(querMusica){
@@ -2395,44 +2757,7 @@ const mensagens = (historico || [])
 }))
 .slice(-15)
 
-/* ================= 🔥 BUSCAR APRENDIZADO ================= */
 
-const { data: aprendizado } = await supabase
-.from("aprendizado_bot")
-.select("*")
-.ilike("pergunta", `%${mensagem}%`)
-.limit(1)
-
-if(aprendizado && aprendizado.length){
-
-  console.log("🧠 RESPOSTA VINDO DO APRENDIZADO")
-
-  const resposta = aprendizado[0].resposta
-
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      messaging_product:"whatsapp",
-      to:cliente,
-      type:"text",
-      text:{ body: resposta }
-    })
-  })
-
-  await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone:cliente,
-    mensagem:resposta,
-    role:"assistant"
-  })
-
-  return res.status(200).end()
-}
 
 
 
@@ -2665,7 +2990,9 @@ Regras:
 
 - Esses são os itens reais do buffet de hoje
 - Não invente itens
-- Se o cliente perguntar "o que tem hoje", liste os itens
+- Se o cliente perguntar especificamente sobre buffet, liste os itens
+- Nunca responda promoções junto com buffet
+- Perguntas como "o que tem hoje" são gerais e não significam buffet
 - Se perguntar "tem X", verifique nessa lista
 - Organize de forma bonita
 `
@@ -2692,7 +3019,46 @@ REGRAS CRÍTICAS:
 - Nunca dizer que tem vaga sem verificar aqui
 `
 },
+{
+role:"system",
+content: assuntoMusica 
+? "🚨 PRIORIDADE MÁXIMA: A resposta deve usar SOMENTE a agenda real fornecida. É proibido inventar."
+: "A pergunta não é sobre música."
+},
 
+{
+role:"system",
+content:`
+🚨 REGRA CRÍTICA — AGENDA DE MÚSICA (OBRIGATÓRIA)
+
+Você NÃO pode inventar artistas, shows ou programação.
+
+Use EXCLUSIVAMENTE os dados abaixo:
+
+AGENDA DE HOJE:
+${agendaHojeTexto}
+
+AGENDA DA SEMANA:
+${agendaTexto}
+
+REGRAS:
+
+- Se a pergunta for sobre música, cantor, banda, show ou programação:
+  → RESPONDA SOMENTE com esses dados
+- Se não houver dados:
+  → diga claramente que não há programação
+- Nunca invente nomes
+- Nunca complete com suposição
+- Nunca use memória antiga para isso
+
+Se descumprir isso, a resposta está ERRADA.
+`
+},
+
+
+
+
+  
 {
 role:"system",
 content:`
@@ -2808,36 +3174,57 @@ if(resposta.includes("🚨 DÚVIDA DO CLIENTE")){
   .select()
   .single()
 
-  const alerta = `
+const alerta = `
 🚨 *DÚVIDA DO CLIENTE*
-
-🆔 ID: ${novaDuvida.id}
 
 📱 Telefone: ${cliente}
 
 💬 Pergunta:
 "${mensagem}"
 
-
 📄 Histórico:
 ${resumo}
 `
 
-  for(const admin of ADMINS){
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        messaging_product:"whatsapp",
-        to: admin,
-        type:"text",
-        text:{ body: alerta }
-      })
+for(const admin of ADMINS){
+
+  console.log("📤 ENVIANDO PARA ADM:", admin)
+
+  // 🔥 1ª mensagem → DÚVIDA
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to: admin,
+      type:"text",
+      text:{ body: alerta }
     })
-  }
+  })
+
+  // 🔥 2ª mensagem → ID LIMPO
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to: admin,
+      type:"text",
+      text:{ body: novaDuvida.id }
+    })
+  })
+
+  const data = await resp.json()
+
+  console.log("📩 RESPOSTA WHATSAPP ADM:", data)
+
+}
 
   /* 🚫 BLOQUEIA ENVIO PARA CLIENTE */
   return res.status(200).end()
@@ -2853,54 +3240,98 @@ resposta.toLowerCase().includes("não sei") ||
 resposta.toLowerCase().includes("não tenho") ||
 resposta.toLowerCase().includes("não encontrei")
 
-if(naoSabe){
-/* 🔥 SALVAR DÚVIDA */
-const { data: novaDuvida } = await supabase
-.from("duvidas_pendentes")
-.insert({
-  telefone: cliente,
-  pergunta: mensagem
-})
-.select()
-.single()
-  console.log("🚨 IA NÃO SABE → ESCALANDO")
+const respostaLower = (resposta || "").toLowerCase()
 
-  const resumo = mensagens
-    .map(m => `${m.role}: ${m.content}`)
-    .join("\n")
+
+const ehAcaoDireta =
+querCancelar ||
+confirmouPedido ||
+querReservar ||
+pedidoJSON ||
+texto.includes("confirmar") ||
+texto.includes("cancelar") ||
+texto.includes("reservar") ||
+texto.includes("pedir")
+
+
+
+
+
+  
+const precisaEscalar =
+!resposta ||
+resposta.length < 5 ||
+
+respostaLower.includes("não sei") ||
+respostaLower.includes("nao sei") ||
+respostaLower.includes("não temos") ||
+respostaLower.includes("nao temos") ||
+respostaLower.includes("não encontrei") ||
+respostaLower.includes("nao encontrei") ||
+respostaLower.includes("não possuo") ||
+respostaLower.includes("nao possuo") ||
+respostaLower.includes("sem informação") ||
+respostaLower.includes("no momento")
+
+if(precisaEscalar && !ehAcaoDireta){
+  console.log("🚨 ESCALANDO PARA ADM")
+
+  // 🔥 SALVA DÚVIDA
+  const { data: novaDuvida } = await supabase
+  .from("duvidas_pendentes")
+  .insert({
+    telefone: cliente,
+    pergunta: mensagem
+  })
+  .select()
+  .single()
+
+const resumo = mensagens
+  .slice(-5)
+  .map(m => `${m.role === "user" ? "👤" : "🤖"} ${m.content}`)
+  .join("\n")
 
 const alerta = `
 🚨 *DÚVIDA DO CLIENTE*
 
-🆔 ID: ${novaDuvida.id}
+🆔 *COPIAR ID:*
+${novaDuvida.id}.com
 
-📱 Telefone: ${cliente}
+📱 Cliente:
+${cliente}
 
 💬 Pergunta:
-"${mensagem}"
+${mensagem}
 
+✍️ *RESPONDA ASSIM:*
+${novaDuvida.id} sua resposta aqui
 
-📄 Histórico:
+📄 Últimas mensagens:
 ${resumo}
 `
 
+  // 🔥 ENVIA PARA TODOS ADM
   for(const admin of ADMINS){
-    await fetch(url,{
+
+    const resp = await fetch(url,{
       method:"POST",
       headers:{
         Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
         "Content-Type":"application/json"
       },
-      body:JSON.stringify({
+      body: JSON.stringify({
         messaging_product:"whatsapp",
         to: admin,
         type:"text",
         text:{ body: alerta }
       })
     })
+
+    const data = await resp.json()
+    console.log("📩 ENVIO ADM:", admin, data)
   }
 
-  /* 🔥 NÃO RESPONDE O CLIENTE */
+  // 🚫 NÃO RESPONDE O CLIENTE
   return res.status(200).end()
 }
 
