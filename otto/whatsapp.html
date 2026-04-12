@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Gestor de Conversas • Mercatto Delícia</title>
+<title>Gestor de Conversas</title>
 
 <meta name="viewport"
 content="width=device-width,
@@ -865,8 +865,7 @@ async function excluirConversa(){
 
 if(!clienteSelecionado) return
 
-if(!confirm("Excluir conversa completa?")) return
-
+if(!confirm("⚠️ Tem certeza que deseja excluir TODA a conversa?\nEssa ação não pode ser desfeita.")) return
 await db
 .from("conversas_whatsapp")
 .delete()
@@ -950,6 +949,12 @@ box.innerHTML = `
 <button class="menuAction ${pausado ? 'menuAtivar' : 'menuDesativar'}"
 onclick="toggleBot('${telefone}'); fecharMenu()">
 ${pausado ? "▶️ Ativar BOT" : "⛔ Desativar BOT"}
+</button>
+
+<!-- 🔥 NOVO BOTÃO -->
+<button class="menuAction menuDesativar"
+onclick="clienteSelecionado='${telefone}'; excluirConversa(); fecharMenu()">
+Excluir conversa
 </button>
 
 <button class="menuCancel" onclick="fecharMenu()">
