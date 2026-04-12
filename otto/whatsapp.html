@@ -749,8 +749,8 @@ container.innerHTML = ""
 
 for (const c of clientes){
 
-  const div = document.createElement("div")
-
+const div = document.createElement("div")
+div.setAttribute("data-telefone", c.telefone)
   const inicial = c.telefone.slice(-2)
 
   const pausado = await verificarPausa(c.telefone)
@@ -1331,17 +1331,30 @@ async function atualizarClientesSilencioso(){
         phoneEl.innerText = nome
       }
 
-      if(previewEl && previewEl.innerText !== c.mensagem){
-        previewEl.innerText = c.mensagem
+if(previewEl && previewEl.innerText !== c.mensagem){
 
-        // 🔥 efeito leve (sem travar UI)
-        card.style.transition = "0.2s"
-        card.style.background = "#dcfce7"
+  previewEl.innerText = c.mensagem
 
-        setTimeout(()=>{
-          card.style.background = ""
-        },300)
-      }
+  // 🔥 PISCAR IGUAL WHATSAPP
+  card.style.transition = "0.3s"
+  card.style.background = "#bbf7d0"
+
+  setTimeout(()=>{
+    card.style.background = "#dcfce7"
+  },150)
+
+  setTimeout(()=>{
+    card.style.background = ""
+  },600)
+
+  // 🔥 LEVE PULO
+  card.style.transform = "scale(1.02)"
+
+  setTimeout(()=>{
+    card.style.transform = "scale(1)"
+  },200)
+
+}
 
       if(statusEl){
         statusEl.innerHTML = `● ${pausado?'BOT PAUSADO':'BOT ATIVO'}`
