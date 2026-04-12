@@ -16,25 +16,13 @@ const ADMINS = [
   "557781293963",
   "5577981291635"
 ]
-
-// 🔥 BUFFER DE MENSAGENS (AGRUPAR WHATSAPP)
 const bufferMensagens = {}
-
-
 
 const TEMPLATES_PERMITIDOS = [
 "confirmao_de_reserva",
 "reserva_especial",
 "hello_world"
 ]
-
-
-
-
-
-
-
-
 
 
 
@@ -58,11 +46,16 @@ new Date().toLocaleString("en-US",{ timeZone:"America/Bahia" })
 )
 
 const hoje = agoraBahia.toISOString().split("T")[0]
+
 const {data:reservas} = await supabase
 .from("reservas_mercatto")
 .select("*")
-.gte("datahora", hoje+"T00:00")
-.lte("datahora", hoje+"T23:59")
+.in("status", ["Pendente","Confirmada"])
+.gte("datahora", hoje+"T00:00") // 🔥 daqui pra frente
+.order("datahora",{ascending:true})
+
+
+  
 .order("datahora",{ascending:true})
 
 let resposta = "📊 *Relatório automático de reservas (Hoje)*\n\n"
@@ -242,6 +235,52 @@ return unicos
 }
 
 
+
+function buscarRespostaAprendida(textoCliente, aprendizados){
+
+  const textoLimpo = normalizar(textoCliente || "")
+  const palavrasCliente = textoLimpo
+    .split(/\s+/)
+    .filter(p => p.length > 2)
+
+  let melhor = null
+  let melhorScore = 0
+
+  for(const item of aprendizados){
+
+    const perguntaBanco = normalizar(item.pergunta || "")
+    const palavrasBanco = perguntaBanco
+      .split(/\s+/)
+      .filter(p => p.length > 2)
+
+    if(!palavrasBanco.length) continue
+
+    let iguais = 0
+
+    for(const palavra of palavrasCliente){
+      if(palavrasBanco.includes(palavra)){
+        iguais++
+      }
+    }
+
+    const scoreCliente = iguais / Math.max(palavrasCliente.length, 1)
+    const scoreBanco = iguais / Math.max(palavrasBanco.length, 1)
+    const scoreFinal = Math.max(scoreCliente, scoreBanco)
+
+    if(scoreFinal > melhorScore){
+      melhorScore = scoreFinal
+      melhor = item
+    }
+  }
+
+  // ajuste o limite aqui se quiser mais rígido ou mais solto
+  if(melhor && melhorScore >= 0.45){
+    return melhor
+  }
+
+  return null
+}
+
 /* ================= VERIFICAR SE TEM PRODUTO (INTELIGENTE) ================= */
 
 function normalizar(txt){
@@ -404,43 +443,6 @@ return publicUrl
 
 
 
-
-function ehConfirmacaoPositiva(txt){
-  const t = normalizar(txt || "")
-  return (
-    t === "sim" ||
-    t === "s" ||
-    t === "ok" ||
-    t === "pode" ||
-    t === "pode sim" ||
-    t === "claro" ||
-    t === "quero" ||
-    t === "adicionar" ||
-    t === "cadastrar"
-  )
-}
-
-function ehConfirmacaoNegativa(txt){
-  const t = normalizar(txt || "")
-  return (
-    t === "nao" ||
-    t === "não" ||
-    t === "n" ||
-    t === "cancelar" ||
-    t === "ignorar" ||
-    t === "deixa" ||
-    t === "deixa pra la" ||
-    t === "deixa pra lá"
-  )
-}
-
-
-
-
-
-
-
-
 module.exports = async function handler(req,res){
 let resposta = ""
 
@@ -519,7 +521,35 @@ REGRAS CRÍTICAS DE CONVERSA
 - Seja natural e direto (como humano)
 `
 },
+{
+  role: "system",
+  content: `
+Você é o atendente do Mercatto Delícia.
 
+Se o cliente fizer um pedido de delivery:
+
+1. Responda normalmente confirmando o pedido
+2. E NO FINAL da resposta, gere EXATAMENTE isso:
+
+PEDIDO_DELIVERY_JSON: {
+  "nome": "",
+  "telefone": "",
+  "endereco": "",
+  "bairro": "",
+  "itens": [
+    { "nome": "", "preco": 0, "quantidade": 0 }
+  ],
+  "valor_total": 0,
+  "pagamento": "",
+  "obs": ""
+}
+
+REGRAS:
+- SEMPRE gerar esse JSON se for pedido
+- NÃO explicar o JSON
+- NÃO alterar o nome PEDIDO_DELIVERY_JSON
+`
+},
 
   
 {
@@ -730,23 +760,6 @@ const message_id = mensagensRecebidas[0]?.id
 
 
 
-// 🔥 SALVAR MENSAGEM RECEBIDA (LOCAL EXATO)
-await supabase
-  .from("conversas_whatsapp")
-  .insert({
-    telefone: cliente,
-    mensagem: mensagem,
-    tipo: tipo,
-    media_url: media_url,
-    nome_arquivo: nome_arquivo,
-    role: "user",
-    message_id: message_id,
-    status: "received"
-  })
-
-
-
-
 
 
 
@@ -813,57 +826,21 @@ const { data: aprendizadoContexto } = await supabase
 .select("*")
 .limit(50)
 
+let melhorAprendizado = null
 let aprendizadoTexto = ""
-let respostaAprendida = null
 
 if(aprendizadoContexto && aprendizadoContexto.length){
 
-  const textoLimpo = normalizar(texto)
+  melhorAprendizado = buscarRespostaAprendida(texto, aprendizadoContexto)
 
-  for(const item of aprendizadoContexto){
-
-    const perguntaBanco = normalizar(item.pergunta || "")
-
-    if(
-      textoLimpo.includes(perguntaBanco) ||
-      perguntaBanco.includes(textoLimpo)
-    ){
-      respostaAprendida = item.resposta
-      console.log("🧠 RESPOSTA VINDO DO APRENDIZADO")
-      break
-    }
-
+  if(melhorAprendizado){
+    console.log("🧠 CONHECIMENTO ENCONTRADO:", melhorAprendizado.pergunta)
   }
 
-  // 🔥 CONTEXTO PARA IA
   aprendizadoTexto = aprendizadoContexto.map(a => `
 PERGUNTA: ${a.pergunta}
-RESPOSTA: ${a.resposta}
+RESPOSTA_BASE: ${a.resposta}
 `).join("\n")
-
-}
-
-/* ================= USAR RESPOSTA ================= */
-
-if(respostaAprendida){
-
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      messaging_product:"whatsapp",
-      to:cliente,
-      type:"text",
-      text:{ body: respostaAprendida }
-    })
-  })
-
-  console.log("✅ RESPONDIDO VIA APRENDIZADO")
-
-  return res.status(200).end()
 }
 
 
@@ -909,7 +886,7 @@ let { data: reservas, error } = await supabase
   .from("reservas_mercatto")
   .select("*")
   .in("status", ["Pendente","Confirmada"])
-  .gte("datahora", agoraISO)
+  .gte("datahora", hoje + "T00:00") // 🔥 CORRETO
   .order("datahora",{ ascending:true })
   .limit(50)
 
@@ -1124,7 +1101,13 @@ const itensTratados = (dados.itens || []).map(item => {
     foto: produto?.foto_url || "https://via.placeholder.com/300"
   }
 })
+const valor_total = itensTratados.reduce((total, item) => {
+  return total + (item.total || 0)
+}, 0)
 
+
+
+  
 await supabase
   .from("pedidos_pendentes")
   .insert({
@@ -1137,6 +1120,7 @@ cliente_endereco:
   dados.cliente_endereco ||
   dados.endereco ||
   dados.entrega ||
+  dados.rua ||
   "",
 
 cliente_bairro:
@@ -1261,164 +1245,45 @@ cliente_bairro:
 
 
 
-/* ================= ADMIN - FLUXO DE APRENDIZADO ================= */
+  
+/* ================= ADMIN RESPONDENDO CLIENTE ================= */
 
 if(isAdmin){
 
   console.log("👨‍💼 MENSAGEM DO ADMIN DETECTADA")
 
-  const { data: estadoAdmin } = await supabase
-    .from("estado_conversa")
-    .select("*")
-    .eq("telefone", cliente)
-    .maybeSingle()
+const match = mensagem.match(
+  /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\.com)?\s+([\s\S]+)/i
+)
+  // Admin mandou mensagem comum, sem ID
+  if(!match){
+    console.log("⚠️ ADMIN SEM ID → CONTINUANDO FLUXO NORMAL")
+  } else {
 
-  /* ================= ETAPA 1 - CONFIRMAR SE QUER CADASTRAR ================= */
+    const idRaw = match[1]
+    const id = idRaw.replace(".com","").trim()
+    const respostaAdmin = match[2].trim()
 
-  if(estadoAdmin?.tipo === "confirmar_aprendizado"){
+    console.log("🆔 ID RECEBIDO:", id)
+    console.log("💬 RESPOSTA ADMIN:", respostaAdmin)
 
-    console.log("🧠 ETAPA ADMIN: confirmar_aprendizado")
-
-    const textoAdmin = normalizar(mensagem || "")
-
-    const confirmou =
-      textoAdmin === "sim" ||
-      textoAdmin === "s" ||
-      textoAdmin === "ok" ||
-      textoAdmin === "pode" ||
-      textoAdmin === "quero" ||
-      textoAdmin === "adicionar" ||
-      textoAdmin === "cadastrar"
-
-    const recusou =
-      textoAdmin === "nao" ||
-      textoAdmin === "não" ||
-      textoAdmin === "n" ||
-      textoAdmin === "cancelar" ||
-      textoAdmin === "ignorar"
-
-   if(confirmou){
-
-  const { data: duvida } = await supabase
-    .from("duvidas_pendentes")
-    .select("*")
-    .eq("id", estadoAdmin.referencia_id)
-    .maybeSingle()
-
-  if(!duvida){
-    console.log("❌ DÚVIDA NÃO ENCONTRADA PARA CONFIRMAÇÃO")
-
-    await supabase
-      .from("estado_conversa")
-      .delete()
-      .eq("telefone", cliente)
-
-    return res.status(200).end()
-  }
-
-  await supabase
-    .from("estado_conversa")
-    .upsert({
-      telefone: cliente,
-      tipo: "aguardando_resposta_aprendizado",
-      referencia_id: duvida.id
-    }, { onConflict: "telefone" })
-
-  const textoPergunta = `Perfeito 👍
-
-Digite em apenas uma mensagem a resposta para essa pergunta.
-
-Essa resposta será usada com seus clientes.
-
-REGISTRO DE INFRORMAÇÃO:
-${duvida.pergunta}`
-
-  await fetch(url,{
-    method:"POST",
-    headers:{
-      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({
-      messaging_product:"whatsapp",
-      to: cliente,
-      type:"text",
-      text:{ body: textoPergunta }
-    })
-  })
-
-  return res.status(200).end()
-}
-
-    if(recusou){
-
-      await supabase
-        .from("estado_conversa")
-        .delete()
-        .eq("telefone", cliente)
-
-      await fetch(url,{
-        method:"POST",
-        headers:{
-          Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-          "Content-Type":"application/json"
-        },
-        body: JSON.stringify({
-          messaging_product:"whatsapp",
-          to: cliente,
-          type:"text",
-          text:{ body:"Tudo bem. Não vou adicionar essa resposta ao conhecimento." }
-        })
-      })
-
-      return res.status(200).end()
-    }
-
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        messaging_product:"whatsapp",
-        to: cliente,
-        type:"text",
-        text:{ body:"Responda apenas com *SIM* para cadastrar ou *NÃO* para ignorar." }
-      })
-    })
-
-    return res.status(200).end()
-  }
-
-  /* ================= ETAPA 2 - ADMIN ENVIA A RESPOSTA ================= */
-
-  if(estadoAdmin?.tipo === "aguardando_resposta_aprendizado"){
-
-    console.log("🧠 ETAPA ADMIN: aguardando_resposta_aprendizado")
-
-    const respostaAdmin = (mensagem || "").trim()
-
-    if(!respostaAdmin){
-      return res.status(200).end()
-    }
-
-    const { data: duvida } = await supabase
+    const { data: duvida, error: erroDuvida } = await supabase
       .from("duvidas_pendentes")
       .select("*")
-      .eq("id", estadoAdmin.referencia_id)
+      .eq("id", id)
       .maybeSingle()
 
-    if(!duvida){
-      console.log("❌ DÚVIDA NÃO ENCONTRADA PARA RESPOSTA FINAL")
-
-      await supabase
-        .from("estado_conversa")
-        .delete()
-        .eq("telefone", cliente)
-
+    if(erroDuvida){
+      console.log("❌ ERRO AO BUSCAR DÚVIDA:", erroDuvida)
       return res.status(200).end()
     }
+
+    if(!duvida){
+      console.log("❌ DÚVIDA NÃO ENCONTRADA:", id)
+      return res.status(200).end()
+    }
+
+    const telefoneCliente = duvida.telefone
 
     await supabase
       .from("aprendizado_bot")
@@ -1427,29 +1292,31 @@ ${duvida.pergunta}`
         resposta: respostaAdmin
       })
 
-    console.log("✅ APRENDIZADO SALVO")
+    console.log("🧠 APRENDIZADO SALVO")
 
-    const envioCliente = await fetch(url,{
+    const envioAdmin = await fetch(url,{
       method:"POST",
       headers:{
         Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
         "Content-Type":"application/json"
       },
-      body: JSON.stringify({
+      body:JSON.stringify({
         messaging_product:"whatsapp",
-        to: duvida.telefone,
+        to: telefoneCliente,
         type:"text",
         text:{ body: respostaAdmin }
       })
     })
 
-    const retornoCliente = await envioCliente.json()
-    const messageIdAdmin = retornoCliente?.messages?.[0]?.id || null
+    const retornoEnvioAdmin = await envioAdmin.json()
+    const messageIdAdmin = retornoEnvioAdmin?.messages?.[0]?.id || null
+
+    console.log("📤 RESPOSTA ENVIADA PARA CLIENTE:", retornoEnvioAdmin)
 
     await supabase
       .from("conversas_whatsapp")
       .insert({
-        telefone: duvida.telefone,
+        telefone: telefoneCliente,
         mensagem: respostaAdmin,
         role: "assistant",
         message_id: messageIdAdmin,
@@ -1459,31 +1326,11 @@ ${duvida.pergunta}`
     await supabase
       .from("duvidas_pendentes")
       .delete()
-      .eq("id", duvida.id)
+      .eq("id", id)
 
-    await supabase
-      .from("estado_conversa")
-      .delete()
-      .eq("telefone", cliente)
-
-    await fetch(url,{
-      method:"POST",
-      headers:{
-        Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        messaging_product:"whatsapp",
-        to: cliente,
-        type:"text",
-        text:{ body:"Resposta cadastrada no conhecimento e enviada ao cliente com sucesso ✅" }
-      })
-    })
-
+    console.log("✅ DÚVIDA FINALIZADA")
     return res.status(200).end()
   }
-
-  console.log("⚠️ ADMIN SEM FLUXO DE APRENDIZADO ATIVO → CONTINUANDO FLUXO NORMAL")
 }
   
 const textoNormalizado = normalizar(texto)
@@ -1647,15 +1494,7 @@ console.log("CLASSIFICAÇÃO:", tipoMensagem)
 /* ================= PRIORIDADE MÁXIMA — CONTATO HUMANO ================= */
 
 const querGerente =
-texto.includes("gerente") ||
-texto.includes("responsavel") ||
-texto.includes("falar com alguem") ||
-texto.includes("atendimento humano") ||
-texto.includes("falar com atendente") ||
 texto.includes("falar com gerente") ||
-texto.includes("quero gerente") ||
-texto.includes("quero falar com alguém") ||
-texto.includes("preciso falar com atendente") ||
 texto.match(/\d{2}\s?\d{4,5}-?\d{4}/)
 
 if(querGerente){
@@ -3174,7 +3013,35 @@ REGRAS DE PRIORIDADE DO AGENTE
 4. Nunca use respostas antigas como regra se o prompt atual disser algo diferente.
 `
 },
+{
+role:"system",
+content:`
+BASE DE CONHECIMENTO APRENDIDA
 
+Abaixo estão respostas aprendidas anteriormente com o administrador.
+
+Use isso como BASE DE CONHECIMENTO e NÃO como resposta pronta.
+
+REGRAS:
+- Você pode reaproveitar o conteúdo se a pergunta do cliente for igual ou parecida
+- Reescreva de forma natural, clara e adequada ao contexto atual
+- Nunca copie mecanicamente
+- Nunca invente além do que está salvo
+- Se houver um conhecimento mais parecido, priorize ele
+
+MELHOR CONHECIMENTO ENCONTRADO:
+${melhorAprendizado ? `
+PERGUNTA_BASE: ${melhorAprendizado.pergunta}
+RESPOSTA_BASE: ${melhorAprendizado.resposta}
+` : "NENHUM"}
+
+OUTROS CONHECIMENTOS DISPONÍVEIS:
+${aprendizadoTexto || "SEM CONHECIMENTO SALVO"}
+`
+},
+
+
+  
 {
 role:"system",
 content: assuntoMusica 
@@ -3182,6 +3049,11 @@ content: assuntoMusica
 : "A pergunta atual do cliente não é sobre música."
 },
 
+
+
+
+
+  
 {
 role:"system",
 content: nomeMemoria
@@ -3363,6 +3235,50 @@ REGRAS:
 resposta = completion.choices[0].message.content
 
 
+
+  /* ================= CAPTURAR PEDIDO ================= */
+
+if (resposta.includes("PEDIDO_DELIVERY_JSON")) {
+
+  try {
+
+    const jsonStr = resposta.split("PEDIDO_DELIVERY_JSON:")[1].trim()
+
+    const pedido = JSON.parse(jsonStr)
+
+    const valor_total = pedido.itens.reduce(
+      (total, item) => total + (item.preco * item.quantidade),
+      0
+    )
+
+    console.log("🛒 PEDIDO DETECTADO:", pedido)
+
+    await supabase.from("pedidos").insert({
+      cliente_nome: pedido.nome,
+      cliente_telefone: from,
+      cliente_endereco: pedido.endereco,
+      cliente_bairro: pedido.bairro,
+      tipo: "entrega",
+      itens: pedido.itens,
+      valor_total: valor_total,
+      forma_pagamento: pedido.pagamento,
+      observacao: pedido.obs,
+      status: "novo",
+      origem: "whatsapp",
+      whatsapp_message_id: msg.id,
+      pagamento_status: "pendente"
+    })
+
+    console.log("✅ PEDIDO SALVO")
+
+  } catch (err) {
+    console.error("❌ ERRO AO PROCESSAR PEDIDO:", err)
+  }
+
+}
+
+  
+
 // ================= PRE-PEDIDO (ANTES DO ENVIO) =================
 
 if(
@@ -3528,43 +3444,44 @@ respostaLower.includes("sem informação") ||
 respostaLower.includes("no momento")
 
 if(precisaEscalar && !ehAcaoDireta){
-  console.log("🚨 ESCALANDO PARA ADM (NOVO FLUXO)")
+  console.log("🚨 ESCALANDO PARA ADM")
 
-  const { data: novaDuvida, error: erroNovaDuvida } = await supabase
-    .from("duvidas_pendentes")
-    .insert({
-      telefone: cliente,
-      pergunta: mensagem
-    })
-    .select()
-    .single()
+  // 🔥 SALVA DÚVIDA
+  const { data: novaDuvida } = await supabase
+  .from("duvidas_pendentes")
+  .insert({
+    telefone: cliente,
+    pergunta: mensagem
+  })
+  .select()
+  .single()
 
-  if(erroNovaDuvida || !novaDuvida){
-    console.log("❌ ERRO AO SALVAR DÚVIDA:", erroNovaDuvida)
-    return res.status(200).end()
-  }
+const resumo = mensagens
+  .slice(-5)
+  .map(m => `${m.role === "user" ? "👤" : "🤖"} ${m.content}`)
+  .join("\n")
 
-  const alerta = `🚨 *Nova dúvida sem resposta cadastrada*
+const alerta = `
+🚨 *DÚVIDA DO CLIENTE*
 
-❓ Pergunta do cliente:
+🆔 *COPIAR ID:*
+${novaDuvida.id}.com
+
+📱 Cliente:
+${cliente}
+
+💬 Pergunta:
 ${mensagem}
 
-Deseja adicionar uma resposta ao conhecimento?
+✍️ *RESPONDA ASSIM:*
+${novaDuvida.id} sua resposta aqui
 
-Responda:
-*SIM* para cadastrar
-ou
-*NÃO* para ignorar`
+📄 Últimas mensagens:
+${resumo}
+`
 
+  // 🔥 ENVIA PARA TODOS ADM
   for(const admin of ADMINS){
-
-    await supabase
-      .from("estado_conversa")
-      .upsert({
-        telefone: admin,
-        tipo: "confirmar_aprendizado",
-        referencia_id: novaDuvida.id
-      }, { onConflict: "telefone" })
 
     const resp = await fetch(url,{
       method:"POST",
@@ -3581,11 +3498,13 @@ ou
     })
 
     const data = await resp.json()
-    console.log("📩 ALERTA NOVO FLUXO ADM:", admin, data)
+    console.log("📩 ENVIO ADM:", admin, data)
   }
 
+  // 🚫 NÃO RESPONDE O CLIENTE
   return res.status(200).end()
 }
+
 
   
 console.log("RESPOSTA IA COMPLETA:", resposta)
