@@ -33,8 +33,14 @@ button,input,textarea,select{font:inherit}
   border-bottom:1px solid var(--border);
 }
 .header-inner{
-  max-width:1400px;margin:0 auto;padding:14px 18px;
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  width:100%;
+  max-width:100%;
+  margin:0;
+  padding:14px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
 }
 .brand{display:flex;align-items:center;gap:12px}
 .logo{
@@ -155,11 +161,6 @@ button,input,textarea,select{font:inherit}
   .grid{grid-template-columns:1fr}
 }
 @media (max-width:720px){
-.header-inner{
-  width:100%;
-  max-width:100%;
-  padding:14px 24px;
-}
   .toolbar{grid-template-columns:1fr}
   .kpis{grid-template-columns:1fr}
   .actions{flex-direction:column}
