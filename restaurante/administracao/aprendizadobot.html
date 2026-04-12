@@ -56,8 +56,16 @@ button,input,textarea,select{font:inherit}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-warning{background:var(--warning);color:#fff}
 .btn-blue{background:var(--blue);color:#fff}
-.layout{max-width:1400px;margin:0 auto;padding:22px 18px 32px}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+  
+.layout{
+  width:100%;
+  max-width:100%;
+  padding:22px 24px 32px;
+}
+  
+  
+  
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
 .kpi{
   background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)
 }
@@ -147,7 +155,11 @@ button,input,textarea,select{font:inherit}
   .grid{grid-template-columns:1fr}
 }
 @media (max-width:720px){
-  .header-inner{flex-direction:column;align-items:stretch}
+.header-inner{
+  width:100%;
+  max-width:100%;
+  padding:14px 24px;
+}
   .toolbar{grid-template-columns:1fr}
   .kpis{grid-template-columns:1fr}
   .actions{flex-direction:column}
