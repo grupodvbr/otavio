@@ -753,8 +753,25 @@ async function atualizarSilencioso(){
   .order("created_at",{ascending:false})
   .limit(20)
 
-  if(!data) return
+  /* 🔥 SE NÃO EXISTE MAIS CONVERSA */
+  if(!data || data.length === 0){
 
+    msgs.innerHTML = `
+      <div style="
+        margin:auto;
+        text-align:center;
+        color:#555;
+        font-size:14px;
+      ">
+        🗑️ Conversa excluída
+      </div>
+    `
+
+    mensagensIds.clear()
+    return
+  }
+
+  /* NORMAL */
   data.reverse().forEach(m=>{
 
     const id = m.id || m.message_id
@@ -762,7 +779,8 @@ async function atualizarSilencioso(){
     if(!mensagensIds.has(id)){
       render(m)
 
-      const pertoDoFim = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 200
+      const pertoDoFim =
+        msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 200
 
       if(pertoDoFim){
         scrollBottom()
