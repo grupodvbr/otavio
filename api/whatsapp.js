@@ -174,11 +174,12 @@ async function buscarCardapio(){
 
 const { data, error } = await supabase
 .from("buffet")
-.select("id,nome,tipo,descricao,preco_venda,foto_url")
-.eq("ativo",true)
-.eq("cardapio",true)
-.order("tipo",{ascending:true})
-.order("nome",{ascending:true})
+.select("id,nome,tipo,descricao,preco_venda,foto_url,delivery")
+.eq("ativo", true)
+.eq("cardapio", true)
+.eq("delivery", true) // 🔥 OBRIGATÓRIO
+.order("tipo", { ascending: true })
+.order("nome", { ascending: true })
 
 if(error){
 console.log("Erro cardápio:",error)
@@ -289,9 +290,14 @@ function encontrarPratoComFoto(cardapio, texto){
 
     const nome = normalizar(item.nome)
 
-    if(nome.includes(textoLimpo)){
-      return item
-    }
+if(nome.includes(textoLimpo)){
+
+  if(!item.delivery){
+    return { erro: "SEM_DELIVERY" }
+  }
+
+  return item
+}
 
   }
 
@@ -1000,9 +1006,10 @@ if(mensagem.includes("PEDIDO_DELIVERY_JSON:")){
 
   try{
 
-    const jsonString = mensagem.split("PEDIDO_DELIVERY_JSON:")[1].trim()
-
-    pedidoJSON = JSON.parse(jsonString)
+const match = mensagem.match(/PEDIDO_DELIVERY_JSON:\s*(\{[\s\S]*\})$/)
+    if(match){
+      pedidoJSON = JSON.parse(match[1])
+    }
 
     console.log("🧾 PEDIDO JSON DETECTADO:", pedidoJSON)
 
@@ -1019,21 +1026,67 @@ if(mensagem.includes("PEDIDO_DELIVERY_JSON:")){
 
 if(pedidoJSON){
 
-  const dados = pedidoJSON.dados
+const dados = pedidoJSON?.dados || {}
 
-  await supabase
-    .from("pedidos_pendentes")
-    .insert({
-      cliente_nome: dados.cliente_nome || "Cliente",
-      cliente_telefone: cliente,
-      cliente_endereco: dados.cliente_endereco || "",
-      cliente_bairro: dados.cliente_bairro || "",
-      itens: dados.itens,
-      valor_total: dados.valor_total,
-      forma_pagamento: dados.forma_pagamento,
-      observacao: dados.observacao,
-      origem: "whatsapp"
-    })
+dados.cliente_nome = dados.cliente_nome || "Cliente"
+dados.cliente_telefone = cliente
+dados.cliente_endereco = dados.cliente_endereco || ""
+dados.cliente_bairro = dados.cliente_bairro || ""
+dados.forma_pagamento = dados.forma_pagamento || "Não informado"
+dados.observacao = dados.observacao || ""
+
+if(!Array.isArray(dados.itens)){
+  dados.itens = []
+}
+
+
+  
+const cardapio = await buscarCardapio()
+
+const itensTratados = (dados.itens || []).map(item => {
+
+  const produto = cardapio.find(p =>
+    normalizar(p.nome).includes(normalizar(item.nome))
+  )
+
+  const quantidade = parseInt(String(item.quantidade).replace(/\D/g,"")) || 1
+  const preco = Number(produto?.preco_venda || item.preco) || 0
+
+  return {
+    nome: produto?.nome || item.nome || "Item",
+    preco,
+    quantidade,
+    total: preco * quantidade,
+    foto: produto?.foto_url || "https://via.placeholder.com/300"
+  }
+})
+
+await supabase
+  .from("pedidos_pendentes")
+  .insert({
+    cliente_nome: dados.cliente_nome || "Cliente",
+    cliente_telefone: cliente,
+
+
+    
+cliente_endereco:
+  dados.cliente_endereco ||
+  dados.endereco ||
+  dados.entrega ||
+  "",
+
+cliente_bairro:
+  dados.cliente_bairro ||
+  dados.bairro ||
+  "",
+
+    
+ itens: itensTratados,
+    valor_total: valor_total,
+    forma_pagamento: dados.forma_pagamento,
+    observacao: dados.observacao,
+    origem: "whatsapp"
+  })
 
   console.log("✅ PEDIDO PENDENTE SALVO CORRETAMENTE")
 
@@ -1106,8 +1159,15 @@ if(!ultimoPedido){
       status: "novo",
       cliente_nome: nomeMemoria || "Cliente",
       cliente_telefone: cliente,
-      cliente_endereco: ultimoPedido.cliente_endereco,
-      cliente_bairro: ultimoPedido.cliente_bairro,
+cliente_endereco:
+  ultimoPedido.cliente_endereco ||
+  memoriaCliente?.endereco ||
+  "",
+
+cliente_bairro:
+  ultimoPedido.cliente_bairro ||
+  memoriaCliente?.bairro ||
+  "",
       itens: ultimoPedido.itens,
       valor_total: ultimoPedido.valor_total,
       forma_pagamento: ultimoPedido.forma_pagamento,
@@ -1680,22 +1740,30 @@ if(match){
 
 
 
-// 🔥 SALVAR PEDIDO PENDENTE (AQUI É O PONTO CRÍTICO)
-
-await supabase
-.from("pedidos_pendentes")
-.delete()
-.eq("cliente_telefone", cliente)
+// 🔥 EXTRAI DADOS DO TEXTO (LINHA NOVA)
+const dadosExtraidos = extrairDadosPedido(mensagem)
 
 await supabase
 .from("pedidos_pendentes")
 .insert({
   cliente_nome: nomeMemoria || "Cliente",
   cliente_telefone: cliente,
-  cliente_endereco: memoriaCliente?.endereco || "",
-  cliente_bairro: memoriaCliente?.bairro || "",
+
+  // 🔥 CORREÇÃO PRINCIPAL
+  cliente_endereco:
+    dadosExtraidos.endereco ||
+    memoriaCliente?.endereco ||
+    "",
+
+  cliente_bairro:
+    dadosExtraidos.bairro ||
+    memoriaCliente?.bairro ||
+    "",
+
   itens: pedido.itens,
+
   valor_total: pedido.itens.reduce((s,i)=>s+(i.preco*i.quantidade),0),
+
   forma_pagamento: "",
   observacao: ""
 })
@@ -1926,11 +1994,14 @@ origem: "whatsapp"
 await supabase
 .from("memoria_clientes")
 .upsert({
-telefone: cliente,
-nome: nomeFinal,
-endereco: enderecoFinal,
-bairro: bairroFinal,
-ultima_interacao: new Date().toISOString()
+  telefone: cliente,
+  nome: nomeFinal,
+
+  // 🔥 AGORA SALVA ENDEREÇO
+  endereco: enderecoFinal,
+  bairro: bairroFinal,
+
+  ultima_interacao: new Date().toISOString()
 },{ onConflict:"telefone" })
   
 
@@ -2667,10 +2738,31 @@ if(pediuFotoEspecifica){
 
   const cardapio = await buscarCardapio()
 
-  const prato = encontrarPratoComFoto(cardapio, mensagem)
+const prato = encontrarPratoComFoto(cardapio, mensagem)
 
-  if(prato){
+// 🔥 BLOQUEIO DELIVERY (OBRIGATÓRIO)
+if(prato?.erro === "SEM_DELIVERY"){
 
+  await fetch(url,{
+    method:"POST",
+    headers:{
+      Authorization:`Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
+      messaging_product:"whatsapp",
+      to:cliente,
+      type:"text",
+      text:{ body:"Esse item está disponível apenas para consumo no local 😊" }
+    })
+  })
+
+  return res.status(200).end()
+}
+
+// ✅ CONTINUA NORMAL SÓ SE FOR DELIVERY
+if(prato){
+    
     console.log("✅ FOTO ENCONTRADA:", prato.nome)
 
     await fetch(url,{
@@ -4044,28 +4136,58 @@ console.log("Resposta IA:",resposta)
 
 /* ================= PEDIDO DELIVERY ================= */
 
-const pedidoMatch = resposta.match(/PEDIDO_DELIVERY_JSON:\s*({[\s\S]*?})/)
+const pedidoMatch = resposta.match(/PEDIDO_DELIVERY_JSON:\s*(\{[\s\S]*\})$/)
 
 if(pedidoMatch){
 
 let pedido = null
-
 let jsonTexto = pedidoMatch[1]
 
-console.log("JSON EXTRAIDO:", jsonTexto)
+console.log("🧾 JSON BRUTO:", jsonTexto)
 
-/* LIMPAR JSON */
+/* 🔥 LIMPEZA FORTE */
 
 jsonTexto = jsonTexto
 .replace(/,\s*}/g,"}")
 .replace(/,\s*]/g,"]")
 .replace(/\n/g,"")
 .replace(/\t/g,"")
+.replace(/\r/g,"")
 .trim()
 
-try{
+/* 🔥 GARANTIR FECHAMENTO DO JSON */
 
-pedido = JSON.parse(jsonTexto)
+if(!jsonTexto.endsWith("}}")){
+  console.log("⚠️ JSON INCOMPLETO — CORRIGINDO")
+  jsonTexto = jsonTexto + "}}"
+}
+
+try {
+
+  pedido = JSON.parse(jsonTexto)
+
+  console.log("✅ JSON OK:", pedido)
+
+} catch (err) {
+
+  console.log("❌ ERRO JSON:", err)
+  console.log("❌ JSON QUEBROU:", jsonTexto)
+
+  try {
+
+    const corrigido = jsonTexto + "}"
+    pedido = JSON.parse(corrigido)
+
+    console.log("✅ JSON RECUPERADO")
+
+  } catch (e2) {
+
+    console.log("❌ FALHA TOTAL JSON")
+    return res.status(200).end()
+
+  }
+
+}
 
 console.log("JSON DO PEDIDO OK:", pedido)
 
