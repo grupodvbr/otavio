@@ -162,16 +162,16 @@ color:#111827;
   font-size:13px;
   color:var(--muted);
 
-  /* 🔒 TRAVA TAMANHO */
-  height:18px;
-  line-height:18px;
+  display:-webkit-box;
+  -webkit-line-clamp:2;      /* 🔥 LIMITE 2 LINHAS */
+  -webkit-box-orient:vertical;
 
   overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
 
-  display:block;
-  max-width:220px;
+  line-height:18px;
+  height:36px;               /* 🔒 2 linhas fixas */
+
+  word-break:break-word;
 }
 
 /* STATUS */
