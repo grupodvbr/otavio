@@ -496,12 +496,15 @@ async function responderESalvar(id){
 
   showLoading(true);
   try{
-    const { error: erroInsert } = await sb
-      .from("aprendizado_bot")
-      .insert({
-        pergunta: item.pergunta,
-        resposta
-      });
+const telefoneAdmin = prompt("Digite o número do admin que está salvando esta resposta:", "") || "";
+
+const { error: erroInsert } = await sb
+  .from("aprendizado_bot")
+  .insert({
+    pergunta: item.pergunta,
+    resposta,
+    telefone_admin: telefoneAdmin.trim()
+  });
 
     if(erroInsert) throw erroInsert;
 
@@ -603,11 +606,15 @@ async function salvarModal(){
     if(modoNovoAprendizado){
       if(!resposta) return toast("Digite a resposta para criar o aprendizado");
 
-      const { data, error } = await sb
-        .from("aprendizado_bot")
-        .insert({ pergunta, resposta })
-        .select()
-        .single();
+const { data, error } = await sb
+  .from("aprendizado_bot")
+  .insert({
+    pergunta,
+    resposta,
+    telefone_admin: telefone || ""
+  })
+  .select()
+  .single();
 
       if(error) throw error;
       aprendizado.unshift(data);
