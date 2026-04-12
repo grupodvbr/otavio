@@ -159,19 +159,12 @@ color:#111827;
 }
 
 .preview{
-  font-size:13px;
-  color:var(--muted);
-
-  display:-webkit-box;
-  -webkit-line-clamp:2;      /* 🔥 LIMITE 2 LINHAS */
-  -webkit-box-orient:vertical;
-
-  overflow:hidden;
-
-  line-height:18px;
-  height:36px;               /* 🔒 2 linhas fixas */
-
-  word-break:break-word;
+font-size:13px;
+color:var(--muted);
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+max-width:200px;
 }
 
 /* STATUS */
@@ -1338,21 +1331,11 @@ async function atualizarClientesSilencioso(){
         phoneEl.innerText = nome
       }
 
-if(previewEl && previewEl.innerText !== c.mensagem){
-
-  previewEl.innerText = c.mensagem
-
-  // 🎨 cor diferente dependendo de quem enviou
-  if(c.role === "assistant"){
-    card.style.background = "#dbeafe" // azul leve (bot)
-  } else {
-    card.style.background = "#bbf7d0" // verde (cliente)
-  }
-
-  setTimeout(()=>{
-    card.style.background = ""
-  },600)
-}
+if(
+  previewEl &&
+  previewEl.innerText !== c.mensagem &&
+  c.role === "user" // 🔥 AQUI A MÁGICA
+){
 
   
   previewEl.innerText = c.mensagem
