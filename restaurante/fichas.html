@@ -1416,6 +1416,16 @@ cursor:pointer;
 <option value="">Todos os tipos</option>
 </select>
 
+
+<select id="filtroDelivery">
+  <option value="">Delivery (Todos)</option>
+  <option value="true">Somente Delivery</option>
+  <option value="false">Somente Local</option>
+</select>
+
+
+
+  
 <select id="filtroStatus">
 <option value="">Todos (Ativo + Desativado)</option>
 <option value="ativo">Somente ATIVOS</option>
@@ -1769,8 +1779,9 @@ function aplicarFiltros() {
 
   window.scrollTo({ top:0, behavior:"smooth" });
 
-  const nomeFiltro = (filtroNome.value || "").toUpperCase().trim();
-  const tipoFiltro = filtroTipo.value;
+const nomeFiltro = (filtroNome.value || "").toUpperCase().trim();
+const tipoFiltro = filtroTipo.value;
+const deliveryFiltro = document.getElementById("filtroDelivery").value;
 
   const statusFiltro = (window.filtroStatus?.value || "");
   const cmvFaixa = (window.filtroCMV?.value || "");
@@ -1782,7 +1793,10 @@ function aplicarFiltros() {
   for(const p of pratos){
     const nomeOk = !nomeFiltro || (p.nome || "").toUpperCase().includes(nomeFiltro);
     const tipoOk = !tipoFiltro || p.tipo === tipoFiltro;
-
+const deliveryOk =
+  !deliveryFiltro ||
+  (deliveryFiltro === "true" && p.delivery === true) ||
+  (deliveryFiltro === "false" && p.delivery !== true);
     // status (p.ativo pode ser true/false/null)
     const ativoBool = (p.ativo === false) ? false : true; // default: ativo
     const statusOk =
@@ -1790,8 +1804,7 @@ function aplicarFiltros() {
       (statusFiltro === "ativo" && ativoBool) ||
       (statusFiltro === "inativo" && !ativoBool);
 
-    if(!nomeOk || !tipoOk || !statusOk) continue;
-
+if(!nomeOk || !tipoOk || !statusOk || !deliveryOk) continue;
     const m = calcMetricsForList(p);
 
     const cmvOk = inRangeCMV(m.cmvPerc, cmvFaixa);
@@ -1950,7 +1963,7 @@ filtroTipo.addEventListener("change", () => {
 filtroStatus.addEventListener("change", aplicarFiltros);
 filtroCMV.addEventListener("change", aplicarFiltros);
 filtroSort.addEventListener("change", aplicarFiltros);
-
+filtroDelivery.addEventListener("change", aplicarFiltros);
 
   
 /* =====================================================
