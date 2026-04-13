@@ -8,20 +8,27 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
 
-  // 🔐 VERIFICAÇÃO META
-  if (req.method === "GET") {
-    const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+if (req.method === "GET") {
 
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
+  const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "otto_verifp";
 
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      return res.status(200).send(challenge);
-    } else {
-      return res.sendStatus(403);
-    }
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  console.log("MODE:", mode);
+  console.log("TOKEN RECEBIDO:", token);
+  console.log("TOKEN ESPERADO:", VERIFY_TOKEN);
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    return res.status(200).send(challenge);
   }
+
+  return res.status(403).send("Token inválido");
+}
+
+
+  
   // 📩 RECEBER MENSAGEM
   if (req.method === "POST") {
     try {
