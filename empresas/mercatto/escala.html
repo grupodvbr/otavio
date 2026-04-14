@@ -238,23 +238,32 @@ input:focus,select:focus{
 <!-- MODAL CADASTRO -->
 <div id="cadastro" class="modal">
   <div class="box">
+
     <h3>Novo Funcionário</h3>
 
-    <input id="nome" placeholder="Nome">
-    <input id="numero" placeholder="Número">
+    <div class="form">
 
-    <select id="sexo">
-      <option>MASCULINO</option>
-      <option>FEMININO</option>
-    </select>
+      <input class="form-full" id="nome" placeholder="Nome completo">
 
-    <input type="date" id="nascimento">
-    <input type="date" id="contratacao">
+      <input id="numero" placeholder="WhatsApp">
 
-    <div class="preview" id="preview"></div>
+      <select id="sexo">
+        <option>MASCULINO</option>
+        <option>FEMININO</option>
+      </select>
 
-    <button onclick="salvarFuncionario()">Salvar</button>
-    <button onclick="fecharCadastro()">Fechar</button>
+      <input type="date" id="nascimento">
+      <input type="date" id="contratacao">
+
+    </div>
+
+    <div id="preview" class="preview"></div>
+
+    <div class="actions">
+      <button onclick="salvarFuncionario()">Salvar</button>
+      <button onclick="fecharCadastro()">Fechar</button>
+    </div>
+
   </div>
 </div>
 
