@@ -301,7 +301,7 @@ RESERVA_JSON:
 "dados":{
   "nome":"",
   "telefone":"",
-  "email":"nao_informado@mercatto.com",
+  "email":"paineladm@mercatto.com",
   "pessoas":1,
   "mesa":"Salão Central",
   "datahora":"",
