@@ -188,30 +188,39 @@ content: pergunta
 })
 /* ================= BUSCAR DADOS SISTEMA ================= */
 
-const {data:reservas} = await supabase
-.from("reservas_mercatto")
-.select("*")
-.limit(100)
+const {data:reservas} = await supabase.from("reservas_mercatto").select("*").limit(200)
 
-const {data:agenda} = await supabase
-.from("agenda_musicos")
-.select("*")
-.limit(100)
+const {data:agenda} = await supabase.from("agenda_musicos").select("*").limit(200)
 
-const {data:clientes} = await supabase
-.from("memoria_clientes")
-.select("*")
-.limit(100)
+const {data:clientes} = await supabase.from("memoria_clientes").select("*").limit(200)
 
-const {data:conversas} = await supabase
-.from("conversas_whatsapp")
-.select("*")
-.limit(50)
+const {data:conversas} = await supabase.from("conversas_whatsapp").select("*").limit(100)
 
-const {data:buffet} = await supabase
-.from("buffet")
-.select("*")
-.limit(100)
+const {data:buffet} = await supabase.from("buffet").select("*").limit(200)
+
+/* 🔥 NOVAS TABELAS */
+
+const {data:pedidos} = await supabase.from("pedidos").select("*").limit(200)
+
+const {data:pedidosPendentes} = await supabase.from("pedidos_pendentes").select("*").limit(200)
+
+const {data:estado} = await supabase.from("estado_conversa").select("*").limit(200)
+
+const {data:controleBot} = await supabase.from("controle_bot").select("*").limit(200)
+
+const {data:controleEnvio} = await supabase.from("controle_envio").select("*").limit(200)
+
+const {data:aprendizado} = await supabase.from("aprendizado_bot").select("*").limit(200)
+
+const {data:duvidas} = await supabase.from("duvidas_pendentes").select("*").limit(200)
+
+const {data:processadas} = await supabase.from("mensagens_processadas").select("*").limit(200)
+
+const {data:buffetLancamentos} = await supabase.from("buffet_lancamentos").select("*").limit(200)
+
+const {data:promptsMercatto} = await supabase.from("prompts_mercatto").select("*").limit(200)
+
+  
 
 /* ================= BUSCAR PROMPTS DO AGENTE ================= */
 
@@ -360,7 +369,31 @@ ${promptAgente}
 Todas as regras acima são obrigatórias e devem ser seguidas rigorosamente.
 `
 },
+{
+role:"system",
+content:`
 
+🔥 CONTROLE TOTAL DO SISTEMA
+
+Você pode criar, editar ou excluir QUALQUER registro em QUALQUER tabela.
+
+Para isso use:
+
+ALTERAR_REGISTRO_JSON:
+{
+"operacao":"insert | update | delete",
+"tabela":"nome_da_tabela",
+"dados":{...},
+"filtro":{...}
+}
+
+REGRAS:
+- Sempre usar confirmação antes de executar
+- Nunca executar sem confirmação
+- Nunca inventar dados
+- Sempre usar dados existentes como base
+`
+},
 {
 role:"system",
 content:`
@@ -403,7 +436,46 @@ content:`CARDAPIO:\n${JSON.stringify(buffet || [])}`
 role:"system",
 content:`PROMPTS DO AGENTE:\n${JSON.stringify(promptTabela || [])}`
 },
-
+{
+role:"system",
+content:`PEDIDOS:\n${JSON.stringify(pedidos || [])}`
+},
+{
+role:"system",
+content:`PEDIDOS_PENDENTES:\n${JSON.stringify(pedidosPendentes || [])}`
+},
+{
+role:"system",
+content:`ESTADO_CONVERSA:\n${JSON.stringify(estado || [])}`
+},
+{
+role:"system",
+content:`CONTROLE_BOT:\n${JSON.stringify(controleBot || [])}`
+},
+{
+role:"system",
+content:`CONTROLE_ENVIO:\n${JSON.stringify(controleEnvio || [])}`
+},
+{
+role:"system",
+content:`APRENDIZADO:\n${JSON.stringify(aprendizado || [])}`
+},
+{
+role:"system",
+content:`DUVIDAS_PENDENTES:\n${JSON.stringify(duvidas || [])}`
+},
+{
+role:"system",
+content:`MENSAGENS_PROCESSADAS:\n${JSON.stringify(processadas || [])}`
+},
+{
+role:"system",
+content:`BUFFET_LANCAMENTOS:\n${JSON.stringify(buffetLancamentos || [])}`
+},
+{
+role:"system",
+content:`PROMPTS_MERCATTO:\n${JSON.stringify(promptsMercatto || [])}`
+}
 
 {
 role:"system",
