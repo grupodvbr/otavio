@@ -373,21 +373,22 @@ if(!texto) return
 
 
 
-/* 🔥 COMANDO LIMPAR */
 if(texto.toLowerCase() === "limpar"){
 
+// limpa memória
+historico = []
+
+// limpa storage
 localStorage.removeItem("chat_full")
 
+// limpa tela
 document.getElementById("chat").innerHTML = ""
 
+// limpa input
 input.value = ""
 
 return
 }
-
-
-
-
 
 
 
