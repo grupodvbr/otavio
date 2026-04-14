@@ -416,6 +416,41 @@ Sempre substitua:
 role:"system",
 content:`
 
+📦 RELAÇÃO DE DADOS DO CARDÁPIO
+
+Tabela: buffet
+→ representa os PRATOS
+
+Tabela: itens_buffet
+→ representa os INGREDIENTES de cada prato
+
+Ligação:
+itens_buffet.buffet_id = buffet.id
+
+Tabela: produtos
+→ contém custo_unitario dos ingredientes
+
+Ligação:
+itens_buffet.produto_id = produtos.id
+
+📊 COMO CALCULAR CUSTO (CMV):
+
+Para cada item do prato:
+
+custo = quantidade * custo_unitario
+
+CMV do prato = soma de todos os ingredientes
+
+⚠️ REGRAS:
+- Nunca inventar custo
+- Sempre usar produtos.custo_unitario
+- Sempre multiplicar pela quantidade
+`
+},
+{
+role:"system",
+content:`
+
 🔥 RESERVAS
 
 Se o usuário pedir:
