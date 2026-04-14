@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>ESCALA MERCATTO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+  margin:0;
+  font-family:Inter;
+  background:#0f172a;
+  color:white;
+}
+
+/* HEADER */
+header{
+  padding:15px;
+  font-weight:800;
+  background:#020617;
+  text-align:center;
+}
+
+/* CALENDARIO */
+.calendar{
+  display:grid;
+  grid-template-columns: repeat(7,1fr);
+  gap:5px;
+  padding:10px;
+}
+
+.day{
+  background:#1e293b;
+  border-radius:10px;
+  padding:8px;
+  min-height:120px;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+}
+
+.day:hover{
+  background:#334155;
+}
+
+.day-number{
+  font-size:12px;
+  opacity:0.6;
+}
+
+.func{
+  font-size:10px;
+  margin-top:2px;
+  background:#22c55e;
+  border-radius:4px;
+  padding:2px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.box{
+  background:#1e293b;
+  padding:20px;
+  border-radius:12px;
+  width:300px;
+}
+
+select,button{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+
+button{
+  background:#22c55e;
+  color:white;
+  font-weight:700;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>ESCALA DE FUNCIONÁRIOS</header>
+
+<div id="calendar" class="calendar"></div>
+
+<!-- MODAL -->
+<div id="modal" class="modal">
+  <div class="box">
+    <h3 id="dataSelecionada"></h3>
+
+    <select id="funcionario"></select>
+
+    <select id="turno">
+      <option>MANHÃ</option>
+      <option>TARDE</option>
+      <option>NOITE</option>
+    </select>
+
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="fechar()">Fechar</button>
+  </div>
+</div>
+
+<script>
+
+const sb = supabase.createClient(
+  "https://SEU_URL.supabase.co",
+  "SUA_KEY"
+)
+
+let dataAtual = new Date()
+let funcionarios = []
+let dataSelecionada = null
+
+// ================= CARREGAR FUNCIONÁRIOS =================
+async function loadFuncionarios(){
+
+  const {data} = await sb
+    .from("funcionarios_mercatto")
+    .select("*")
+    .eq("ativo",true)
+
+  funcionarios = data
+
+  const select = document.getElementById("funcionario")
+  select.innerHTML = ""
+
+  data.forEach(f=>{
+    select.innerHTML += `
+      <option value="${f.id}">
+        ${f.nome} (${f.status_experiencia})
+      </option>
+    `
+  })
+
+}
+
+// ================= CALENDARIO =================
+async function renderCalendar(){
+
+  const cal = document.getElementById("calendar")
+  cal.innerHTML=""
+
+  const ano = dataAtual.getFullYear()
+  const mes = dataAtual.getMonth()
+
+  const dias = new Date(ano, mes+1, 0).getDate()
+
+  const {data:escala} = await sb
+    .from("escala_funcionarios")
+    .select("*")
+
+  for(let i=1;i<=dias;i++){
+
+    const dataStr = `${ano}-${String(mes+1).padStart(2,"0")}-${String(i).padStart(2,"0")}`
+
+    const dia = document.createElement("div")
+    dia.className="day"
+
+    dia.innerHTML = `<div class="day-number">${i}</div>`
+
+    const escalados = escala.filter(e=>e.data === dataStr)
+
+    escalados.forEach(e=>{
+      dia.innerHTML += `<div class="func">${e.nome}</div>`
+    })
+
+    dia.onclick = ()=>{
+      abrir(dataStr)
+    }
+
+    cal.appendChild(dia)
+  }
+
+}
+
+// ================= MODAL =================
+function abrir(data){
+  dataSelecionada = data
+  document.getElementById("modal").style.display="flex"
+  document.getElementById("dataSelecionada").innerText = data
+}
+
+function fechar(){
+  document.getElementById("modal").style.display="none"
+}
+
+// ================= SALVAR =================
+async function salvar(){
+
+  const funcId = document.getElementById("funcionario").value
+  const turno = document.getElementById("turno").value
+
+  const func = funcionarios.find(f=>f.id === funcId)
+
+  await sb.from("escala_funcionarios").insert({
+    funcionario_id: func.id,
+    nome: func.nome,
+    numero: func.numero,
+    data: dataSelecionada,
+    turno
+  })
+
+  fechar()
+  renderCalendar()
+}
+
+// ================= INIT =================
+loadFuncionarios()
+renderCalendar()
+
+</script>
+
+</body>
+</html>
