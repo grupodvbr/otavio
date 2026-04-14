@@ -310,7 +310,7 @@ div.className="msg "+role
 div.innerHTML = render(text)+`<div class="time">${hora()}</div>`
 
 chat.appendChild(div)
-chat.scrollTop = chat.scrollHeight
+scrollBottom()
 
 }
 
@@ -427,6 +427,8 @@ typing.remove()
 
 addMsg("assistant",data.resposta || "Erro")
 
+setTimeout(scrollBottom,100)
+setTimeout(scrollBottom,300)
 historico.push({role:"assistant",text:data.resposta})
 salvar()
 
@@ -472,6 +474,20 @@ document.addEventListener('touchend', function (event) {
 document.addEventListener('gesturestart', function (e) {
   e.preventDefault();
 });
+
+
+function scrollBottom(){
+
+const chat = document.getElementById("chat")
+
+setTimeout(()=>{
+chat.scrollTo({
+top: chat.scrollHeight,
+behavior: "smooth"
+})
+}, 50)
+
+}
 </script>
 
 </body>
