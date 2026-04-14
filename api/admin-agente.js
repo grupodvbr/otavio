@@ -217,7 +217,7 @@ const { data:buffet } = await supabase
 const { data:itensBuffet } = await supabase
 .from("itens_buffet")
 .select("*")
-.limit(2000)
+.limit(200)
 
 const { data:produtos } = await supabase
 .from("produtos")
@@ -234,9 +234,16 @@ const { data:pedidosPendentes } = await supabase
 .from("pedidos_pendentes")
 .select("*")
 .order("created_at",{ ascending:false })
-.limit(1000)
+.limit(200)
   
+const { data:histReservas } = await supabase
+.from("hist_reservas_mercatto")
+.select("*")
+.order("created_at",{ ascending:false })
+.limit(2000)
 
+
+  
 /* ================= BUSCAR PROMPTS DO AGENTE ================= */
 
 const {data:promptTabela} = await supabase
