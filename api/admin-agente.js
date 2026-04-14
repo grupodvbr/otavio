@@ -220,6 +220,21 @@ const {data:buffetLancamentos} = await supabase.from("buffet_lancamentos").selec
 
 const {data:promptsMercatto} = await supabase.from("prompts_mercatto").select("*").limit(200)
 
+
+
+
+
+  const {data:itensBuffet} = await supabase
+.from("itens_buffet")
+.select("*")
+.limit(500)
+
+const {data:produtos} = await supabase
+.from("produtos")
+.select("*")
+.limit(500)
+
+
   
 
 /* ================= BUSCAR PROMPTS DO AGENTE ================= */
@@ -476,7 +491,14 @@ content:`BUFFET_LANCAMENTOS:\n${JSON.stringify(buffetLancamentos || [])}`
 role:"system",
 content:`PROMPTS_MERCATTO:\n${JSON.stringify(promptsMercatto || [])}`
 }
-
+{
+role:"system",
+content:`ITENS_BUFFET:\n${JSON.stringify(itensBuffet || [])}`
+},
+{
+role:"system",
+content:`PRODUTOS:\n${JSON.stringify(produtos || [])}`
+},
 {
 role:"system",
 content:`
