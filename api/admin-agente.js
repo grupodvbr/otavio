@@ -309,7 +309,29 @@ const promptAgente = (prompts || [])
 .map(p => p.prompt)
 .join("\n\n")
 
+/* ================= CONTEXTO INTELIGENTE ================= */
 
+function addContext(label, data){
+  if(!data || data.length === 0) return null
+
+  return {
+    role:"system",
+    content:`${label}:\n${JSON.stringify(data)}`
+  }
+}
+
+const contextos = [
+
+addContext("RESERVAS", reservas),
+addContext("AGENDA", agenda),
+addContext("CLIENTES", clientes),
+addContext("CARDAPIO", buffet),
+addContext("PEDIDOS", pedidos),
+addContext("PEDIDOS_PENDENTES", pedidosPendentes),
+addContext("ITENS_BUFFET", itensBuffet),
+addContext("PRODUTOS", produtos)
+
+].filter(Boolean)
 
 /* ================= DATAS SISTEMA ================= */
 
@@ -350,6 +372,7 @@ const completion = await openai.chat.completions.create({
 model:"gpt-4.1-mini",
 temperature:0,
 
+  
 messages:[
 
 {
@@ -479,78 +502,6 @@ Dados:
 ${JSON.stringify(reservas || [])}
 `},
 
-
-{
-role:"system",
-content:`AGENDA:\n${JSON.stringify(agenda || [])}`
-},
-
-{
-role:"system",
-content:`CLIENTES:\n${JSON.stringify(clientes || [])}`
-},
-
-{
-role:"system",
-content:`CONVERSAS:\n${JSON.stringify(conversas || [])}`
-},
-
-{
-role:"system",
-content:`CARDAPIO:\n${JSON.stringify(buffet || [])}`
-},
-{
-role:"system",
-content:`PROMPTS DO AGENTE:\n${JSON.stringify(promptTabela || [])}`
-},
-{
-role:"system",
-content:`PEDIDOS:\n${JSON.stringify(pedidos || [])}`
-},
-{
-role:"system",
-content:`PEDIDOS_PENDENTES:\n${JSON.stringify(pedidosPendentes || [])}`
-},
-{
-role:"system",
-content:`ESTADO_CONVERSA:\n${JSON.stringify(estado || [])}`
-},
-{
-role:"system",
-content:`CONTROLE_BOT:\n${JSON.stringify(controleBot || [])}`
-},
-{
-role:"system",
-content:`CONTROLE_ENVIO:\n${JSON.stringify(controleEnvio || [])}`
-},
-{
-role:"system",
-content:`APRENDIZADO:\n${JSON.stringify(aprendizado || [])}`
-},
-{
-role:"system",
-content:`DUVIDAS_PENDENTES:\n${JSON.stringify(duvidas || [])}`
-},
-{
-role:"system",
-content:`MENSAGENS_PROCESSADAS:\n${JSON.stringify(processadas || [])}`
-},
-{
-role:"system",
-content:`BUFFET_LANCAMENTOS:\n${JSON.stringify(buffetLancamentos || [])}`
-},
-{
-role:"system",
-content:`PROMPTS_MERCATTO:\n${JSON.stringify(promptsMercatto || [])}`
-},
-{
-role:"system",
-content:`ITENS_BUFFET:\n${JSON.stringify(itensBuffet || [])}`
-},
-{
-role:"system",
-content:`PRODUTOS:\n${JSON.stringify(produtos || [])}`
-},
 {
 role:"system",
 content:`
