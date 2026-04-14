@@ -273,6 +273,7 @@ function addContext(label, data){
 const contextos = [
 
 addContext("RESERVAS", reservas),
+addContext("HIST_RESERVAS", histReservas), // 🔥 NOVO
 addContext("AGENDA", agenda),
 addContext("CLIENTES", clientes),
 addContext("CARDAPIO", buffet),
@@ -402,6 +403,42 @@ CMV do prato = soma de todos os ingredientes
 - Nunca inventar custo
 - Sempre usar produtos.custo_unitario
 - Sempre multiplicar pela quantidade
+`
+},
+
+
+
+
+
+
+  {
+role:"system",
+content:`
+
+📜 HISTÓRICO DE RESERVAS
+
+Tabela: HIST_RESERVAS
+
+Essa tabela contém o histórico completo de ações:
+
+- INSERT (criação de reserva)
+- UPDATE (edições)
+- DELETE (exclusões)
+
+Cada registro representa uma ação feita no sistema.
+
+Use essa tabela para:
+
+- Saber quem criou uma reserva
+- Saber quem alterou
+- Saber quem excluiu
+- Ver histórico completo de mudanças
+
+⚠️ REGRAS:
+
+- Nunca inventar histórico
+- Sempre usar os dados da tabela HIST_RESERVAS
+- Sempre considerar a ordem cronológica (created_at)
 `
 },
 {
