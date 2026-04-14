@@ -311,7 +311,7 @@ RESERVA_JSON:
 
 ⚠️ Não escrever texto fora do JSON
 `
-}
+},
 {
 role:"system",
 content:`REGRAS DO AGENTE:
