@@ -187,51 +187,7 @@ role:"user",
 content: pergunta
 })
 
-/* ================= DETECÇÃO DE INTENÇÃO ================= */
 
-const texto = pergunta.toLowerCase()
-
-// 🔥 FORÇA BUSCA COMPLETA SEM DEPENDER DE INTENÇÃO
-const intencao = {
-  reservas: true,
-  agenda: true,
-  clientes: true,
-  financeiro: true,
-  pedidos: true,
-  sistema: true
-}
-
-if(texto.includes("reserva") || texto.includes("mesa")){
-  intencao.reservas = true
-}
-
-if(texto.includes("musica") || texto.includes("cantor") || texto.includes("show")){
-  intencao.agenda = true
-}
-
-if(texto.includes("cliente") || texto.includes("telefone")){
-  intencao.clientes = true
-}
-
-if(
-  texto.includes("custo") ||
-  texto.includes("cmv") ||
-  texto.includes("margem") ||
-  texto.includes("lucro") ||
-  texto.includes("ingrediente")
-){
-  intencao.financeiro = true
-}
-
-if(texto.includes("pedido") || texto.includes("delivery")){
-  intencao.pedidos = true
-}
-
-if(texto.includes("tudo") || texto.includes("geral") || texto.includes("sistema")){
-  intencao.sistema = true
-}
-
-console.log("🧠 INTENÇÃO:", intencao)
 
 /* ================= BUSCA TOTAL DO SISTEMA ================= */
 
@@ -306,9 +262,11 @@ const promptAgente = (prompts || [])
 function addContext(label, data){
   if(!data) return null
 
+  const limite = Array.isArray(data) ? data.slice(0, 200) : data
+
   return {
     role:"system",
-    content:`${label}:\n${JSON.stringify(data)}`
+    content:`${label}:\n${JSON.stringify(limite)}`
   }
 }
 
@@ -523,17 +481,19 @@ role:"system",
 content:`
 TABELA: reservas_mercatto
 
-Os dados abaixo são TODOS os registros retornados da tabela reservas_mercatto.
+Você já recebeu os dados completos da tabela RESERVAS no contexto acima.
 
-Se uma reserva não aparecer nessa lista, significa que ela NÃO EXISTE no sistema.
+Se uma reserva não aparecer nesses dados:
+→ significa que ela NÃO EXISTE no sistema.
 
-Nunca invente reservas.
-Nunca deduza reservas.
-Use apenas os registros abaixo.
+Regras obrigatórias:
 
-Dados:
+- Nunca inventar reservas
+- Nunca deduzir reservas
+- Nunca criar dados que não estejam no contexto
+- Sempre responder baseado na tabela RESERVAS fornecida
 
-${JSON.stringify(reservas || [])}
+Use apenas os dados reais já enviados anteriormente.
 `},
 
 {
