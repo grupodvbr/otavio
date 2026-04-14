@@ -490,7 +490,7 @@ content:`BUFFET_LANCAMENTOS:\n${JSON.stringify(buffetLancamentos || [])}`
 {
 role:"system",
 content:`PROMPTS_MERCATTO:\n${JSON.stringify(promptsMercatto || [])}`
-}
+},
 {
 role:"system",
 content:`ITENS_BUFFET:\n${JSON.stringify(itensBuffet || [])}`
