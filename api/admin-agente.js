@@ -186,39 +186,106 @@ mensagens.push({
 role:"user",
 content: pergunta
 })
-/* ================= BUSCAR DADOS SISTEMA ================= */
 
-const {data:reservas} = await supabase.from("reservas_mercatto").select("*").limit(200)
+/* ================= DETECÇÃO DE INTENÇÃO ================= */
 
-const {data:agenda} = await supabase.from("agenda_musicos").select("*").limit(200)
+const texto = pergunta.toLowerCase()
 
-const {data:clientes} = await supabase.from("memoria_clientes").select("*").limit(200)
+const intencao = {
+  reservas: false,
+  agenda: false,
+  clientes: false,
+  financeiro: false,
+  pedidos: false,
+  sistema: false
+}
 
-const {data:conversas} = await supabase.from("conversas_whatsapp").select("*").limit(100)
+if(texto.includes("reserva") || texto.includes("mesa")){
+  intencao.reservas = true
+}
 
-const {data:buffet} = await supabase.from("buffet").select("*").limit(200)
+if(texto.includes("musica") || texto.includes("cantor") || texto.includes("show")){
+  intencao.agenda = true
+}
 
-/* 🔥 NOVAS TABELAS */
+if(texto.includes("cliente") || texto.includes("telefone")){
+  intencao.clientes = true
+}
 
-const {data:pedidos} = await supabase.from("pedidos").select("*").limit(200)
+if(
+  texto.includes("custo") ||
+  texto.includes("cmv") ||
+  texto.includes("margem") ||
+  texto.includes("lucro") ||
+  texto.includes("ingrediente")
+){
+  intencao.financeiro = true
+}
 
-const {data:pedidosPendentes} = await supabase.from("pedidos_pendentes").select("*").limit(200)
+if(texto.includes("pedido") || texto.includes("delivery")){
+  intencao.pedidos = true
+}
 
-const {data:estado} = await supabase.from("estado_conversa").select("*").limit(200)
+if(texto.includes("tudo") || texto.includes("geral") || texto.includes("sistema")){
+  intencao.sistema = true
+}
 
-const {data:controleBot} = await supabase.from("controle_bot").select("*").limit(200)
+console.log("🧠 INTENÇÃO:", intencao)
 
-const {data:controleEnvio} = await supabase.from("controle_envio").select("*").limit(200)
+  /* ================= BUSCA INTELIGENTE ================= */
 
-const {data:aprendizado} = await supabase.from("aprendizado_bot").select("*").limit(200)
+let reservas = []
+let agenda = []
+let clientes = []
+let conversas = []
+let buffet = []
+let pedidos = []
+let pedidosPendentes = []
+let itensBuffet = []
+let produtos = []
 
-const {data:duvidas} = await supabase.from("duvidas_pendentes").select("*").limit(200)
+// 🔥 RESERVAS
+if(intencao.reservas || intencao.sistema){
+  const {data} = await supabase.from("reservas_mercatto").select("*").limit(50)
+  reservas = data || []
+}
 
-const {data:processadas} = await supabase.from("mensagens_processadas").select("*").limit(200)
+// 🔥 AGENDA
+if(intencao.agenda || intencao.sistema){
+  const {data} = await supabase.from("agenda_musicos").select("*").limit(50)
+  agenda = data || []
+}
 
-const {data:buffetLancamentos} = await supabase.from("buffet_lancamentos").select("*").limit(200)
+// 🔥 CLIENTES
+if(intencao.clientes || intencao.sistema){
+  const {data} = await supabase.from("memoria_clientes").select("*").limit(50)
+  clientes = data || []
+}
 
-const {data:promptsMercatto} = await supabase.from("prompts_mercatto").select("*").limit(200)
+// 🔥 CARDÁPIO
+if(intencao.financeiro || intencao.pedidos || intencao.sistema){
+  const {data} = await supabase.from("buffet").select("*").limit(50)
+  buffet = data || []
+}
+
+// 🔥 CMV (ingredientes)
+if(intencao.financeiro || intencao.sistema){
+  const {data:itens} = await supabase.from("itens_buffet").select("*").limit(100)
+  const {data:prod} = await supabase.from("produtos").select("*").limit(100)
+
+  itensBuffet = itens || []
+  produtos = prod || []
+}
+
+// 🔥 PEDIDOS
+if(intencao.pedidos || intencao.sistema){
+  const {data:p} = await supabase.from("pedidos").select("*").limit(50)
+  const {data:pp} = await supabase.from("pedidos_pendentes").select("*").limit(50)
+
+  pedidos = p || []
+  pedidosPendentes = pp || []
+}
+
 
   
 
@@ -242,7 +309,29 @@ const promptAgente = (prompts || [])
 .map(p => p.prompt)
 .join("\n\n")
 
+/* ================= CONTEXTO INTELIGENTE ================= */
 
+function addContext(label, data){
+  if(!data || data.length === 0) return null
+
+  return {
+    role:"system",
+    content:`${label}:\n${JSON.stringify(data)}`
+  }
+}
+
+const contextos = [
+
+addContext("RESERVAS", reservas),
+addContext("AGENDA", agenda),
+addContext("CLIENTES", clientes),
+addContext("CARDAPIO", buffet),
+addContext("PEDIDOS", pedidos),
+addContext("PEDIDOS_PENDENTES", pedidosPendentes),
+addContext("ITENS_BUFFET", itensBuffet),
+addContext("PRODUTOS", produtos)
+
+].filter(Boolean)
 
 /* ================= DATAS SISTEMA ================= */
 
@@ -283,6 +372,7 @@ const completion = await openai.chat.completions.create({
 model:"gpt-4.1-mini",
 temperature:0,
 
+  
 messages:[
 
 {
@@ -320,6 +410,41 @@ Sempre substitua:
 
 "hoje" → ${hojeISO}
 "agora" → ${hora}
+`
+},
+{
+role:"system",
+content:`
+
+📦 RELAÇÃO DE DADOS DO CARDÁPIO
+
+Tabela: buffet
+→ representa os PRATOS
+
+Tabela: itens_buffet
+→ representa os INGREDIENTES de cada prato
+
+Ligação:
+itens_buffet.buffet_id = buffet.id
+
+Tabela: produtos
+→ contém custo_unitario dos ingredientes
+
+Ligação:
+itens_buffet.produto_id = produtos.id
+
+📊 COMO CALCULAR CUSTO (CMV):
+
+Para cada item do prato:
+
+custo = quantidade * custo_unitario
+
+CMV do prato = soma de todos os ingredientes
+
+⚠️ REGRAS:
+- Nunca inventar custo
+- Sempre usar produtos.custo_unitario
+- Sempre multiplicar pela quantidade
 `
 },
 {
@@ -412,71 +537,6 @@ Dados:
 ${JSON.stringify(reservas || [])}
 `},
 
-
-{
-role:"system",
-content:`AGENDA:\n${JSON.stringify(agenda || [])}`
-},
-
-{
-role:"system",
-content:`CLIENTES:\n${JSON.stringify(clientes || [])}`
-},
-
-{
-role:"system",
-content:`CONVERSAS:\n${JSON.stringify(conversas || [])}`
-},
-
-{
-role:"system",
-content:`CARDAPIO:\n${JSON.stringify(buffet || [])}`
-},
-{
-role:"system",
-content:`PROMPTS DO AGENTE:\n${JSON.stringify(promptTabela || [])}`
-},
-{
-role:"system",
-content:`PEDIDOS:\n${JSON.stringify(pedidos || [])}`
-},
-{
-role:"system",
-content:`PEDIDOS_PENDENTES:\n${JSON.stringify(pedidosPendentes || [])}`
-},
-{
-role:"system",
-content:`ESTADO_CONVERSA:\n${JSON.stringify(estado || [])}`
-},
-{
-role:"system",
-content:`CONTROLE_BOT:\n${JSON.stringify(controleBot || [])}`
-},
-{
-role:"system",
-content:`CONTROLE_ENVIO:\n${JSON.stringify(controleEnvio || [])}`
-},
-{
-role:"system",
-content:`APRENDIZADO:\n${JSON.stringify(aprendizado || [])}`
-},
-{
-role:"system",
-content:`DUVIDAS_PENDENTES:\n${JSON.stringify(duvidas || [])}`
-},
-{
-role:"system",
-content:`MENSAGENS_PROCESSADAS:\n${JSON.stringify(processadas || [])}`
-},
-{
-role:"system",
-content:`BUFFET_LANCAMENTOS:\n${JSON.stringify(buffetLancamentos || [])}`
-},
-{
-role:"system",
-content:`PROMPTS_MERCATTO:\n${JSON.stringify(promptsMercatto || [])}`
-}
-
 {
 role:"system",
 content:`
@@ -541,7 +601,7 @@ Se não gerar o JSON a ação será ignorada.
 },
 
 
-  
+...contextos,
 ...mensagens
 ]
 
