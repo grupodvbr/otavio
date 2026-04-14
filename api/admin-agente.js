@@ -191,13 +191,14 @@ content: pergunta
 
 const texto = pergunta.toLowerCase()
 
+// 🔥 FORÇA BUSCA COMPLETA SEM DEPENDER DE INTENÇÃO
 const intencao = {
-  reservas: false,
-  agenda: false,
-  clientes: false,
-  financeiro: false,
-  pedidos: false,
-  sistema: false
+  reservas: true,
+  agenda: true,
+  clientes: true,
+  financeiro: true,
+  pedidos: true,
+  sistema: true
 }
 
 if(texto.includes("reserva") || texto.includes("mesa")){
@@ -232,61 +233,52 @@ if(texto.includes("tudo") || texto.includes("geral") || texto.includes("sistema"
 
 console.log("🧠 INTENÇÃO:", intencao)
 
-  /* ================= BUSCA INTELIGENTE ================= */
+/* ================= BUSCA TOTAL DO SISTEMA ================= */
 
-let reservas = []
-let agenda = []
-let clientes = []
-let conversas = []
-let buffet = []
-let pedidos = []
-let pedidosPendentes = []
-let itensBuffet = []
-let produtos = []
+const { data:reservas } = await supabase
+.from("reservas_mercatto")
+.select("*")
+.order("created_at",{ ascending:false })
+.limit(1000)
 
-// 🔥 RESERVAS
-if(intencao.reservas || intencao.sistema){
-  const {data} = await supabase.from("reservas_mercatto").select("*").limit(50)
-  reservas = data || []
-}
+const { data:agenda } = await supabase
+.from("agenda_musicos")
+.select("*")
+.order("data",{ ascending:false })
+.limit(500)
 
-// 🔥 AGENDA
-if(intencao.agenda || intencao.sistema){
-  const {data} = await supabase.from("agenda_musicos").select("*").limit(50)
-  agenda = data || []
-}
+const { data:clientes } = await supabase
+.from("memoria_clientes")
+.select("*")
+.order("ultima_interacao",{ ascending:false })
+.limit(1000)
 
-// 🔥 CLIENTES
-if(intencao.clientes || intencao.sistema){
-  const {data} = await supabase.from("memoria_clientes").select("*").limit(50)
-  clientes = data || []
-}
+const { data:buffet } = await supabase
+.from("buffet")
+.select("*")
+.limit(500)
 
-// 🔥 CARDÁPIO
-if(intencao.financeiro || intencao.pedidos || intencao.sistema){
-  const {data} = await supabase.from("buffet").select("*").limit(50)
-  buffet = data || []
-}
+const { data:itensBuffet } = await supabase
+.from("itens_buffet")
+.select("*")
+.limit(2000)
 
-// 🔥 CMV (ingredientes)
-if(intencao.financeiro || intencao.sistema){
-  const {data:itens} = await supabase.from("itens_buffet").select("*").limit(100)
-  const {data:prod} = await supabase.from("produtos").select("*").limit(100)
+const { data:produtos } = await supabase
+.from("produtos")
+.select("*")
+.limit(2000)
 
-  itensBuffet = itens || []
-  produtos = prod || []
-}
+const { data:pedidos } = await supabase
+.from("pedidos")
+.select("*")
+.order("created_at",{ ascending:false })
+.limit(1000)
 
-// 🔥 PEDIDOS
-if(intencao.pedidos || intencao.sistema){
-  const {data:p} = await supabase.from("pedidos").select("*").limit(50)
-  const {data:pp} = await supabase.from("pedidos_pendentes").select("*").limit(50)
-
-  pedidos = p || []
-  pedidosPendentes = pp || []
-}
-
-
+const { data:pedidosPendentes } = await supabase
+.from("pedidos_pendentes")
+.select("*")
+.order("created_at",{ ascending:false })
+.limit(1000)
   
 
 /* ================= BUSCAR PROMPTS DO AGENTE ================= */
@@ -312,7 +304,7 @@ const promptAgente = (prompts || [])
 /* ================= CONTEXTO INTELIGENTE ================= */
 
 function addContext(label, data){
-  if(!data || data.length === 0) return null
+  if(!data) return null
 
   return {
     role:"system",
@@ -412,6 +404,13 @@ Sempre substitua:
 "agora" → ${hora}
 `
 },
+
+
+
+
+
+
+  
 {
 role:"system",
 content:`
