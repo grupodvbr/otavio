@@ -61,6 +61,39 @@ delete acao.dados.created_at
 }
 if(acao.operacao === "insert"){
 
+// 🔥 CORREÇÃO CRÍTICA PARA RESERVAS
+if(acao.tabela === "reservas_mercatto"){
+
+  if(!acao.dados.email){
+    acao.dados.email = "nao_informado@mercatto.com"
+  }
+
+  if(!acao.dados.status){
+    acao.dados.status = "Pendente"
+  }
+
+  if(!acao.dados.comandaIndividual){
+    acao.dados.comandaIndividual = "Não"
+  }
+
+  if(!acao.dados.valorEstimado){
+    acao.dados.valorEstimado = 0
+  }
+
+  if(!acao.dados.pagamentoAntecipado){
+    acao.dados.pagamentoAntecipado = 0
+  }
+
+  if(!acao.dados.banco){
+    acao.dados.banco = ""
+  }
+
+  if(!acao.dados.observacoes){
+    acao.dados.observacoes = ""
+  }
+
+}
+
 const { data, error } = await supabase
 .from(acao.tabela)
 .insert(acao.dados)
@@ -452,11 +485,10 @@ let resposta = completion.choices[0].message.content
 
 
 
-  /* ================= DETECTAR RESERVA ================= */
+/* ================= DETECTAR RESERVA ================= */
 
-const matchReserva = resposta.match(/RESERVA_JSON:\s*(\{[\s\S]*\})/)
+const matchReserva = resposta.match(/RESERVA_JSON:\s*(\{[\s\S]*?\})/)
 let acaoReserva = null
-
 if(matchReserva){
 
   try{
