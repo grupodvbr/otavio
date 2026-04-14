@@ -301,10 +301,16 @@ RESERVA_JSON:
 "dados":{
   "nome":"",
   "telefone":"",
-  "email":"paineladm@mercatto.com",
+  "email":"nao_informado@mercatto.com",
   "pessoas":1,
   "mesa":"Salão Central",
+  "cardapio":"",
+  "comandaIndividual":"Não",
   "datahora":"",
+  "valorEstimado":0,
+  "pagamentoAntecipado":0,
+  "banco":"",
+  "observacoes":"",
   "status":"Pendente"
 }
 }
