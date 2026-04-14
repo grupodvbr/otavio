@@ -280,7 +280,38 @@ Sempre substitua:
 "agora" → ${hora}
 `
 },
+{
+role:"system",
+content:`
 
+🔥 RESERVAS
+
+Se o usuário pedir:
+
+- criar reserva
+- marcar mesa
+- reservar
+
+Você DEVE gerar:
+
+RESERVA_JSON:
+{
+"operacao":"insert",
+"tabela":"reservas_mercatto",
+"dados":{
+  "nome":"",
+  "telefone":"",
+  "email":"nao_informado@mercatto.com",
+  "pessoas":1,
+  "mesa":"Salão Central",
+  "datahora":"",
+  "status":"Pendente"
+}
+}
+
+⚠️ Não escrever texto fora do JSON
+`
+}
 {
 role:"system",
 content:`REGRAS DO AGENTE:
@@ -407,8 +438,96 @@ Se não gerar o JSON a ação será ignorada.
 
 let resposta = completion.choices[0].message.content
 
+
+
+
+
+
+
+
+
+  /* ================= DETECTAR RESERVA ================= */
+
+const matchReserva = resposta.match(/RESERVA_JSON:\s*(\{[\s\S]*\})/)
+let acaoReserva = null
+
+if(matchReserva){
+
+  try{
+
+    let jsonTexto = matchReserva[1]
+
+    jsonTexto = jsonTexto
+      .replace(/```json/g,"")
+      .replace(/```/g,"")
+      .trim()
+
+    acaoReserva = JSON.parse(jsonTexto)
+
+    // 🔥 GARANTE EMAIL (CRÍTICO)
+    const dados = {
+      email: "nao_informado@mercatto.com",
+      ...acaoReserva.dados
+    }
+
+    if(acaoReserva.operacao === "insert"){
+
+      const { error } = await supabase
+        .from("reservas_mercatto")
+        .insert(dados)
+
+      if(error){
+        console.error("Erro insert reserva:", error)
+      }
+
+    }
+
+    if(acaoReserva.operacao === "update"){
+
+      await supabase
+        .from("reservas_mercatto")
+        .update(dados)
+        .match(acaoReserva.filtro)
+
+    }
+
+    if(acaoReserva.operacao === "delete"){
+
+      await supabase
+        .from("reservas_mercatto")
+        .delete()
+        .match(acaoReserva.filtro)
+
+    }
+
+  }catch(e){
+    console.log("Erro reserva JSON:", e)
+  }
+}
+
+
+
+
+
+
+
+
+  
 /* ================= DETECTAR AÇÃO ================= */
 
+
+
+
+
+
+
+
+
+
+
+
+
+  
 const match = resposta.match(/ALTERAR_REGISTRO_JSON:\s*(\{[\s\S]*\})/)
 
 let acao = null
