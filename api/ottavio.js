@@ -347,6 +347,7 @@ RESERVA_JSON:
 "tabela":"reservas_mercatto",
 "dados":{
   "nome":"João",
+  "email":"nao_informado@mercatto.com",
   "telefone":"557799999999",
   "pessoas":4,
   "mesa":"Salão Central",
