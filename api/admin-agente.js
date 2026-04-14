@@ -186,53 +186,105 @@ mensagens.push({
 role:"user",
 content: pergunta
 })
-/* ================= BUSCAR DADOS SISTEMA ================= */
 
-const {data:reservas} = await supabase.from("reservas_mercatto").select("*").limit(200)
+/* ================= DETECÇÃO DE INTENÇÃO ================= */
 
-const {data:agenda} = await supabase.from("agenda_musicos").select("*").limit(200)
+const texto = pergunta.toLowerCase()
 
-const {data:clientes} = await supabase.from("memoria_clientes").select("*").limit(200)
+const intencao = {
+  reservas: false,
+  agenda: false,
+  clientes: false,
+  financeiro: false,
+  pedidos: false,
+  sistema: false
+}
 
-const {data:conversas} = await supabase.from("conversas_whatsapp").select("*").limit(100)
+if(texto.includes("reserva") || texto.includes("mesa")){
+  intencao.reservas = true
+}
 
-const {data:buffet} = await supabase.from("buffet").select("*").limit(200)
+if(texto.includes("musica") || texto.includes("cantor") || texto.includes("show")){
+  intencao.agenda = true
+}
 
-/* 🔥 NOVAS TABELAS */
+if(texto.includes("cliente") || texto.includes("telefone")){
+  intencao.clientes = true
+}
 
-const {data:pedidos} = await supabase.from("pedidos").select("*").limit(200)
+if(
+  texto.includes("custo") ||
+  texto.includes("cmv") ||
+  texto.includes("margem") ||
+  texto.includes("lucro") ||
+  texto.includes("ingrediente")
+){
+  intencao.financeiro = true
+}
 
-const {data:pedidosPendentes} = await supabase.from("pedidos_pendentes").select("*").limit(200)
+if(texto.includes("pedido") || texto.includes("delivery")){
+  intencao.pedidos = true
+}
 
-const {data:estado} = await supabase.from("estado_conversa").select("*").limit(200)
+if(texto.includes("tudo") || texto.includes("geral") || texto.includes("sistema")){
+  intencao.sistema = true
+}
 
-const {data:controleBot} = await supabase.from("controle_bot").select("*").limit(200)
+console.log("🧠 INTENÇÃO:", intencao)
 
-const {data:controleEnvio} = await supabase.from("controle_envio").select("*").limit(200)
+  /* ================= BUSCA INTELIGENTE ================= */
 
-const {data:aprendizado} = await supabase.from("aprendizado_bot").select("*").limit(200)
+let reservas = []
+let agenda = []
+let clientes = []
+let conversas = []
+let buffet = []
+let pedidos = []
+let pedidosPendentes = []
+let itensBuffet = []
+let produtos = []
 
-const {data:duvidas} = await supabase.from("duvidas_pendentes").select("*").limit(200)
+// 🔥 RESERVAS
+if(intencao.reservas || intencao.sistema){
+  const {data} = await supabase.from("reservas_mercatto").select("*").limit(50)
+  reservas = data || []
+}
 
-const {data:processadas} = await supabase.from("mensagens_processadas").select("*").limit(200)
+// 🔥 AGENDA
+if(intencao.agenda || intencao.sistema){
+  const {data} = await supabase.from("agenda_musicos").select("*").limit(50)
+  agenda = data || []
+}
 
-const {data:buffetLancamentos} = await supabase.from("buffet_lancamentos").select("*").limit(200)
+// 🔥 CLIENTES
+if(intencao.clientes || intencao.sistema){
+  const {data} = await supabase.from("memoria_clientes").select("*").limit(50)
+  clientes = data || []
+}
 
-const {data:promptsMercatto} = await supabase.from("prompts_mercatto").select("*").limit(200)
+// 🔥 CARDÁPIO
+if(intencao.financeiro || intencao.pedidos || intencao.sistema){
+  const {data} = await supabase.from("buffet").select("*").limit(50)
+  buffet = data || []
+}
 
+// 🔥 CMV (ingredientes)
+if(intencao.financeiro || intencao.sistema){
+  const {data:itens} = await supabase.from("itens_buffet").select("*").limit(100)
+  const {data:prod} = await supabase.from("produtos").select("*").limit(100)
 
+  itensBuffet = itens || []
+  produtos = prod || []
+}
 
+// 🔥 PEDIDOS
+if(intencao.pedidos || intencao.sistema){
+  const {data:p} = await supabase.from("pedidos").select("*").limit(50)
+  const {data:pp} = await supabase.from("pedidos_pendentes").select("*").limit(50)
 
-
-  const {data:itensBuffet} = await supabase
-.from("itens_buffet")
-.select("*")
-.limit(500)
-
-const {data:produtos} = await supabase
-.from("produtos")
-.select("*")
-.limit(500)
+  pedidos = p || []
+  pedidosPendentes = pp || []
+}
 
 
   
