@@ -351,7 +351,13 @@ RESERVA_JSON:
   "telefone":"557799999999",
   "pessoas":4,
   "mesa":"Salão Central",
+  "cardapio":"",
+  "comandaIndividual":"Não",
   "datahora":"2026-04-15T20:00",
+  "valorEstimado":0,
+  "pagamentoAntecipado":0,
+  "banco":"",
+  "observacoes":"",
   "status":"Pendente"
 }
 }
@@ -382,6 +388,19 @@ REGRAS:
 - Não escrever texto fora do JSON
 
 Se não gerar o JSON, a ação NÃO será executada.
+
+Campos obrigatórios para criar reserva:
+
+- nome
+- telefone
+- pessoas
+- datahora
+
+Se faltar algum desses dados:
+NÃO gere o JSON
+Peça a informação ao usuário primeiro
+
+
 `
 },
 
