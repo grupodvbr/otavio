@@ -1,46 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- 🔒 BLOQUEIO DE ZOOM -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <title>Agente Administrador</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
 
-/* BASE */
+/* RESET */
+*{margin:0;padding:0;box-sizing:border-box}
 
+/* BODY */
 body{
-margin:0;
 font-family:Inter;
-background:#0b141a;
+background:#e5ddd5;
 display:flex;
 flex-direction:column;
 height:100vh;
-color:white;
+overflow:hidden;
 }
 
 /* HEADER */
-
 .header{
-background:#202c33;
+background:#ffffff;
 padding:12px 16px;
 display:flex;
 align-items:center;
-gap:10px;
+gap:12px;
+border-bottom:1px solid #e5e7eb;
+}
+
+.avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+background:#25d366;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-weight:600;
+}
+
+.header-info{
+display:flex;
+flex-direction:column;
 }
 
 .header-title{
 font-weight:600;
+font-size:15px;
+color:#111827;
 }
 
-/* CHAT AREA */
+.header-status{
+font-size:12px;
+color:#6b7280;
+}
 
+/* CHAT */
 .chat{
 flex:1;
 overflow:auto;
@@ -48,40 +73,98 @@ padding:20px;
 display:flex;
 flex-direction:column;
 gap:10px;
-background:#111b21;
+background-image:url("https://i.imgur.com/2nCt3Sbl.png");
+background-size:cover;
 }
 
-/* BOLHAS */
-
+/* MENSAGENS */
 .msg{
-max-width:65%;
+max-width:70%;
 padding:10px 12px;
 border-radius:8px;
 font-size:14px;
 line-height:1.5;
 word-wrap:break-word;
+box-shadow:0 1px 1px rgba(0,0,0,0.08);
+animation:fadeIn .2s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(5px)}
+to{opacity:1;transform:translateY(0)}
 }
 
 .user{
 align-self:flex-end;
-background:#005c4b;
+background:#dcf8c6;
 }
 
 .assistant{
 align-self:flex-start;
-background:#202c33;
+background:#ffffff;
+}
+
+/* HORA */
+.time{
+font-size:10px;
+color:#6b7280;
+text-align:right;
+margin-top:4px;
+}
+
+/* INPUT */
+.input-area{
+display:flex;
+gap:10px;
+padding:10px;
+background:#f0f2f5;
+border-top:1px solid #e5e7eb;
+}
+
+textarea{
+flex:1;
+height:42px;
+border-radius:20px;
+border:1px solid #e5e7eb;
+padding:10px;
+font-family:Inter;
+resize:none;
+outline:none;
+background:white;
+}
+
+button{
+background:#25d366;
+border:none;
+padding:10px 16px;
+border-radius:20px;
+color:white;
+cursor:pointer;
+font-weight:500;
+}
+
+/* DIGITANDO */
+.typing{
+display:flex;
+gap:4px;
+}
+
+.dot{
+width:6px;
+height:6px;
+background:#9ca3af;
+border-radius:50%;
+animation:blink 1.4s infinite;
+}
+
+@keyframes blink{
+0%,80%,100%{opacity:0}
+40%{opacity:1}
 }
 
 /* MIDIA */
-
-.media img{
-max-width:260px;
-border-radius:8px;
-margin-top:8px;
-}
-
-.media video{
-max-width:260px;
+.media img, .media video{
+max-width:240px;
 border-radius:8px;
 margin-top:8px;
 }
@@ -89,49 +172,19 @@ margin-top:8px;
 .download{
 display:inline-block;
 margin-top:6px;
-background:#2563eb;
-padding:4px 8px;
-border-radius:4px;
 font-size:12px;
-color:white;
+color:#2563eb;
 text-decoration:none;
 }
 
-/* INPUT */
-
-.input-area{
-display:flex;
-gap:10px;
-padding:12px;
-background:#202c33;
+/* SCROLL */
+.chat::-webkit-scrollbar{
+width:6px;
 }
 
-textarea{
-flex:1;
-height:40px;
-border-radius:6px;
-border:none;
-padding:8px;
-font-family:Inter;
-resize:none;
-background:#2a3942;
-color:white;
-}
-
-button{
-background:#00a884;
-border:none;
-padding:8px 14px;
-border-radius:6px;
-color:white;
-cursor:pointer;
-}
-
-/* PENSANDO */
-
-.thinking{
-opacity:0.6;
-font-size:13px;
+.chat::-webkit-scrollbar-thumb{
+background:#cbd5e1;
+border-radius:10px;
 }
 
 </style>
@@ -140,42 +193,44 @@ font-size:13px;
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
+<div class="avatar">AI</div>
+<div class="header-info">
 <div class="header-title">Agente Administrador</div>
+<div class="header-status">online</div>
+</div>
 </div>
 
+<!-- CHAT -->
 <div id="chat" class="chat"></div>
 
+<!-- INPUT -->
 <div class="input-area">
-
-<textarea id="msg" placeholder="Digite sua mensagem..."></textarea>
-
+<textarea id="msg" placeholder="Digite uma mensagem..."></textarea>
 <button onclick="enviar()">Enviar</button>
-
 </div>
 
 <script>
 
-/* ================= PROMPT DO SISTEMA ================= */
+/* 🔒 BLOQUEIO ZOOM IOS */
+document.addEventListener("gesturestart", e=>e.preventDefault())
 
-const SYSTEM_PROMPT = `
-
-COLE AQUI SEU PROMPT DO AGENTE
-
-`
-
-/* ================= HISTORICO ================= */
-
+/* HISTÓRICO */
 let historico = JSON.parse(localStorage.getItem("mercatto_admin_chat") || "[]")
 
 function salvarHistorico(){
-
 localStorage.setItem("mercatto_admin_chat",JSON.stringify(historico))
-
 }
 
-/* ================= DETECTAR MIDIA ================= */
+/* HORA */
+function hora(){
+const d=new Date()
+return d.getHours().toString().padStart(2,'0')+":"+
+d.getMinutes().toString().padStart(2,'0')
+}
 
+/* MIDIA */
 function renderMidia(texto){
 
 let html = marked.parse(texto)
@@ -183,73 +238,47 @@ let html = marked.parse(texto)
 const urls = texto.match(/https?:\/\/[^\s]+/g)
 
 if(urls){
-
 urls.forEach(url=>{
 
 if(url.match(/\.(jpg|jpeg|png|webp|gif)/i)){
-
-html += `
-<div class="media">
-<img src="${url}">
-<br>
-<a class="download" href="${url}" download>Baixar</a>
-</div>
-`
-
+html += `<div class="media"><img src="${url}"><br><a class="download" href="${url}" download>Baixar</a></div>`
 }
 
 if(url.match(/\.(mp4|webm|mov)/i)){
-
-html += `
-<div class="media">
-<video controls src="${url}"></video>
-<br>
-<a class="download" href="${url}" download>Baixar</a>
-</div>
-`
-
+html += `<div class="media"><video controls src="${url}"></video><br><a class="download" href="${url}" download>Baixar</a></div>`
 }
 
 })
-
 }
 
 return html
 
 }
 
-/* ================= ADICIONAR MSG ================= */
-
+/* ADD MSG */
 function addMsg(role,text){
 
 const chat = document.getElementById("chat")
 
 const div = document.createElement("div")
-
 div.className="msg "+role
 
-div.innerHTML = renderMidia(text)
+div.innerHTML = renderMidia(text)+`<div class="time">${hora()}</div>`
 
 chat.appendChild(div)
-
 chat.scrollTop = chat.scrollHeight
 
 }
 
-/* ================= CARREGAR HISTORICO ================= */
-
+/* CARREGAR */
 historico.forEach(m=>{
-
 addMsg(m.role,m.content)
-
 })
 
-/* ================= ENVIAR ================= */
-
+/* ENVIAR */
 async function enviar(){
 
 const textarea = document.getElementById("msg")
-
 const texto = textarea.value.trim()
 
 if(!texto) return
@@ -257,41 +286,32 @@ if(!texto) return
 addMsg("user",texto)
 
 historico.push({role:"user",content:texto})
-
 salvarHistorico()
 
 textarea.value=""
 
-/* pensando */
-
+/* DIGITANDO */
 const chat = document.getElementById("chat")
 
-const thinking = document.createElement("div")
+const typing = document.createElement("div")
+typing.className="msg assistant"
+typing.innerHTML=`<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`
 
-thinking.className="msg assistant thinking"
-
-thinking.innerText="Agente está pensando..."
-
-chat.appendChild(thinking)
-
+chat.appendChild(typing)
 chat.scrollTop = chat.scrollHeight
 
-/* requisição */
+try{
 
 const res = await fetch("/api/admin-agente",{
-
 method:"POST",
-
 headers:{
 "Content-Type":"application/json",
 "Authorization":"Bearer mercatto_admin_2026"
 },
-
 body:JSON.stringify({
 pergunta:texto,
-system_prompt:SYSTEM_PROMPT
+system_prompt:""
 })
-
 })
 
 const text = await res.text()
@@ -299,45 +319,36 @@ const text = await res.text()
 let data
 
 try{
-
 data = JSON.parse(text)
+}catch(e){
+throw new Error("Resposta inválida")
+}
+
+typing.remove()
+
+addMsg("assistant",data.resposta || "Erro na resposta")
+
+historico.push({role:"assistant",content:data.resposta})
+salvarHistorico()
 
 }catch(e){
 
-thinking.remove()
-
-addMsg("assistant","Erro no servidor")
-
-return
+typing.remove()
+addMsg("assistant","❌ Erro ao conectar com servidor")
 
 }
 
-thinking.remove()
-
-addMsg("assistant",data.resposta)
-
-historico.push({role:"assistant",content:data.resposta})
-
-salvarHistorico()
-
 }
 
-/* ENTER ENVIA */
-
+/* ENTER */
 document.getElementById("msg").addEventListener("keydown",function(e){
-
 if(e.key==="Enter" && !e.shiftKey){
-
 e.preventDefault()
-
 enviar()
-
 }
-
 })
 
 </script>
 
 </body>
-
 </html>
