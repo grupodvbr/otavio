@@ -370,6 +370,29 @@ const texto = input.value.trim()
 
 if(!texto) return
 
+
+
+
+/* 🔥 COMANDO LIMPAR */
+if(texto.toLowerCase() === "limpar"){
+
+localStorage.removeItem("chat_full")
+
+document.getElementById("chat").innerHTML = ""
+
+input.value = ""
+
+return
+}
+
+
+
+
+
+
+
+
+  
 addMsg("user",texto)
 
 historico.push({role:"user",text:texto})
