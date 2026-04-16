@@ -1382,8 +1382,22 @@ async function atualizarClientesSilencioso(){
     /* 🔥 LOOP CORRETO (SEM forEach async) */
     for(const c of clientes){
 
-      let card = document.querySelector(`[data-telefone="${c.telefone}"]`)
+let card = document.querySelector(`[data-telefone="${c.telefone}"]`)
+if(!card) continue
 
+const previewEl = card.querySelector(".preview")
+
+// 🔥 MOVE PRO TOPO SE MUDOU
+if (
+  previewEl &&
+  previewEl.innerText !== c.mensagem
+){
+  container.prepend(card)
+}
+
+// depois atualiza conteúdo
+
+      
       const pausado = await verificarPausa(c.telefone)
       const nome = nomesTemp[c.telefone] || c.telefone
 
