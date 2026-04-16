@@ -307,22 +307,34 @@ if(empresaFiltro){
 }
 
 let { data:buffetLancamentos } = await query
+buffetLancamentos = buffetLancamentos || []
 
-// 🔥 fallback automático
+
+
+
+
+
+
+
+
+
+
+  
+// 🔥 fallback automático CORRETO
 if(!buffetLancamentos || buffetLancamentos.length === 0){
 
-  let { data:ontemData } = await supabase
-  .from("buffet_lancamentos")
-  .select("*")
-  .eq("data", ontemISO)
+  let queryOntem = supabase
+    .from("buffet_lancamentos")
+    .select("*")
+    .eq("data", ontemISO)
 
-if(empresaFiltro){
-  queryOntem = queryOntem.eq("empresa", empresaFiltro)
-}
+  if(empresaFiltro){
+    queryOntem = queryOntem.eq("empresa", empresaFiltro)
+  }
 
-let { data:ontemData } = await queryOntem
+  const { data:ontemData } = await queryOntem
 
-  buffetLancamentos = ontemData
+  buffetLancamentos = ontemData || []
 }
 
   
