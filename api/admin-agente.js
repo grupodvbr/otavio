@@ -244,8 +244,8 @@ const {data:historico} = await supabase
 const mensagens = (historico || [])
 .reverse()
 .map(m => ({
-role: m.role,
-content: m.mensagem
+  role: m.role,
+  content: m.mensagem + (m.acao_json ? `\n\nAÇÃO_JSON:\n${JSON.stringify(m.acao_json)}` : "")
 }))
 
 mensagens.push({
