@@ -777,13 +777,15 @@ if(matchesReserva.length > 0){
 
       if(acaoReserva.operacao === "insert"){
 
-        const { error } = await supabase
-          .from("reservas_mercatto")
-          .insert(dados)
+const { error } = await supabase
+  .from("reservas_mercatto")
+  .insert(dados)
 
-        if(error){
-          console.error("Erro insert reserva:", error)
-        }
+if(error){
+  console.error("Erro insert reserva:", error)
+
+  throw new Error("ERRO AO INSERIR RESERVA: " + error.message)
+}
 
       }
 
