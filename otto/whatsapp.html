@@ -812,11 +812,7 @@ div.addEventListener("click", () => {
 
   // 📱 Se for celular → abre outra página
   if(window.innerWidth <= 768){
-history.pushState(
-  { telefone: c.telefone },
-  "",
-  "chat.html?telefone=" + c.telefone
-)
+window.location.href = "chat.html?telefone=" + c.telefone
 
 // 🔥 abre chat sem sair da página
 abrirChatIframe(c.telefone)
