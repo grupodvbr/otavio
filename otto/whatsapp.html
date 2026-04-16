@@ -798,27 +798,6 @@ onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">
 </div>
 `
 
-
-
-
-<div class="menuDots" onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">⋮</div>
-    <div class="menu" id="menu-${c.telefone}">
-      <button onclick="editarContato('${c.telefone}')">
-        Editar contato
-      </button>
-
-      <button onclick="toggleBot('${c.telefone}')" style="
-        background:${pausado?'#22c55e':'#ef4444'};
-        color:white;
-        padding:6px 10px;
-        border-radius:6px;
-        font-size:12px;
-      ">
-        ${pausado ? "ATIVAR BOT" : "DESATIVAR BOT"}
-      </button>
-    </div>
-  `
-
   /* 🔥 CLICK CORRETO */
 
 div.addEventListener("click", () => {
