@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Gestor de Conversas • Mercatto Delícia</title>
+<title>Gestor de Conversas</title>
 
 <meta name="viewport"
 content="width=device-width,
@@ -186,17 +186,35 @@ color:#dc2626;
 /* MENU */
 
 .menuDots{
-margin-left:auto;
-cursor:pointer;
-font-size:18px;
-opacity:.5;
-color:#111827;
+  margin-left:auto;
+  cursor:pointer;
+  font-size:18px;
+  opacity:.6;
+  color:#111827;
+
+  /* 🔥 ÁREA DE CLICK GRANDE */
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:12px;
+  transition:0.2s;
 }
+
+
 
 .menuDots:hover{
-opacity:1;
+  background:#f3f4f6;
+  opacity:1;
 }
 
+.menuDots:active{
+  transform:scale(0.9);
+}
+
+  
 .menu{
 position:absolute;
 background:white;
@@ -731,16 +749,14 @@ container.innerHTML = ""
 
 for (const c of clientes){
 
-  const div = document.createElement("div")
-
+const div = document.createElement("div")
+div.setAttribute("data-telefone", c.telefone)
   const inicial = c.telefone.slice(-2)
 
   const pausado = await verificarPausa(c.telefone)
 
-div.className = pausado ? "client pausado" : "client"
-div.setAttribute("data-telefone", c.telefone)
+  div.className = pausado ? "client pausado" : "client"
 
-  
   div.innerHTML = `
 <div class="avatar">
   <img 
@@ -867,8 +883,7 @@ async function excluirConversa(){
 
 if(!clienteSelecionado) return
 
-if(!confirm("Excluir conversa completa?")) return
-
+if(!confirm("⚠️ Tem certeza que deseja excluir TODA a conversa?\nEssa ação não pode ser desfeita.")) return
 await db
 .from("conversas_whatsapp")
 .delete()
@@ -955,6 +970,12 @@ box.innerHTML = `
 <button class="menuAction ${pausado ? 'menuAtivar' : 'menuDesativar'}"
 onclick="toggleBot('${telefone}'); fecharMenu()">
 ${pausado ? "▶️ Ativar BOT" : "⛔ Desativar BOT"}
+</button>
+
+<!-- 🔥 NOVO BOTÃO -->
+<button class="menuAction menuDesativar"
+onclick="clienteSelecionado='${telefone}'; excluirConversa(); fecharMenu()">
+Excluir conversa
 </button>
 
 <button class="menuCancel" onclick="fecharMenu()">
@@ -1292,8 +1313,8 @@ async function atualizarClientesSilencioso(){
 
     const {data} = await db
     .from("conversas_whatsapp")
-    .select("telefone,mensagem,created_at")
-    .order("created_at",{ascending:false})
+.select("telefone,mensagem,created_at,role")
+      .order("created_at",{ascending:false})
     .limit(50) // 🔥 evita travamento
 
     const {data:memoria} = await db
@@ -1334,17 +1355,35 @@ async function atualizarClientesSilencioso(){
         phoneEl.innerText = nome
       }
 
-      if(previewEl && previewEl.innerText !== c.mensagem){
-        previewEl.innerText = c.mensagem
+if(
+  previewEl &&
+  previewEl.innerText !== c.mensagem &&
+  c.role === "user" // 🔥 AQUI A MÁGICA
+){
 
-        // 🔥 efeito leve (sem travar UI)
-        card.style.transition = "0.2s"
-        card.style.background = "#dcfce7"
+  
+  previewEl.innerText = c.mensagem
 
-        setTimeout(()=>{
-          card.style.background = ""
-        },300)
-      }
+  // 🔥 PISCAR IGUAL WHATSAPP
+  card.style.transition = "0.3s"
+  card.style.background = "#bbf7d0"
+
+  setTimeout(()=>{
+    card.style.background = "#dcfce7"
+  },150)
+
+  setTimeout(()=>{
+    card.style.background = ""
+  },600)
+
+  // 🔥 LEVE PULO
+  card.style.transform = "scale(1.02)"
+
+  setTimeout(()=>{
+    card.style.transform = "scale(1)"
+  },200)
+
+}
 
       if(statusEl){
         statusEl.innerHTML = `● ${pausado?'BOT PAUSADO':'BOT ATIVO'}`
@@ -1364,9 +1403,7 @@ async function atualizarClientesSilencioso(){
 
 setInterval(() => {
   atualizarClientesSilencioso()
-}, 5000)
-
-
+}, 2000)
 
   
 
