@@ -281,11 +281,32 @@ const { data:buffet } = await supabase
 .limit(500)
 
 
-let { data:buffetLancamentos } = await supabase
-.from("buffet_lancamentos")
-.select("*")
-.gte("data", dataFiltro)
-.lt("data", dataFiltro + "T23:59:59")
+// 🔥 detectar empresa
+let empresaFiltro = null
+
+if(texto.includes("mercatto")){
+  empresaFiltro = "MERCATTO DELÍCIA"
+}
+
+if(texto.includes("villa")){
+  empresaFiltro = "VILLA GOURMET"
+}
+
+if(texto.includes("padaria")){
+  empresaFiltro = "PADARIA DELÍCIA"
+}
+
+// 🔥 query correta (igual painel)
+let query = supabase
+  .from("buffet_lancamentos")
+  .select("*")
+  .eq("data", dataFiltro)
+
+if(empresaFiltro){
+  query = query.eq("empresa", empresaFiltro)
+}
+
+let { data:buffetLancamentos } = await query
 
 // 🔥 fallback automático
 if(!buffetLancamentos || buffetLancamentos.length === 0){
@@ -293,8 +314,13 @@ if(!buffetLancamentos || buffetLancamentos.length === 0){
   let { data:ontemData } = await supabase
   .from("buffet_lancamentos")
   .select("*")
-  .gte("data", ontemISO)
-  .lt("data", ontemISO + "T23:59:59")
+  .eq("data", ontemISO)
+
+if(empresaFiltro){
+  queryOntem = queryOntem.eq("empresa", empresaFiltro)
+}
+
+let { data:ontemData } = await queryOntem
 
   buffetLancamentos = ontemData
 }
