@@ -30,6 +30,43 @@ typeof req.body === "string"
 : req.body
 
 const pergunta = body?.pergunta || ""
+
+/* ================= DATAS PRIMEIRO ================= */
+
+const agora = new Date()
+
+const formatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Bahia",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit"
+})
+
+const parts = formatter.formatToParts(agora)
+const get = type => parts.find(p => p.type === type)?.value
+
+const hojeISO = `${get("year")}-${get("month")}-${get("day")}`
+const hora = `${get("hour")}:${get("minute")}:${get("second")}`
+
+const ontem = new Date(`${hojeISO}T00:00:00`)
+ontem.setDate(ontem.getDate() - 1)
+
+const ontemISO = ontem.toISOString().split("T")[0]
+
+/* ================= AGORA SIM ================= */
+
+
+
+
+
+
+
+
+
+  
 let dataFiltro = hojeISO
 
 const texto = pergunta.toLowerCase()
@@ -326,37 +363,7 @@ addContext("PRODUTOS", produtos)
 
 ].filter(Boolean)
 
-/* ================= DATAS SISTEMA ================= */
 
-const agora = new Date()
-
-const formatter = new Intl.DateTimeFormat("pt-BR", {
-  timeZone: "America/Bahia",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit"
-})
-
-const parts = formatter.formatToParts(agora)
-
-const get = type => parts.find(p => p.type === type)?.value
-
-const hojeISO = `${get("year")}-${get("month")}-${get("day")}`
-const hora = `${get("hour")}:${get("minute")}:${get("second")}`
-
-const ontem = new Date(`${hojeISO}T00:00:00`)
-ontem.setDate(ontem.getDate() - 1)
-
-const amanha = new Date(`${hojeISO}T00:00:00`)
-amanha.setDate(amanha.getDate() + 1)
-
-const ontemISO = ontem.toISOString().split("T")[0]
-const amanhaISO = amanha.toISOString().split("T")[0]
-
-const agoraTexto = `${hojeISO} ${hora}`
   
 /* ================= OPENAI ================= */
 
