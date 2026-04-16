@@ -809,16 +809,10 @@ onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">
   /* 🔥 CLICK CORRETO */
 
 div.addEventListener("click", () => {
-
-  // 📱 Se for celular → abre outra página
-  if(window.innerWidth <= 768){
+if(window.innerWidth <= 768){
 window.location.href = "chat.html?telefone=" + c.telefone
-
-// 🔥 abre chat sem sair da página
-abrirChatIframe(c.telefone)
-  
-    return
-  }
+return
+}
 
   // 💻 Se for desktop → iframe normal
   abrirChatIframe(c.telefone)
