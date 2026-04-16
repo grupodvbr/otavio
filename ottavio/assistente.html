@@ -144,6 +144,12 @@ const db = supabase.createClient(
 "sb_publishable_NNFvdfSXgOdGGVcSbphbjQ_brC3_9ed"
 )
 
+let pagina = 0
+const limite = 20
+let carregando = false
+let acabou = false
+
+
 const telefoneFake = localStorage.getItem("user") || "ADMIN"/* ENTER ENVIA */
 
 document.getElementById("input").addEventListener("keydown", function(e){
@@ -185,30 +191,52 @@ function addMsg(text,role,loading=false){
 
 
 
-async function carregarHistorico(){
+async function carregarMais(){
+
+  if(carregando || acabou) return
+
+  carregando = true
+
+  const from = pagina * limite
+  const to = from + limite - 1
 
   const { data, error } = await db
-  .from("conversas_whatsapp")
-  .select("*")
-  .eq("telefone", telefoneFake)
-  .order("created_at",{ ascending:true })
+    .from("conversas_whatsapp")
+    .select("*")
+    .eq("telefone", telefoneFake)
+    .order("created_at",{ ascending:false })
+    .range(from, to)
 
   if(error){
     console.error(error)
+    carregando = false
+    return
+  }
+
+  if(!data || data.length === 0){
+    acabou = true
+    carregando = false
     return
   }
 
   const container = document.getElementById("messages")
-  container.innerHTML = ""
 
-  data.forEach(msg => {
-    addMsg(msg.mensagem, msg.role)
+  const scrollAtual = container.scrollHeight
+
+  data.reverse().forEach(msg => {
+    const div = document.createElement("div")
+    div.className = "msg " + msg.role
+    div.innerText = msg.mensagem
+
+    container.prepend(div)
   })
 
-  scrollBottom()
+  // mantém posição do scroll
+  container.scrollTop = container.scrollHeight - scrollAtual
+
+  pagina++
+  carregando = false
 }
-
-
 
 
 
@@ -294,7 +322,9 @@ async function enviar(){
 
   btn.disabled = false
 }
-carregarHistorico()
+carregarMais()
+scrollBottom()
+
 </script>
 
 </body>
