@@ -281,13 +281,25 @@ const { data:buffet } = await supabase
 .limit(500)
 
 
-const { data:buffetLancamentos } = await supabase
+let { data:buffetLancamentos } = await supabase
 .from("buffet_lancamentos")
 .select("*")
 .gte("data", dataFiltro)
 .lt("data", dataFiltro + "T23:59:59")
-.order("hora",{ascending:false})
 
+// 🔥 fallback automático
+if(!buffetLancamentos || buffetLancamentos.length === 0){
+
+  let { data:ontemData } = await supabase
+  .from("buffet_lancamentos")
+  .select("*")
+  .gte("data", ontemISO)
+  .lt("data", ontemISO + "T23:59:59")
+
+  buffetLancamentos = ontemData
+}
+
+  
   
 const { data:itensBuffet } = await supabase
 .from("itens_buffet")
