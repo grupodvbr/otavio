@@ -753,48 +753,52 @@ let resposta = completion.choices[0].message.content
 
 /* ================= DETECTAR RESERVA ================= */
 
-const matchesReserva = [...resposta.matchAll(/RESERVA_JSON:\s*(\{[\s\S]*?\})/g)]
+const matchReserva = resposta.match(/RESERVA_JSON:\s*(\{[\s\S]*?\})/)
 
-if(matchesReserva.length > 0){
+if(matchReserva){
 
-  for(const match of matchesReserva){
+  try{
 
-    try{
+    let jsonTexto = matchReserva[1]
+      .replace(/```json/g,"")
+      .replace(/```/g,"")
+      .trim()
 
-      let jsonTexto = match[1]
+    const acaoReserva = JSON.parse(jsonTexto)
 
-      jsonTexto = jsonTexto
-        .replace(/```json/g,"")
-        .replace(/```/g,"")
-        .trim()
+    const dados = {
 
-      const acaoReserva = JSON.parse(jsonTexto)
-
-      const dados = {
-        email: "nao_informado@mercatto.com",
-        ...acaoReserva.dados
-      }
-
-      if(acaoReserva.operacao === "insert"){
-
-const { error } = await supabase
-  .from("reservas_mercatto")
-  .insert(dados)
-
-if(error){
-  console.error("Erro insert reserva:", error)
-
-  throw new Error("ERRO AO INSERIR RESERVA: " + error.message)
-}
-
-      }
-
-    }catch(e){
-      console.log("Erro reserva JSON:", e)
+      nome: acaoReserva.dados.nome || "Cliente",
+      telefone: acaoReserva.dados.telefone || "ADMIN",
+      email: acaoReserva.dados.email || "nao_informado@mercatto.com",
+      pessoas: parseInt(acaoReserva.dados.pessoas) || 1,
+      mesa: acaoReserva.dados.mesa || "Salão",
+      cardapio: acaoReserva.dados.cardapio || "",
+      datahora: acaoReserva.dados.datahora,
+      observacoes: acaoReserva.dados.observacoes || "",
+      status: acaoReserva.dados.status || "Pendente",
+      valorEstimado: 0,
+      pagamentoAntecipado: 0,
+      banco: "",
+      comandaIndividual: acaoReserva.dados.comandaIndividual || "Não"
     }
 
-  }
+    delete dados.comandaindividual
 
+    const { error } = await supabase
+      .from("reservas_mercatto")
+      .insert(dados)
+
+    if(error){
+      console.error("❌ ERRO REAL AO SALVAR:", error)
+      throw new Error(error.message)
+    }
+
+    resposta = "✅ Reserva criada com sucesso"
+
+  }catch(e){
+    console.error("❌ ERRO RESERVA:", e)
+  }
 }
 
 
