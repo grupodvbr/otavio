@@ -1438,15 +1438,13 @@ window.addEventListener("popstate", () => {
 
 })
   
-window.addEventListener("pageshow", (event) => {
+window.addEventListener("pageshow", () => {
 
-  // 🔥 se veio do histórico (botão voltar)
-  if (event.persisted) {
-    console.log("⚡ Voltou do cache")
+  console.log("⚡ Voltou para a tela")
 
-    // NÃO recarrega tudo
-    atualizarClientesSilencioso()
-  }
+  // 🔥 NÃO recria tudo
+  // 🔥 só atualiza o que mudou
+  atualizarClientesSilencioso()
 
 })
   
