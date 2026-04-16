@@ -76,7 +76,7 @@ if(texto.includes("ontem")){
 }
 
 if(texto.includes("semana passada")){
-  const d = new Date(hojeISO)
+const d = new Date(hojeISO + "T00:00:00")
   d.setDate(d.getDate() - 7)
   dataFiltro = d.toISOString().split("T")[0]
 }
