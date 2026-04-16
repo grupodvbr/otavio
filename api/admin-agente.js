@@ -55,7 +55,10 @@ const ontem = new Date(`${hojeISO}T00:00:00`)
 ontem.setDate(ontem.getDate() - 1)
 
 const ontemISO = ontem.toISOString().split("T")[0]
+const amanha = new Date(`${hojeISO}T00:00:00`)
+amanha.setDate(amanha.getDate() + 1)
 
+const amanhaISO = amanha.toISOString().split("T")[0]
 /* ================= AGORA SIM ================= */
 
 
