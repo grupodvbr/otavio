@@ -284,7 +284,8 @@ const { data:buffet } = await supabase
 const { data:buffetLancamentos } = await supabase
 .from("buffet_lancamentos")
 .select("*")
-.eq("data", dataFiltro)
+.gte("data", dataFiltro)
+.lt("data", dataFiltro + "T23:59:59")
 .order("hora",{ascending:false})
 
   
