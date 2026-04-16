@@ -30,6 +30,27 @@ typeof req.body === "string"
 : req.body
 
 const pergunta = body?.pergunta || ""
+let dataFiltro = hojeISO
+
+const texto = pergunta.toLowerCase()
+
+if(texto.includes("ontem")){
+  dataFiltro = ontemISO
+}
+
+const matchData = texto.match(/\d{2}\/\d{2}\/\d{4}/)
+
+if(matchData){
+  const [dia, mes, ano] = matchData[0].split("/")
+  dataFiltro = `${ano}-${mes}-${dia}`
+}
+
+
+
+
+
+
+  
 let confirmar = body?.confirmar || null
 /* ================= CONFIRMAR COM "SIM" ================= */
 
@@ -218,9 +239,8 @@ const { data:buffet } = await supabase
 const { data:buffetLancamentos } = await supabase
 .from("buffet_lancamentos")
 .select("*")
-.order("data",{ascending:false})
-.limit(500)
-
+.eq("data", dataFiltro)
+.order("hora",{ascending:false})
 
   
 const { data:itensBuffet } = await supabase
@@ -380,7 +400,10 @@ Sempre substitua:
 "agora" → ${hora}
 `
 },
-
+{
+role:"system",
+content:`DATA FILTRADA: ${dataFiltro}`
+},
 
 {
 role:"system",
