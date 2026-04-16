@@ -753,60 +753,46 @@ let resposta = completion.choices[0].message.content
 
 /* ================= DETECTAR RESERVA ================= */
 
-const matchReserva = resposta.match(/RESERVA_JSON:\s*(\{[\s\S]*?\})/)
-let acaoReserva = null
-if(matchReserva){
+const matchesReserva = [...resposta.matchAll(/RESERVA_JSON:\s*(\{[\s\S]*?\})/g)]
 
-  try{
+if(matchesReserva.length > 0){
 
-    let jsonTexto = matchReserva[1]
+  for(const match of matchesReserva){
 
-    jsonTexto = jsonTexto
-      .replace(/```json/g,"")
-      .replace(/```/g,"")
-      .trim()
+    try{
 
-    acaoReserva = JSON.parse(jsonTexto)
+      let jsonTexto = match[1]
 
-    // 🔥 GARANTE EMAIL (CRÍTICO)
-    const dados = {
-      email: "nao_informado@mercatto.com",
-      ...acaoReserva.dados
-    }
+      jsonTexto = jsonTexto
+        .replace(/```json/g,"")
+        .replace(/```/g,"")
+        .trim()
 
-    if(acaoReserva.operacao === "insert"){
+      const acaoReserva = JSON.parse(jsonTexto)
 
-      const { error } = await supabase
-        .from("reservas_mercatto")
-        .insert(dados)
-
-      if(error){
-        console.error("Erro insert reserva:", error)
+      const dados = {
+        email: "nao_informado@mercatto.com",
+        ...acaoReserva.dados
       }
 
+      if(acaoReserva.operacao === "insert"){
+
+        const { error } = await supabase
+          .from("reservas_mercatto")
+          .insert(dados)
+
+        if(error){
+          console.error("Erro insert reserva:", error)
+        }
+
+      }
+
+    }catch(e){
+      console.log("Erro reserva JSON:", e)
     }
 
-    if(acaoReserva.operacao === "update"){
-
-      await supabase
-        .from("reservas_mercatto")
-        .update(dados)
-        .match(acaoReserva.filtro)
-
-    }
-
-    if(acaoReserva.operacao === "delete"){
-
-      await supabase
-        .from("reservas_mercatto")
-        .delete()
-        .match(acaoReserva.filtro)
-
-    }
-
-  }catch(e){
-    console.log("Erro reserva JSON:", e)
   }
+
 }
 
 
