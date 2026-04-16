@@ -280,10 +280,11 @@ function addContext(label, data){
 const contextos = [
 
 addContext("RESERVAS", reservas),
-addContext("HIST_RESERVAS", histReservas), // 🔥 NOVO
+addContext("HIST_RESERVAS", histReservas),
 addContext("AGENDA", agenda),
 addContext("CLIENTES", clientes),
 addContext("CARDAPIO", buffet),
+addContext("BUFFET_LANCAMENTOS", buffetLancamentos),
 addContext("PEDIDOS", pedidos),
 addContext("PEDIDOS_PENDENTES", pedidosPendentes),
 addContext("ITENS_BUFFET", itensBuffet),
