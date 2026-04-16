@@ -214,6 +214,16 @@ const { data:buffet } = await supabase
 .select("*")
 .limit(500)
 
+
+const { data:buffetLancamentos } = await supabase
+.from("buffet_lancamentos")
+.select("*")
+.gte("data", ontemISO)
+.order("data",{ascending:false})
+.limit(500)
+
+
+  
 const { data:itensBuffet } = await supabase
 .from("itens_buffet")
 .select("*")
