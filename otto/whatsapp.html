@@ -623,10 +623,9 @@ margin-top:6px;
     width:100%;
     height:100vh;
   }
-
-  .chat{
-    display:none !important; /* 🔥 ESSA LINHA RESOLVE */
-  }
+.chat{
+  display:none;
+}
 
 }
 </style>
@@ -810,8 +809,17 @@ onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">
 
 div.addEventListener("click", () => {
 if(window.innerWidth <= 768){
-window.location.href = "chat.html?telefone=" + c.telefone
-return
+
+  // 🔥 troca tela sem sair da página
+  document.querySelector(".sidebar").style.display = "none"
+  document.querySelector(".chat").style.display = "flex"
+
+  abrirChatIframe(c.telefone)
+
+  // 🔥 adiciona histórico
+  history.pushState({ telefone: c.telefone }, "", "#chat")
+
+  return
 }
 
   // 💻 Se for desktop → iframe normal
@@ -1432,9 +1440,9 @@ setInterval(() => {
 }, 2000)
 window.addEventListener("popstate", () => {
 
-  // 🔥 quando voltar
-  document.getElementById("frameChat").src = ""
-  document.getElementById("clienteAtual").innerText = "Selecione um cliente"
+  // 🔥 volta para lista
+  document.querySelector(".sidebar").style.display = "flex"
+  document.querySelector(".chat").style.display = "none"
 
 })
   
