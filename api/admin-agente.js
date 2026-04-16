@@ -38,13 +38,18 @@ if(texto.includes("ontem")){
   dataFiltro = ontemISO
 }
 
+if(texto.includes("semana passada")){
+  const d = new Date(hojeISO)
+  d.setDate(d.getDate() - 7)
+  dataFiltro = d.toISOString().split("T")[0]
+}
+
 const matchData = texto.match(/\d{2}\/\d{2}\/\d{4}/)
 
 if(matchData){
   const [dia, mes, ano] = matchData[0].split("/")
   dataFiltro = `${ano}-${mes}-${dia}`
 }
-
 
 
 
