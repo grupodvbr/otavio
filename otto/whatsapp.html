@@ -1438,7 +1438,17 @@ window.addEventListener("popstate", () => {
 
 })
   
+window.addEventListener("pageshow", (event) => {
 
+  // 🔥 se veio do histórico (botão voltar)
+  if (event.persisted) {
+    console.log("⚡ Voltou do cache")
+
+    // NÃO recarrega tudo
+    atualizarClientesSilencioso()
+  }
+
+})
   
 </script>
 <div id="popupRepertorio" class="popupOverlay">
