@@ -1358,7 +1358,7 @@ async function atualizarClientesSilencioso(){
       const phoneEl = card.querySelector(".phone")
       const previewEl = card.querySelector(".preview")
       const statusEl = card.querySelector(".status")
-      const date = new Date(c.created_at)
+      const date = new Date(c.created_at + "Z")
 
 const hora = date.toLocaleTimeString("pt-BR",{
   hour:"2-digit",
