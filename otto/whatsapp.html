@@ -1434,26 +1434,33 @@ if(
 }{
 
   
+if (
+  previewEl &&
+  previewEl.innerText !== c.mensagem
+){
+
   previewEl.innerText = c.mensagem
 
-  // 🔥 PISCAR IGUAL WHATSAPP
+  // 🔴 NOTIFICAÇÃO
+  let notif = card.querySelector(".notificacao")
+
+  if(c.role === "user"){
+    if(!notif){
+      const dot = document.createElement("div")
+      dot.className = "notificacao"
+      card.appendChild(dot)
+    }
+  } else {
+    if(notif) notif.remove()
+  }
+
+  // ✅ PISCAR SÓ QUANDO MUDA
   card.style.transition = "0.3s"
   card.style.background = "#bbf7d0"
 
   setTimeout(()=>{
-    card.style.background = "#dcfce7"
-  },150)
-
-  setTimeout(()=>{
     card.style.background = ""
-  },600)
-
-  // 🔥 LEVE PULO
-  card.style.transform = "scale(1.02)"
-
-  setTimeout(()=>{
-    card.style.transform = "scale(1)"
-  },200)
+  },400)
 
 }
 
