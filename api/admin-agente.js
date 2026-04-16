@@ -373,7 +373,39 @@ Sempre substitua:
 },
 
 
+{
+role:"system",
+content:`
 
+📊 REGRA INTELIGENTE — BUFFET_LANCAMENTOS
+
+Sempre que o usuário pedir dados do buffet:
+
+1. Se NÃO informar a empresa:
+→ Pergunte QUAL EMPRESA antes de qualquer resposta
+
+2. Se informar empresa MAS não houver dados no dia:
+→ NÃO pare a resposta
+→ Você DEVE automaticamente:
+
+- buscar dados de ONTEM
+- ou sugerir outras datas disponíveis
+
+3. Se não houver dados nem hoje nem ontem:
+→ informe claramente:
+"Não houve lançamentos recentes"
+
+4. Nunca responda vazio
+5. Sempre sugira próximo passo
+
+Exemplo correto:
+
+"Hoje não houve registros para Mercatto.
+Ontem houve produção de X kg.
+Deseja ver outro período ou outra empresa?"
+
+`
+},
 
 
 
