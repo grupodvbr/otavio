@@ -781,14 +781,16 @@ div.innerHTML = `
 
   <div class="preview">${c.mensagem}</div>
 
-<div style="display:flex;justify-content:space-between;align-items:flex-end">
+<div style="display:flex;align-items:flex-end">
 
   <div class="status ${pausado?'off':'on'}">
     ● ${pausado?'BOT PAUSADO':'BOT ATIVO'}
   </div>
 
-  <div class="hora" style="font-size:11px;color:#6b7280">
-    ${hora}
+  <div style="margin-left:auto;margin-right:6px">
+    <div class="hora" style="font-size:11px;color:#6b7280">
+      ${hora}
+    </div>
   </div>
 
 </div>
