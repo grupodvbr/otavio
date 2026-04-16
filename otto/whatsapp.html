@@ -120,6 +120,8 @@ box-shadow:0 2px 6px rgba(0,0,0,0.05);
 
 cursor:pointer;
 transition:.2s;
+position:relative; /* 🔥 IMPORTANTE */
+
 }
 
 .client:hover{
@@ -629,6 +631,32 @@ margin-top:6px;
   }
 
 }
+
+
+.notificacao {
+  position:absolute;
+  top:8px;
+  right:8px;
+
+  width:10px;
+  height:10px;
+  border-radius:50%;
+
+  background:#ef4444;
+
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{ transform:scale(1); opacity:1 }
+  50%{ transform:scale(1.4); opacity:0.6 }
+  100%{ transform:scale(1); opacity:1 }
+}
+
+
+
+
+  
 </style>
 </head>
 
@@ -799,6 +827,8 @@ div.innerHTML = `
 
 
 </div>
+
+${c.role === "user" ? '<div class="notificacao"></div>' : ''}
 
 <div class="menuDots"
 onclick="event.stopPropagation(); abrirMenu(event,'${c.telefone}')">
@@ -1385,6 +1415,23 @@ if(
   previewEl &&
   previewEl.innerText !== c.mensagem
 ){
+
+  previewEl.innerText = c.mensagem
+
+  // 🔴 CONTROLE DA BOLINHA
+  let notif = card.querySelector(".notificacao")
+
+  if(c.role === "user"){
+    if(!notif){
+      const dot = document.createElement("div")
+      dot.className = "notificacao"
+      card.appendChild(dot)
+    }
+  } else {
+    if(notif) notif.remove()
+  }
+
+}{
 
   
   previewEl.innerText = c.mensagem
