@@ -325,6 +325,13 @@ async function enviar(){
 carregarMais()
 scrollBottom()
 
+document.getElementById("messages").addEventListener("scroll", function(){
+
+  if(this.scrollTop === 0){
+    carregarMais()
+  }
+
+})
 </script>
 
 </body>
