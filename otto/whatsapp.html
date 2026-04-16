@@ -812,8 +812,16 @@ div.addEventListener("click", () => {
 
   // 📱 Se for celular → abre outra página
   if(window.innerWidth <= 768){
-window.location.assign("chat.html?telefone=" + c.telefone)
-  return
+history.pushState(
+  { telefone: c.telefone },
+  "",
+  "chat.html?telefone=" + c.telefone
+)
+
+// 🔥 abre chat sem sair da página
+abrirChatIframe(c.telefone)
+  
+    return
   }
 
   // 💻 Se for desktop → iframe normal
@@ -1433,7 +1441,13 @@ if(
 setInterval(() => {
   atualizarClientesSilencioso()
 }, 2000)
+window.addEventListener("popstate", () => {
 
+  // 🔥 quando voltar
+  document.getElementById("frameChat").src = ""
+  document.getElementById("clienteAtual").innerText = "Selecione um cliente"
+
+})
   
 
   
