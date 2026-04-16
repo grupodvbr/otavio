@@ -223,19 +223,24 @@ async function carregarMais(){
 
   const scrollAtual = container.scrollHeight
 
-  data.reverse().forEach(msg => {
-    const div = document.createElement("div")
-    div.className = "msg " + msg.role
-    div.innerText = msg.mensagem
+data.reverse().forEach(msg => {
+  const div = document.createElement("div")
+  div.className = "msg " + msg.role
+  div.innerText = msg.mensagem
 
-    container.prepend(div)
-  })
+  container.prepend(div)
+})
 
-  // mantém posição do scroll
+// 🔥 PRIMEIRA CARGA → vai pro final
+if(pagina === 0){
+  scrollBottom()
+}else{
+  // mantém posição ao carregar mais
   container.scrollTop = container.scrollHeight - scrollAtual
+}
 
-  pagina++
-  carregando = false
+pagina++
+carregando = false
 }
 
 
