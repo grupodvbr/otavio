@@ -653,8 +653,63 @@ margin-top:6px;
   100%{ transform:scale(1); opacity:1 }
 }
 
+@media (min-width: 1400px) {
+  body {
+    transform: scale(0.8);
+    transform-origin: top left;
+    width: 125%;
+  }
+}
+/* 🔥 MODO TV */
+@media (min-width: 1200px){
 
+  body{
+    zoom: 0.7;
+  }
 
+  .sidebar{
+    width: 260px !important;
+  }
+
+  .client{
+    padding:10px !important;
+    margin:6px 10px !important;
+    border-radius:12px !important;
+  }
+
+  .avatar{
+    width:40px !important;
+    height:40px !important;
+  }
+
+  .phone{
+    font-size:13px !important;
+  }
+
+  .preview{
+    font-size:11px !important;
+    max-width:140px !important;
+  }
+
+  .status{
+    font-size:10px !important;
+  }
+
+  .chat-header{
+    padding:12px 16px !important;
+  }
+
+  .messages{
+    padding:18px !important;
+  }
+
+  .msg{
+    font-size:12px !important;
+    padding:10px 12px !important;
+    max-width:50% !important;
+  }
+
+}
 
   
 </style>
@@ -1382,22 +1437,8 @@ async function atualizarClientesSilencioso(){
     /* 🔥 LOOP CORRETO (SEM forEach async) */
     for(const c of clientes){
 
-let card = document.querySelector(`[data-telefone="${c.telefone}"]`)
-if(!card) continue
+      let card = document.querySelector(`[data-telefone="${c.telefone}"]`)
 
-const previewEl = card.querySelector(".preview")
-
-// 🔥 MOVE PRO TOPO SE MUDOU
-if (
-  previewEl &&
-  previewEl.innerText !== c.mensagem
-){
-  container.prepend(card)
-}
-
-// depois atualiza conteúdo
-
-      
       const pausado = await verificarPausa(c.telefone)
       const nome = nomesTemp[c.telefone] || c.telefone
 
@@ -1425,6 +1466,12 @@ if(horaEl){
         phoneEl.innerText = nome
       }
 
+if(
+  previewEl &&
+  previewEl.innerText !== c.mensagem
+){
+
+  previewEl.innerText = c.mensagem
 
   // 🔴 CONTROLE DA BOLINHA
   let notif = card.querySelector(".notificacao")
@@ -1442,33 +1489,26 @@ if(horaEl){
 }{
 
   
-if (
-  previewEl &&
-  previewEl.innerText !== c.mensagem
-){
-
   previewEl.innerText = c.mensagem
 
-  // 🔴 NOTIFICAÇÃO
-  let notif = card.querySelector(".notificacao")
-
-  if(c.role === "user"){
-    if(!notif){
-      const dot = document.createElement("div")
-      dot.className = "notificacao"
-      card.appendChild(dot)
-    }
-  } else {
-    if(notif) notif.remove()
-  }
-
-  // ✅ PISCAR SÓ QUANDO MUDA
+  // 🔥 PISCAR IGUAL WHATSAPP
   card.style.transition = "0.3s"
   card.style.background = "#bbf7d0"
 
   setTimeout(()=>{
+    card.style.background = "#dcfce7"
+  },150)
+
+  setTimeout(()=>{
     card.style.background = ""
-  },400)
+  },600)
+
+  // 🔥 LEVE PULO
+  card.style.transform = "scale(1.02)"
+
+  setTimeout(()=>{
+    card.style.transform = "scale(1)"
+  },200)
 
 }
 
@@ -1508,6 +1548,24 @@ window.addEventListener("pageshow", () => {
   atualizarClientesSilencioso()
 
 })
+
+/* 🔥 FORÇAR ZOOM NA TV */
+function ajustarZoomTV() {
+  const largura = window.innerWidth
+
+  if (largura >= 1200) { // considera TV / tela grande
+    document.body.style.transform = "scale(0.65)"
+    document.body.style.transformOrigin = "top left"
+    document.body.style.width = "150%"
+  }
+}
+
+ajustarZoomTV()
+window.addEventListener("resize", ajustarZoomTV)
+
+
+
+
   
 </script>
 <div id="popupRepertorio" class="popupOverlay">
